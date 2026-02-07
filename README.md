@@ -7,10 +7,10 @@ An AI agent for professional business analysis compliant with **BABOK v3** (Inte
 BABOK Analyst is a set of system prompts for AI models (Claude, ChatGPT, other LLMs) that transforms them into business analysis experts. The agent:
 
 - Conducts a structured analysis process in **8 stages** (Stage 1-8)
-- Asks questions in **Chain-of-Thought** format with visible reasoning
+- Uses **Short Rationale + Evidence** methodology (concise conclusions with cited evidence)
 - Requires **human approval** at each stage (human-in-the-loop)
 - Generates complete **project documentation** in Markdown format
-- Specializes in IT projects for the **SME** (small and medium enterprises) sector
+- Specializes in IT projects for **mid-market** companies (€10-100M revenue, 50-500 employees)
 
 ## Repository Structure
 
@@ -165,7 +165,8 @@ gh repo clone GSkuza/BABOK_ANALYST
 The agent asks questions in a structured format:
 
 ```
-REASONING: [Explanation of why it's asking about this topic]
+RATIONALE: [Concise conclusion with key assumptions]
+EVIDENCE: [Data source: Stage N, stakeholder input, industry standard]
 
 QUESTIONS FOR HUMAN:
 1. [Question 1]
@@ -249,7 +250,7 @@ Most of the time is not spent working with the agent, but gathering data from st
 ## Best Practices
 
 **Do:**
-- Read REASONING sections - you'll understand the agent's logic
+- Read RATIONALE + EVIDENCE sections - you'll understand the agent's logic
 - Be specific - "average 50 invoices/month" instead of "a lot"
 - Approve sections progressively - you don't have to wait for the entire stage
 - Correct immediately if the agent makes an error
@@ -325,6 +326,6 @@ This project is not officially endorsed by IIBA.
 
 ---
 
-**Version:** 1.0.0  
-**Release Date:** February 7, 2026  
+**Version:** 1.1.0
+**Release Date:** February 7, 2026
 **Last Updated:** 2026-02-07

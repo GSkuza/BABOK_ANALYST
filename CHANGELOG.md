@@ -5,6 +5,58 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-07
+
+### Changed
+- **Reasoning Methodology:** Replaced Chain-of-Thought with **Short Rationale + Evidence** format
+  - Reduces output verbosity by ~60%
+  - Every conclusion now includes: statement, assumptions (max 3-5), evidence source
+  - Internal reasoning process no longer exposed
+
+- **Company Positioning:** Updated from "SME/MSP sector" to **"Mid-Market"** (€10-100M revenue, 50-500 employees)
+  - Industry focus: Manufacturing, Distribution, Service Industries
+  - Added EU/Polish regulatory focus (GDPR, KSeF, sector-specific)
+
+### Added
+- **Executive Summary (1 page)** added to all stage deliverable templates (Stages 1-4)
+  - Key findings, critical decisions needed, business impact, approval requirements
+  - Agent presents summary FIRST, then offers detailed analysis on request
+
+- **Change Control Process** (new Section 9 in Stage 4)
+  - Change Request template with impact analysis checklist
+  - Change Approval Matrix (Cosmetic → Scope changes with appropriate authority)
+  - Change Log, Requirements Versioning (semantic versioning), Baseline Freeze rules
+  - Agent instructions: formal CR process for any changes after Stage 4 approval
+
+- **RACI Matrix** added to Stage 1 (Stakeholder Mapping)
+  - Responsibility assignment for 10 key project activities
+  - Steering Committee structure, quorum rules, decision-making process
+  - Escalation path with SLAs
+
+- **DPIA (Data Protection Impact Assessment)** added as Stage 7 appendix
+  - GDPR Article 35 compliance template
+  - Processing activity description, necessity assessment
+  - Risk matrix with mitigation measures
+  - Data subject rights implementation plan
+
+- **KSeF Technical Requirements Expansion** (FR-020 in Stage 4)
+  - 9 detailed acceptance criteria (AC-020-01 through AC-020-09)
+  - Normal flow, validation errors, retry logic, duplicate prevention
+  - Monitoring dashboard, environment management (TEST/PROD)
+  - Authentication, UPO storage, edge cases (corrections, multi-currency, prepaid)
+
+- **Modeling Notation Standards** added to Stage 2 deliverable template
+  - BPMN 2.0 for process flows, UML 2.5 for use cases
+  - C4 Model for system architecture, VSM for value streams
+  - Quality checklist for all diagrams
+  - Stage 5 references same standards
+
+### Reviewed By
+- Expert peer review by Grzegorz Skuza (GTMO Framework Author, AI Safety Specialist)
+- 8/8 changes accepted (100%)
+
+---
+
 ## [1.0.0] - 2026-02-07
 
 ### Added
@@ -77,4 +129,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
+- **1.1.0** (2026-02-07) - Short Rationale methodology, Executive Summaries, Change Control, RACI, DPIA, KSeF expansion, Modeling Standards
 - **1.0.0** (2026-02-07) - Initial public release

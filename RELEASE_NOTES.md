@@ -1,14 +1,71 @@
-# BABOK Analyst v1.0.0 - Release Notes
+# BABOK Analyst v1.1.0 - Release Notes
 
-**Release Date:** February 7, 2026  
-**Status:** Stable Release  
+**Release Date:** February 7, 2026
+**Status:** Stable Release
+**License:** MIT
+**Reviewed By:** Grzegorz Skuza (GTMO Framework Author, AI Safety Specialist)
+
+---
+
+## What's New in v1.1.0
+
+### 8 Critical Improvements Based on Expert Review
+
+#### 1. Short Rationale + Evidence (replaces Chain-of-Thought) - CRITICAL
+- Every conclusion now includes: clear statement, key assumptions (max 3-5), evidence source
+- Internal reasoning process no longer exposed (security + usability improvement)
+- **Impact:** ~60% reduction in output verbosity, improved readability
+
+#### 2. Executive Summary (1 page per stage) - CRITICAL
+- Added to all stage deliverable templates
+- Includes: key findings, critical decisions, business impact, approval requirements
+- Agent presents summary FIRST before detailed analysis
+- **Impact:** Stakeholders actually read summaries; approval becomes informed decision
+
+#### 3. Change Control Process - CRITICAL
+- New Section 9 in Stage 4 with formal CR process
+- Change Request template, Impact Analysis checklist, Approval Matrix
+- Requirements versioning (semantic), baseline freeze rules
+- **Impact:** Prevents scope creep, maintains audit trail
+
+#### 4. Mid-Market Positioning (replaces SME/MSP)
+- Updated to: Manufacturing, Distribution, Service Industries
+- Company profile: €10-100M revenue, 50-500 employees
+- EU/Polish regulatory focus (GDPR, KSeF, sector-specific)
+
+#### 5. DPIA as Explicit Deliverable
+- GDPR Article 35 compliance template in Stage 7
+- Processing overview, necessity assessment, risk matrix, mitigation measures
+- Data subject rights implementation plan with SLAs
+
+#### 6. KSeF Technical Requirements Expansion
+- FR-020 expanded from basic to 9 detailed acceptance criteria
+- Covers: normal flow, validation errors, retry logic, duplicate prevention
+- Monitoring dashboard, environment management, authentication, edge cases
+
+#### 7. RACI Matrix
+- Added to Stage 1 (Stakeholder Mapping)
+- 10 key project activities with clear R/A/C/I assignments
+- Steering Committee structure and escalation path
+
+#### 8. Modeling Notation Standards
+- BPMN 2.0, UML 2.5, C4 Model, VSM standards
+- Quality checklist for all diagrams
+- Added to Stage 2 (applies to Stage 5 as well)
+
+---
+
+# BABOK Analyst v1.0.0 - Release Notes (Previous)
+
+**Release Date:** February 7, 2026
+**Status:** Superseded by v1.1.0
 **License:** MIT
 
 ---
 
-## 🎉 Welcome to BABOK Analyst 1.0.0!
+## Welcome to BABOK Analyst 1.0.0!
 
-This is the initial public release of BABOK Analyst - an AI-powered business analysis agent that implements the BABOK® v3 framework for professional business analysis in IT projects.
+This is the initial public release of BABOK Analyst - an AI-powered business analysis agent that implements the BABOK v3 framework for professional business analysis in IT projects.
 
 ---
 
@@ -18,7 +75,7 @@ This is the initial public release of BABOK Analyst - an AI-powered business ana
 
 #### 1. **BABOK Agent System Prompt** (`BABOK_AGENT/BABOK_Agent_System_Prompt.md`)
 - Complete implementation of 8-stage analysis process
-- Chain-of-Thought reasoning with human-in-the-loop validation
+- Short Rationale + Evidence methodology with human-in-the-loop validation
 - Specialized templates for each stage
 - Comprehensive documentation generation
 - **Size:** ~50,000 tokens of carefully crafted instructions
@@ -80,10 +137,10 @@ Works with:
 - ✅ ChatGPT (Custom Instructions)
 - ✅ Any LLM via API (Anthropic, OpenAI, etc.)
 
-### Specialized for SME/MSP Sector
-- IT project focus
+### Specialized for Mid-Market Companies
+- IT project focus for Manufacturing, Distribution, Service Industries
 - Polish regulatory compliance (KSeF, JPK_V7M, GDPR)
-- Small to medium enterprise constraints
+- Mid-market constraints (€10-100M revenue, 50-500 employees)
 - Practical ROI-focused approach
 
 ### Comprehensive Documentation
@@ -237,7 +294,7 @@ https://github.com/GSkuza/BABOK_ANALYST/issues
 
 ### Planned for Future Releases
 
-#### Version 1.1 (Planned Q2 2026)
+#### Version 1.2 (Planned Q2 2026)
 - Video tutorials for each stage
 - Additional industry templates (retail, healthcare)
 - Sample completed analyses (anonymized)
@@ -318,6 +375,6 @@ If you find this tool valuable, please:
 
 ---
 
-**Version:** 1.0.0  
-**Release Date:** February 7, 2026  
+**Version:** 1.1.0
+**Release Date:** February 7, 2026
 **Maintainer:** Grzegorz Skuza ([@GSkuza](https://github.com/GSkuza))
