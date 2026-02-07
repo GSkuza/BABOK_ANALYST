@@ -5,6 +5,18 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-02-08
+
+### Added
+- **Universal Regulatory Framework:** Replaced hardcoded Polish regulations with adaptive "Critical Regulatory Requirements" compatible with any jurisdiction (GDPR, SOX, ISO, etc.).
+- **Command Line Interface (CLI):** 30+ terminal-style commands (e.g., `Launch analysis`, `Status`, `Deep analysis`, `Export all`) for power users.
+- **Adaptive Model Selection:** Intelligent tiering (Deep Analysis vs. Standard vs. Rapid) based on task complexity.
+- **Improved Usability:** `Batch questions`, `Workshop` mode, and `Async` operating modes.
+
+### Changed
+- **Start Command:** Updated from `BEGIN STAGE 1` to `Launch analysis`.
+- **Documentation:** Unified system prompt structure across all files.
+
 ## [1.1.0] - 2026-02-07
 
 ### Changed

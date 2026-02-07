@@ -1,8 +1,8 @@
 # BABOK Project Structure Template
 
-## 📁 Zalecana Struktura Folderów dla Projektu
+## 📁 Recommended Project Folder Structure
 
-Utwórz następującą strukturę folderów na swoim dysku lub w systemie zarządzania dokumentami:
+Create the following folder structure on your disk or in your document management system:
 
 ```
 BABOK_Analysis_[ProjectName]_[Date]/
@@ -48,7 +48,7 @@ BABOK_Analysis_[ProjectName]_[Date]/
 │   │   ├── UC-001_Invoice_Upload_Approve.pdf
 │   │   ├── UC-002_Three_Way_Match.pdf
 │   │   └── UC-003_KSeF_Submission.pdf
-│   ├── Wireframes/ (jeśli utworzone)
+│   ├── Wireframes/ (if created)
 │   │   ├── Dashboard_Mockup_v1.png
 │   │   ├── Invoice_Review_Screen.png
 │   │   └── Search_Interface.png
@@ -89,13 +89,13 @@ BABOK_Analysis_[ProjectName]_[Date]/
 │   ├── STAGE_08_Business_Case_ROI.md
 │   ├── Financial_Model.xlsx
 │   ├── Cost_Benefit_Analysis.xlsx
-│   ├── Vendor_Quotes/ (jeśli dostępne)
+│   ├── Vendor_Quotes/ (if available)
 │   │   ├── Quote_Vendor_A_DMS.pdf
 │   │   ├── Quote_Vendor_B_OCR.pdf
 │   │   └── Quote_Vendor_C_Esignature.pdf
 │   └── Executive_Presentation.pptx
 │
-├── 09_Vendor_Evaluation/ (opcjonalnie)
+├── 09_Vendor_Evaluation/ (optional)
 │   ├── RFP_Document.md
 │   ├── Vendor_Comparison_Matrix.xlsx
 │   ├── Demo_Notes/
@@ -144,7 +144,7 @@ BABOK_Analysis_[ProjectName]_[Date]/
 │   │   ├── User_Guide_Approver.pdf
 │   │   └── User_Guide_Finance_Manager.pdf
 │   ├── Admin_Guide.pdf
-│   ├── Video_Tutorials/ (linki lub pliki)
+│   ├── Video_Tutorials/ (links or files)
 │   │   ├── How_to_Upload_Invoice.mp4
 │   │   ├── How_to_Approve_Document.mp4
 │   │   └── How_to_Search_Archive.mp4
@@ -157,73 +157,73 @@ BABOK_Analysis_[ProjectName]_[Date]/
 │   └── Announcement_Emails/
 │
 └── FINAL_Documentation/
-    ├── FINAL_Complete_Documentation.md (wszystkie 8 stages połączone)
-    ├── Executive_Summary.pdf (1-2 strony dla C-level)
-    ├── Technical_Summary.pdf (dla IT department)
-    ├── Business_Summary.pdf (dla Finance department)
-    └── Lessons_Learned.md (po zakończeniu projektu)
+    ├── FINAL_Complete_Documentation.md (all 8 stages combined)
+    ├── Executive_Summary.pdf (1-2 pages for C-level)
+    ├── Technical_Summary.pdf (for IT department)
+    ├── Business_Summary.pdf (for Finance department)
+    └── Lessons_Learned.md (after project completion)
 ```
 
 ---
 
-## 📋 Checklist Utrzymania Struktury
+## 📋 Structure Maintenance Checklist
 
-### Podczas Projektu:
+### During the Project:
 
-- [ ] **Każdy dokument** ma jasną nazwę z datą lub wersją
-- [ ] **Każda decyzja** jest udokumentowana w Decision_Log.xlsx
-- [ ] **Każde spotkanie** ma notatki zapisane w Meeting_Minutes/
-- [ ] **Każda zmiana** wymaga wpisu w Change_Request_Log.xlsx
-- [ ] **Wszystkie wrażliwe dane** (hasła, klucze API) są zaszyfrowane
+- [ ] **Every document** has a clear name with date or version
+- [ ] **Every decision** is documented in Decision_Log.xlsx
+- [ ] **Every meeting** has notes saved in Meeting_Minutes/
+- [ ] **Every change** requires an entry in Change_Request_Log.xlsx
+- [ ] **All sensitive data** (passwords, API keys) are encrypted
 
-### Wersjonowanie Dokumentów:
+### Document Versioning:
 
-Format nazwy pliku:
+File naming format:
 ```
 [DocumentName]_v[MajorVersion].[MinorVersion]_[Date]_[Status].md
 
-Przykład:
+Example:
 STAGE_04_Solution_Requirements_v1.0_2025-02-15_DRAFT.md
 STAGE_04_Solution_Requirements_v1.1_2025-02-18_REVIEWED.md
 STAGE_04_Solution_Requirements_v2.0_2025-02-20_APPROVED.md
 ```
 
-**Status kody:**
-- `DRAFT` - w trakcie pracy
-- `REVIEWED` - przejrzane przez stakeholderów
-- `APPROVED` - zatwierdzone formalnie
-- `FINAL` - ostateczna wersja
+**Status codes:**
+- `DRAFT` - work in progress
+- `REVIEWED` - reviewed by stakeholders
+- `APPROVED` - formally approved
+- `FINAL` - final version
 
 ### Backup:
 
-- [ ] **Codziennie:** Automatic backup do chmury (OneDrive, Google Drive, Dropbox)
-- [ ] **Co tydzień:** Manual backup na zewnętrzny dysk
-- [ ] **Po każdym etapie:** ZIP archive całego projektu z nazwą `BABOK_Backup_Stage[N]_[Date].zip`
+- [ ] **Daily:** Automatic backup to cloud (OneDrive, Google Drive, Dropbox)
+- [ ] **Weekly:** Manual backup to external drive
+- [ ] **After each stage:** ZIP archive of entire project with name `BABOK_Backup_Stage[N]_[Date].zip`
 
 ---
 
-## 🔒 Bezpieczeństwo Folderów
+## 🔒 Folder Security
 
-### Poziomy Dostępu:
+### Access Levels:
 
-| Folder | Dostęp | Uzasadnienie |
+| Folder | Access | Justification |
 |--------|--------|--------------|
-| `/01_Project_Charter/` | Project Sponsor, BA, PM | Dokument założeń projektowych |
-| `/02_Current_State/` | BA, Finance Team, IT | Dane operacyjne (mogą zawierać wrażliwe info) |
-| `/04_Requirements/` | BA, Dev Team, Finance, IT | Specyfikacje techniczne |
-| `/08_Business_Case/` | CFO, Project Sponsor, BA | Dane finansowe - restricted |
-| `/11_Compliance/` | Legal, Compliance Officer, BA | Dokumenty prawne - restricted |
-| `/12_Testing/` | QA Team, Dev Team, BA | Wyniki testów |
+| `/01_Project_Charter/` | Project Sponsor, BA, PM | Project charter document |
+| `/02_Current_State/` | BA, Finance Team, IT | Operational data (may contain sensitive info) |
+| `/04_Requirements/` | BA, Dev Team, Finance, IT | Technical specifications |
+| `/08_Business_Case/` | CFO, Project Sponsor, BA | Financial data - restricted |
+| `/11_Compliance/` | Legal, Compliance Officer, BA | Legal documents - restricted |
+| `/12_Testing/` | QA Team, Dev Team, BA | Test results |
 
-**Zasada:** Jeśli folder zawiera dane finansowe, prawne lub wrażliwe dane osobowe → **Restricted Access**
+**Rule:** If folder contains financial, legal or sensitive personal data → **Restricted Access**
 
 ---
 
-## 📊 Monitoring Postępu
+## 📊 Progress Monitoring
 
-Utwórz plik `Project_Dashboard.xlsx` w głównym folderze z zakładkami:
+Create a `Project_Dashboard.xlsx` file in the main folder with tabs:
 
-### Zakładka 1: Stage Progress
+### Tab 1: Stage Progress
 | Stage | Status | Start Date | End Date | Owner | % Complete | Issues |
 |-------|--------|-----------|----------|-------|------------|--------|
 | Stage 1 | ✅ Completed | 2025-02-07 | 2025-02-08 | [BA Name] | 100% | None |
@@ -231,14 +231,14 @@ Utwórz plik `Project_Dashboard.xlsx` w głównym folderze z zakładkami:
 | Stage 3 | ⏸️ Not Started | - | - | [BA Name] | 0% | - |
 | ... | ... | ... | ... | ... | ... | ... |
 
-### Zakładka 2: Deliverable Tracker
+### Tab 2: Deliverable Tracker
 | Deliverable | Due Date | Status | Owner | Location |
 |-------------|----------|--------|-------|----------|
 | Stakeholder Register | 2025-02-08 | ✅ Done | BA | /01_Project_Charter/ |
 | Process Maps (AS-IS) | 2025-02-16 | 🔄 In Progress | BA | /02_Current_State/Process_Maps/ |
 | Requirements Doc | 2025-03-01 | ⏸️ Pending | BA | /04_Requirements/ |
 
-### Zakładka 3: Risk Dashboard
+### Tab 3: Risk Dashboard
 | Risk ID | Description | Probability | Impact | Status | Mitigation Owner |
 |---------|-------------|------------|--------|--------|-----------------|
 | R-001 | OCR accuracy below target | Medium | High | 🔄 Monitoring | IT Manager |
@@ -248,34 +248,34 @@ Utwórz plik `Project_Dashboard.xlsx` w głównym folderze z zakładkami:
 
 ## 🚀 Quick Actions
 
-### Rozpoczęcie Nowego Stage:
+### Starting a New Stage:
 
 ```bash
-# Utwórz folder dla stage (jeśli jeszcze nie istnieje)
+# Create folder for stage (if not exists)
 mkdir -p "05_Solution_Design/Architecture_Diagrams"
 mkdir -p "05_Solution_Design/Process_Maps"
 mkdir -p "05_Solution_Design/Technical_Specifications"
 
-# Skopiuj template dokumentu z BABOK Agenta
+# Copy template document from BABOK Agent
 cp "STAGE_05_Future_State_Design.md" "05_Solution_Design/"
 
-# Otwórz w edytorze
+# Open in editor
 code "05_Solution_Design/STAGE_05_Future_State_Design.md"
 ```
 
-### Archiwizacja Po Zakończeniu Stage:
+### Archiving After Stage Completion:
 
 ```bash
-# Utwórz ZIP z całym stage
+# Create ZIP of entire stage
 zip -r "STAGE_04_ARCHIVE_2025-02-28.zip" "04_Requirements/"
 
-# Przenieś do backups
+# Move to backups
 mv "STAGE_04_ARCHIVE_2025-02-28.zip" "Backups/"
 ```
 
-### Generowanie Executive Summary:
+### Generating Executive Summary:
 
-Po zakończeniu wszystkich stages, użyj BABOK Agenta do wygenerowania:
+After completing all stages, use BABOK Agent to generate:
 
 ```
 Generate Executive Summary from all 8 stages:
@@ -287,7 +287,7 @@ Generate Executive Summary from all 8 stages:
 
 ---
 
-## 📧 Email Templates dla Stakeholderów
+## 📧 Email Templates for Stakeholders
 
 ### Template 1: Stage Approval Request
 
@@ -351,23 +351,23 @@ Thank you!
 
 ## 🎯 Success Criteria for Folder Structure
 
-Po zakończeniu projektu, Twoja struktura folderów powinna:
+After project completion, your folder structure should:
 
-- ✅ Zawierać **wszystkie 8 etapów** w osobnych folderach
-- ✅ Mieć **backup archives** dla każdego krytycznego etapu
-- ✅ Zawierać **zatwierdzone dokumenty** (statusy APPROVED lub FINAL)
-- ✅ Mieć **kompletny audit trail** (Decision Log, Change Log, Meeting Minutes)
-- ✅ Być **przeszukiwalna** (jasne nazwy plików, spójna struktura)
-- ✅ Być **transferowalna** (można przekazać innemu BA lub zespołowi)
-- ✅ Spełniać **wymagania compliance** (GDPR, ISO 27001 - jeśli applicable)
+- ✅ Contain **all 8 stages** in separate folders
+- ✅ Have **backup archives** for each critical stage
+- ✅ Contain **approved documents** (status APPROVED or FINAL)
+- ✅ Have **complete audit trail** (Decision Log, Change Log, Meeting Minutes)
+- ✅ Be **searchable** (clear file names, consistent structure)
+- ✅ Be **transferable** (can be passed to another BA or team)
+- ✅ Meet **compliance requirements** (GDPR, ISO 27001 - if applicable)
 
 ---
 
-## 📚 Dodatkowe Narzędzia
+## 📚 Additional Tools
 
-### Zalecane Oprogramowanie:
+### Recommended Software:
 
-| Zadanie | Narzędzie | Koszt | Notatki |
+| Task | Tool | Cost | Notes |
 |---------|-----------|-------|---------|
 | Process Mapping | draw.io / Lucidchart | Free / $12/m | BPMN diagrams |
 | Project Management | Jira / Monday.com | $10/user | Stage tracking |
@@ -377,39 +377,39 @@ Po zakończeniu projektu, Twoja struktura folderów powinna:
 | Spreadsheets | Excel / Google Sheets | Paid / Free | Calculations, matrices |
 | Mind Mapping | MindMeister / XMind | $5/m / Free | Brainstorming |
 
-### Integracje:
+### Integrations:
 
-Jeśli używasz **Jira + Confluence**:
-- Link každý Stage dokument do Jira Epic
-- Embed diagrams z draw.io bezpośrednio w Confluence
-- Automatic RTM updates z Jira requirements
+If using **Jira + Confluence**:
+- Link each Stage document to Jira Epic
+- Embed diagrams from draw.io directly in Confluence
+- Automatic RTM updates from Jira requirements
 
-Jeśli używasz **Azure DevOps**:
-- Store Stage docs w Wiki
-- Link User Stories do Requirements (automatic traceability)
-- Track test cases bezpośrednio z Stage 4 requirements
+If using **Azure DevOps**:
+- Store Stage docs in Wiki
+- Link User Stories to Requirements (automatic traceability)
+- Track test cases directly from Stage 4 requirements
 
 ---
 
 ## ✅ Final Checklist
 
-Przed archiwizacją projektu:
+Before archiving the project:
 
-- [ ] Wszystkie 8 stages zakończone i zatwierdzone
-- [ ] FINAL_Complete_Documentation.md wygenerowany i przejrzany
-- [ ] Executive Summary gotowy dla leadership
-- [ ] Wszystkie attachments i diagramy w odpowiednich folderach
-- [ ] Wrażliwe dane zaszyfrowane lub usunięte
-- [ ] Backup archive utworzony i przetestowany (rozpakowanie działa)
-- [ ] Dokumentacja przekazana do IT/Project Manager
-- [ ] Lessons Learned dokument wypełniony
+- [ ] All 8 stages completed and approved
+- [ ] FINAL_Complete_Documentation.md generated and reviewed
+- [ ] Executive Summary ready for leadership
+- [ ] All attachments and diagrams in appropriate folders
+- [ ] Sensitive data encrypted or removed
+- [ ] Backup archive created and tested (unpacking works)
+- [ ] Documentation handed over to IT/Project Manager
+- [ ] Lessons Learned document completed
 - [ ] Stakeholder feedback collected
-- [ ] Project formally closed (email do sponsor'a)
+- [ ] Project formally closed (email to sponsor)
 
-**Gratulacje! Projekt analizy biznesowej zakończony zgodnie z BABOK® standards. 🎉**
+**Congratulations! Business analysis project completed according to BABOK® standards. 🎉**
 
 ---
 
 **Version:** 1.0  
-**Last Updated:** [DATE]  
+**Last Updated:** 2026-02-07  
 **Maintained by:** BABOK Agent Development Team
