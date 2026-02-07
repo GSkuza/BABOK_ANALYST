@@ -1,110 +1,110 @@
 # BABOK Analyst - AI-Powered Business Analysis Agent
 
-Agent AI do profesjonalnej analizy biznesowej zgodnej ze standardem **BABOK v3** (International Institute of Business Analysis). Prowadzi analityka krok po kroku przez 8 etapow - od inicjalizacji projektu po business case z kalkulacja ROI.
+An AI agent for professional business analysis compliant with **BABOK v3** (International Institute of Business Analysis) standard. Guides the analyst step-by-step through 8 stages - from project initialization to business case with ROI calculation.
 
-## Czym jest BABOK Analyst?
+## What is BABOK Analyst?
 
-BABOK Analyst to zestaw promptow systemowych dla modeli AI (Claude, ChatGPT, inne LLM), ktory zamienia je w eksperta analizy biznesowej. Agent:
+BABOK Analyst is a set of system prompts for AI models (Claude, ChatGPT, other LLMs) that transforms them into business analysis experts. The agent:
 
-- Prowadzi ustrukturyzowany proces analizy w **8 etapach** (Stage 1-8)
-- Zadaje pytania w formacie **Chain-of-Thought** z widocznym rozumowaniem
-- Wymaga **zatwierdzenia czlowieka** na kazdym etapie (human-in-the-loop)
-- Generuje kompletna **dokumentacje projektowa** w formacie Markdown
-- Specjalizuje sie w projektach IT dla sektora **MSP** (male i srednie przedsiebiorstwa)
+- Conducts a structured analysis process in **8 stages** (Stage 1-8)
+- Asks questions in **Chain-of-Thought** format with visible reasoning
+- Requires **human approval** at each stage (human-in-the-loop)
+- Generates complete **project documentation** in Markdown format
+- Specializes in IT projects for the **SME** (small and medium enterprises) sector
 
-## Struktura repozytorium
+## Repository Structure
 
 ```
 BABOK_ANALYST/
 |
-|-- BABOK_AGENT/                          # Pliki agenta
-|   |-- BABOK_Agent_System_Prompt.md      # Glowny system prompt (instrukcje agenta)
-|   |-- BABOK_Agent_Quick_Start_Guide.md  # Skrocona instrukcja uzycia
-|   |-- BABOK_Project_Structure_Template.md # Szablon struktury folderow projektu
+|-- BABOK_AGENT/                          # Agent files
+|   |-- BABOK_Agent_System_Prompt.md      # Main system prompt (agent instructions)
+|   |-- BABOK_Agent_Quick_Start_Guide.md  # Quick start guide
+|   |-- BABOK_Project_Structure_Template.md # Project folder structure template
 |
 |-- .github/
-|   |-- copilot-instructions.md           # Konfiguracja dla GitHub Copilot / VS Code
+|   |-- copilot-instructions.md           # Configuration for GitHub Copilot / VS Code
 |
-|-- .gitignore                            # Wyklucza lokalne pliki analizy
-|-- README.md                             # Ten plik
+|-- .gitignore                            # Excludes local analysis files
+|-- README.md                             # This file
 ```
 
-## 8 etapow analizy
+## 8 Analysis Stages
 
-| Etap | Nazwa | Co otrzymujesz |
+| Stage | Name | What You Get |
 |------|-------|----------------|
-| **Stage 1** | Project Initialization & Stakeholder Mapping | Zakres projektu, rejestr interesariuszy, kryteria sukcesu |
-| **Stage 2** | Current State Analysis (AS-IS) | Mapy procesow, baseline kosztowy, analiza systemow |
-| **Stage 3** | Problem Domain Analysis | Kategoryzacja problemow, analiza przyczynowa, priorytetyzacja |
-| **Stage 4** | Solution Requirements Definition | Wymagania funkcjonalne/niefunkcjonalne, user stories, MoSCoW |
-| **Stage 5** | Future State Design (TO-BE) | Architektura docelowa, procesy TO-BE |
-| **Stage 6** | Gap Analysis & Implementation Roadmap | Analiza luk, roadmapa wdrozenia |
-| **Stage 7** | Risk Assessment & Mitigation Strategy | Rejestr ryzyk, plany mitygacji |
-| **Stage 8** | Business Case & ROI Model | Model finansowy, ROI, NPV, payback period |
+| **Stage 1** | Project Initialization & Stakeholder Mapping | Project scope, stakeholder register, success criteria |
+| **Stage 2** | Current State Analysis (AS-IS) | Process maps, cost baseline, system analysis |
+| **Stage 3** | Problem Domain Analysis | Problem categorization, root cause analysis, prioritization |
+| **Stage 4** | Solution Requirements Definition | Functional/non-functional requirements, user stories, MoSCoW |
+| **Stage 5** | Future State Design (TO-BE) | Target architecture, TO-BE processes |
+| **Stage 6** | Gap Analysis & Implementation Roadmap | Gap analysis, implementation roadmap |
+| **Stage 7** | Risk Assessment & Mitigation Strategy | Risk register, mitigation plans |
+| **Stage 8** | Business Case & ROI Model | Financial model, ROI, NPV, payback period |
 
 ---
 
-## Jak zaczac - krok po kroku
+## How to Get Started - Step by Step
 
-### Sposob 1: Claude.ai (Projects)
+### Method 1: Claude.ai (Projects)
 
-1. **Sklonuj lub pobierz repozytorium** (patrz sekcja ponizej)
-2. Wejdz na [claude.ai](https://claude.ai) i utworz nowy **Project**
-3. W ustawieniach projektu kliknij **"Project Instructions"** (Custom Instructions)
-4. Skopiuj **calkowita** zawartosc pliku `BABOK_AGENT/BABOK_Agent_System_Prompt.md` i wklej do pola Project Instructions
-5. Rozpocznij nowa konwersacje w projekcie i wpisz:
+1. **Clone or download the repository** (see section below)
+2. Go to [claude.ai](https://claude.ai) and create a new **Project**
+3. In project settings, click **"Project Instructions"** (Custom Instructions)
+4. Copy the **entire** content of `BABOK_AGENT/BABOK_Agent_System_Prompt.md` file and paste it into the Project Instructions field
+5. Start a new conversation in the project and type:
    ```
    BEGIN STAGE 1
    ```
 
-### Sposob 2: VS Code z Claude Code (CLI)
+### Method 2: VS Code with Claude Code (CLI)
 
-1. Sklonuj repozytorium:
+1. Clone the repository:
    ```bash
    git clone https://github.com/GSkuza/BABOK_ANALYST.git
    cd BABOK_ANALYST
    ```
-2. Zainstaluj [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (wymaga Node.js 18+):
+2. Install [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (requires Node.js 18+):
    ```bash
    npm install -g @anthropic-ai/claude-code
    ```
-3. Uruchom Claude Code w katalogu projektu:
+3. Launch Claude Code in the project directory:
    ```bash
    claude
    ```
-4. Claude automatycznie wczyta konfiguracje z `.github/copilot-instructions.md`
-5. Wpisz:
+4. Claude will automatically load the configuration from `.github/copilot-instructions.md`
+5. Type:
    ```
    BEGIN STAGE 1
    ```
 
-### Sposob 3: VS Code z GitHub Copilot Chat
+### Method 3: VS Code with GitHub Copilot Chat
 
-1. Sklonuj repozytorium i otworz w VS Code:
+1. Clone the repository and open in VS Code:
    ```bash
    git clone https://github.com/GSkuza/BABOK_ANALYST.git
    code BABOK_ANALYST
    ```
-2. Upewnij sie, ze masz zainstalowane rozszerzenie **GitHub Copilot Chat**
-3. Copilot automatycznie wczyta instrukcje z `.github/copilot-instructions.md`
-4. Otworz Copilot Chat (Ctrl+Shift+I) i wpisz:
+2. Make sure you have the **GitHub Copilot Chat** extension installed
+3. Copilot will automatically load instructions from `.github/copilot-instructions.md`
+4. Open Copilot Chat (Ctrl+Shift+I) and type:
    ```
    BEGIN STAGE 1
    ```
 
-### Sposob 4: ChatGPT lub inny model LLM
+### Method 4: ChatGPT or other LLM
 
-1. Pobierz zawartosc pliku `BABOK_AGENT/BABOK_Agent_System_Prompt.md`
-2. W ChatGPT: Ustawienia -> "Custom Instructions" lub "System Prompt"
-3. Wklej zawartosc pliku jako instrukcje systemowe
-4. Rozpocznij nowa konwersacje i wpisz:
+1. Download the content of `BABOK_AGENT/BABOK_Agent_System_Prompt.md` file
+2. In ChatGPT: Settings -> "Custom Instructions" or "System Prompt"
+3. Paste the file content as system instructions
+4. Start a new conversation and type:
    ```
    BEGIN STAGE 1
    ```
 
-### Sposob 5: API (Anthropic, OpenAI, inne)
+### Method 5: API (Anthropic, OpenAI, others)
 
-Uzyj zawartosci `BABOK_Agent_System_Prompt.md` jako parametru `system` w wywolaniu API:
+Use the content of `BABOK_Agent_System_Prompt.md` as the `system` parameter in the API call:
 
 ```python
 import anthropic
@@ -124,93 +124,93 @@ message = client.messages.create(
 
 ---
 
-## Klonowanie repozytorium
+## Cloning the Repository
 
-### Wymagania
+### Requirements
 
-- **Git** zainstalowany na komputerze ([poradnik instalacji](https://git-scm.com/downloads))
-- Opcjonalnie: **VS Code** lub inny edytor kodu
+- **Git** installed on your computer ([installation guide](https://git-scm.com/downloads))
+- Optional: **VS Code** or other code editor
 
-### Klonowanie przez HTTPS
+### Cloning via HTTPS
 
 ```bash
 git clone https://github.com/GSkuza/BABOK_ANALYST.git
 ```
 
-### Klonowanie przez SSH
+### Cloning via SSH
 
 ```bash
 git clone git@github.com:GSkuza/BABOK_ANALYST.git
 ```
 
-### Klonowanie przez GitHub CLI
+### Cloning via GitHub CLI
 
 ```bash
 gh repo clone GSkuza/BABOK_ANALYST
 ```
 
-### Pobranie ZIP (bez Git)
+### Download ZIP (without Git)
 
-1. Wejdz na https://github.com/GSkuza/BABOK_ANALYST
-2. Kliknij zielony przycisk **"Code"**
-3. Wybierz **"Download ZIP"**
-4. Rozpakuj archiwum w wybranym miejscu
+1. Go to https://github.com/GSkuza/BABOK_ANALYST
+2. Click the green **"Code"** button
+3. Select **"Download ZIP"**
+4. Extract the archive to your chosen location
 
 ---
 
-## Jak pracowac z agentem
+## How to Work with the Agent
 
-### Format komunikacji
+### Communication Format
 
-Agent zadaje pytania w ustrukturyzowanym formacie:
+The agent asks questions in a structured format:
 
 ```
-REASONING: [Wyjasnienie dlaczego pyta o dany temat]
+REASONING: [Explanation of why it's asking about this topic]
 
 QUESTIONS FOR HUMAN:
-1. [Pytanie 1]
-2. [Pytanie 2]
+1. [Question 1]
+2. [Question 2]
 ...
 
 WAIT FOR HUMAN INPUT.
 ```
 
-### Jak odpowiadac
+### How to Respond
 
-Odpowiadaj konkretnie, uzywajac numeracji pytan:
+Respond specifically, using question numbering:
 
 ```
-1. TAK - wszystkie dokumenty w scope: faktury, WZ, zamowienia
+1. YES - all documents in scope: invoices, delivery notes, orders
 2. ERP: SAP Business One v10.0
-3. Ksiegowosc: Comarch ERP Optima v2024.1
-4. Nie mamy DMS obecnie
-5. KSeF deadline: 1 lipca 2026
+3. Accounting: Comarch ERP Optima v2024.1
+4. We don't currently have a DMS
+5. KSeF deadline: July 1, 2026
 ```
 
-Jezeli czegosc nie wiesz:
+If you don't know something:
 
 ```
-NIE WIEM - musze sprawdzic z [osoba/dzial]
+I DON'T KNOW - I need to check with [person/department]
 ```
 
-### Komendy kontrolne
+### Control Commands
 
-| Komenda | Dzialanie |
-|---------|-----------|
-| `BEGIN STAGE [N]` | Rozpoczyna etap N |
-| `STAGE [N] APPROVED` | Zatwierdza etap N i przechodzi do nastepnego |
-| `CORRECTION: [blad] -> [poprawka]` | Poprawia blad agenta |
-| `PAUSE` | Wstrzymuje prace |
-| `RESUME STAGE [N]` | Wznawia prace od etapu N |
-| `SHOW PROGRESS` | Wyswietla status wszystkich etapow |
-| `REGENERATE SECTION [nazwa]` | Regeneruje konkretna sekcje |
-| `SKIP TO STAGE [N]` | Pomija etapy (niezalecane) |
+| Command | Action |
+|---------|--------|
+| `BEGIN STAGE [N]` | Starts stage N |
+| `STAGE [N] APPROVED` | Approves stage N and proceeds to next |
+| `CORRECTION: [error] -> [fix]` | Corrects agent's error |
+| `PAUSE` | Suspends work |
+| `RESUME STAGE [N]` | Resumes work from stage N |
+| `SHOW PROGRESS` | Displays status of all stages |
+| `REGENERATE SECTION [name]` | Regenerates specific section |
+| `SKIP TO STAGE [N]` | Skips stages (not recommended) |
 
 ---
 
-## Pliki wyjsciowe
+## Output Files
 
-Agent generuje dokumenty Markdown dla kazdego etapu:
+The agent generates Markdown documents for each stage:
 
 ```
 STAGE_01_Project_Initialization.md
@@ -224,67 +224,67 @@ STAGE_08_Business_Case_ROI.md
 FINAL_Complete_Documentation.md
 ```
 
-Zalecana struktura folderow projektu jest opisana w pliku `BABOK_AGENT/BABOK_Project_Structure_Template.md`.
+The recommended project folder structure is described in the `BABOK_AGENT/BABOK_Project_Structure_Template.md` file.
 
 ---
 
-## Szacunkowy czas trwania
+## Estimated Timeline
 
-| Etap | Praca z agentem | Konsultacje wewnetrzne | Lacznie |
-|------|----------------|----------------------|---------|
-| Stage 1 | 30-45 min | 1-2 dni | 1-2 dni |
-| Stage 2 | 1-2 godz. | 3-5 dni | ~1 tydzien |
-| Stage 3 | 45-60 min | 1-2 dni | 2-3 dni |
-| Stage 4 | 2-3 godz. | 3-5 dni | ~1 tydzien |
-| Stage 5 | 1-2 godz. | 2-3 dni | 3-4 dni |
-| Stage 6 | 1 godz. | 1 dzien | 1-2 dni |
-| Stage 7 | 45 min | 1 dzien | 1-2 dni |
-| Stage 8 | 1-2 godz. | 2-3 dni | 3-5 dni |
-| **RAZEM** | **8-12 godz.** | **2-3 tygodnie** | **3-4 tygodnie** |
+| Stage | Work with Agent | Internal Consultations | Total |
+|------|----------------|----------------------|-------|
+| Stage 1 | 30-45 min | 1-2 days | 1-2 days |
+| Stage 2 | 1-2 hours | 3-5 days | ~1 week |
+| Stage 3 | 45-60 min | 1-2 days | 2-3 days |
+| Stage 4 | 2-3 hours | 3-5 days | ~1 week |
+| Stage 5 | 1-2 hours | 2-3 days | 3-4 days |
+| Stage 6 | 1 hour | 1 day | 1-2 days |
+| Stage 7 | 45 min | 1 day | 1-2 days |
+| Stage 8 | 1-2 hours | 2-3 days | 3-5 days |
+| **TOTAL** | **8-12 hours** | **2-3 weeks** | **3-4 weeks** |
 
-Wiekszosc czasu to nie praca z agentem, lecz zbieranie danych od interesariuszy i konsultacje wewnetrzne.
-
----
-
-## Najlepsze praktyki
-
-**Rób:**
-- Czytaj sekcje REASONING - zrozumiesz logike agenta
-- Badz konkretny - "srednio 50 faktur/miesiac" zamiast "sporo"
-- Zatwierdzaj sekcje progresywnie - nie musisz czekac na caly etap
-- Koryguj natychmiast jezeli agent popelni blad
-
-**Nie rob:**
-- Nie zgaduj - powiedz "NIE WIEM" jezeli nie znasz odpowiedzi
-- Nie pomijaj pytan - kazde ma uzasadnienie
-- Nie zatwierdzaj dokumentow bez przeczytania
-- Nie mieszaj etapow - dokonczaj jeden przed przejsciem do nastepnego
+Most of the time is not spent working with the agent, but gathering data from stakeholders and internal consultations.
 
 ---
 
-## Rozwiazywanie problemow
+## Best Practices
 
-| Problem | Rozwiazanie |
-|---------|------------|
-| Agent nie rozumie odpowiedzi | Przeformuluj bardziej szczegolowo, podaj przyklad |
-| Agent pyta o cos czego nie wiesz | Odpowiedz "NIE WIEM" lub oznacz jako OPEN QUESTION |
-| Blad w wczesniejszej odpowiedzi | `CORRECTION w [Section X.Y]: [opis bledu i poprawki]` |
-| Zbyt techniczny dokument | "Simplify section [X] for non-technical audience" |
-| Zmiana priorytetu wymagania | "Change requirement FR-015 from MUST to SHOULD. Reasoning: [...]" |
+**Do:**
+- Read REASONING sections - you'll understand the agent's logic
+- Be specific - "average 50 invoices/month" instead of "a lot"
+- Approve sections progressively - you don't have to wait for the entire stage
+- Correct immediately if the agent makes an error
 
----
-
-## Bezpieczenstwo i prywatnosc
-
-**Agent NIE przechowuje:** hasel, kluczy API, numerow kont bankowych, danych osobowych (poza rolami).
-
-**Agent MOZE przechowywac:** strukture organizacyjna, procesy biznesowe, zagregowane metryki, nazwy systemow.
-
-Agent jest zaprojektowany zgodnie z GDPR, BABOK Code of Conduct i zasadami ISO 27001.
+**Don't:**
+- Don't guess - say "I DON'T KNOW" if you don't know the answer
+- Don't skip questions - each one has a justification
+- Don't approve documents without reading them
+- Don't mix stages - complete one before moving to the next
 
 ---
 
-## Dodatkowe zasoby
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Agent doesn't understand response | Rephrase more specifically, provide example |
+| Agent asks about something you don't know | Respond "I DON'T KNOW" or mark as OPEN QUESTION |
+| Error in earlier response | `CORRECTION in [Section X.Y]: [error description and fix]` |
+| Document too technical | "Simplify section [X] for non-technical audience" |
+| Change requirement priority | "Change requirement FR-015 from MUST to SHOULD. Reasoning: [...]" |
+
+---
+
+## Security and Privacy
+
+**Agent DOES NOT store:** passwords, API keys, bank account numbers, personal data (except roles).
+
+**Agent MAY store:** organizational structure, business processes, aggregated metrics, system names.
+
+The agent is designed in compliance with GDPR, BABOK Code of Conduct, and ISO 27001 principles.
+
+---
+
+## Additional Resources
 
 - [IIBA BABOK Guide v3](https://www.iiba.org/babok-guide/)
 - [IIBA Agile Extension](https://www.iiba.org/agile-extension/)
@@ -292,11 +292,11 @@ Agent jest zaprojektowany zgodnie z GDPR, BABOK Code of Conduct i zasadami ISO 2
 
 ---
 
-## Licencja
+## License
 
-Ten projekt jest udostepniony publicznie. Pliki agenta moga byc uzywane w dowolnych projektach analizy biznesowej.
+This project is publicly available. Agent files can be used in any business analysis projects.
 
 ---
 
-**Wersja:** 1.1
-**Ostatnia aktualizacja:** 2026-02-07
+**Version:** 1.1
+**Last Updated:** 2026-02-07
