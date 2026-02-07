@@ -1,2 +1,23 @@
 # Local analysis files - not for GitHub
-BABOK_ANALYSIS_System_Potencjalow_02_2026/
+BABOK_ANALYSIS_*/
+
+# Development and testing folders
+version_development/
+.claude/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE specific files
+.vscode/
+.idea/
+*.sublime-*
+
+# Temporary files
+*.tmp
+*.bak
+*.log
