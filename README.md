@@ -298,5 +298,33 @@ This project is publicly available. Agent files can be used in any business anal
 
 ---
 
-**Version:** 1.1
+## Contributing
+
+Contributions are welcome! Please feel free to submit:
+- Bug reports and feature requests via GitHub Issues
+- Pull requests for documentation improvements
+- Sample analysis templates (anonymized)
+- Translations to other languages
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+BABOK® is a registered trademark of the International Institute of Business Analysis (IIBA®).
+This project is not officially endorsed by IIBA.
+
+---
+
+## Author
+
+**Grzegorz Skuza**
+- GitHub: [@GSkuza](https://github.com/GSkuza)
+- Repository: [BABOK_ANALYST](https://github.com/GSkuza/BABOK_ANALYST)
+
+---
+
+**Version:** 1.0.0  
+**Release Date:** February 7, 2026  
 **Last Updated:** 2026-02-07
