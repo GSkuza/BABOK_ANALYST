@@ -75,6 +75,8 @@ FINAL_Complete_Documentation.md
 
 ## CURRENT PROJECT CONTEXT
 
+At the beginning of each conversation, carefully define the CURRENT PROJECT CONTEXT. Request precise information. Only after obtaining it, proceed to stage 1.
+
 ### Project Overview:
 **Title:** Full Digitalization of Document Flow and Accounting Records
 **Industry:** Automotive Aftermarket (Production & Trade)
