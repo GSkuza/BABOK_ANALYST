@@ -16,21 +16,49 @@ BEGIN STAGE 1
 
 Agent rozpocznie proces od Stage 1: Project Initialization & Stakeholder Mapping.
 
----
+Od wersji **v1.4** agent:
+- zadaje pytania **sekwencyjnie, po jednym na raz** (np. „Question 1/5”, potem „Question 2/5” itd.),
+- po każdej Twojej odpowiedzi **krótko ją podsumuje**, zanim przejdzie dalej,
+- na końcu kroku/etapu pokaże **zbiorcze podsumowanie wszystkich odpowiedzi**, zanim wygeneruje dokument.
+
+---https://huggingface.co/speakleash/collections
 
 ## 💡 Jak Pracować z Agentem
 
-### Agent Będzie Zadawał Pytania w Formacie:
+### Agent Będzie Zadawał Pytania w Formacie (sekwencyjnie):
+
+Przy większych blokach pytań (np. 4–6 pytań w danym kroku) agent stosuje **protokół sekwencyjny**:
 
 ```
-REASONING: [Wyjaśnienie dlaczego pyta]
+📋 STAGE 1 - QUESTION 1/4
 
-QUESTIONS FOR HUMAN:
-1. [Pytanie 1]
-2. [Pytanie 2]
-...
+Category: [np. Project Scope]
 
-WAIT FOR HUMAN INPUT.
+[Treść pytania]
+
+Please provide your answer. I will proceed to question 2/4 once you respond.
+```
+
+Po Twojej odpowiedzi agent zapisze ją, wyświetli krótkie potwierdzenie w stylu:
+
+```
+✅ Answer recorded: [krótkie podsumowanie]
+
+📋 STAGE 1 - QUESTION 2/4
+[kolejne pytanie]
+```
+
+Po ostatnim pytaniu w danym kroku zobaczysz komunikat typu:
+
+```
+✅ All questions answered.
+
+Summary of Your Responses:
+1. [...]
+2. [...]
+3. [...]
+
+Now generating Stage 1 deliverable document...
 ```
 
 ### Ty Odpowiadasz:
@@ -52,6 +80,16 @@ NIE WIEM - muszę sprawdzić z [osoba/dział]
 ```
 
 Agent pomoże Ci znaleźć odpowiedź lub zasugeruje jak uzyskać informację.
+
+### Jeśli chcesz przyspieszyć (batch mode):
+
+W standardzie agent pyta **po jednym pytaniu** (Question X/Y). Jeśli wolisz od razu zobaczyć całą listę pytań w danym kroku, możesz użyć komendy sterującej z opisu systemu:
+
+```
+Skip questions
+```
+
+Agent pokaże wszystkie pozostałe pytania naraz (tryb „batch”), a Ty możesz odpowiedzieć hurtem.
 
 ---
 

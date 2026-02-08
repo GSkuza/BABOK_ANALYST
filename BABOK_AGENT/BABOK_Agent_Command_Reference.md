@@ -1,4 +1,4 @@
-# BABOK Agent v1.2 - Command Reference Card
+# BABOK Agent v1.8 - Command Reference Card
 
 ## 🚀 QUICK START
 
@@ -20,6 +20,9 @@ Help              # Show all available commands
 | `Status` | Show progress across all 8 stages | `Status` |
 | `Reset` | Clear all data, start fresh (requires confirmation) | `Reset` |
 | `Version` | Show agent version and capabilities | `Version` |
+| `Next question` | Skip current question and go to the next one | `Next question` |
+| `Previous question` | Go back to previous question (within the same step) | `Previous question` |
+| `Skip questions` | Show all remaining questions in current step at once (batch mode) | `Skip questions` |
 
 ---
 
@@ -39,12 +42,15 @@ Help              # Show all available commands
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `Export [N]` | Export single stage deliverable | `Export 1` |
-| `Export all` | Export all completed stages | `Export all` |
+| `Export [N]` | Export single stage deliverable (markdown) | `Export 1` |
+| `Export all` | Export all completed stages (markdown) | `Export all` |
 | `Summary [N]` | Show executive summary only (1 page) | `Summary 2` |
 | `Detail [N]` | Show full detailed analysis | `Detail 2` |
 | `Preview [N]` | Preview what will be generated | `Preview 3` |
 | `Template [type]` | Show empty template | `Template stakeholder_register` |
+| `MAKE DOCX` | (CLI) Generate professional DOCX files from stage .md | `babok make docx BABOK-20260208-XXXX` |
+| `MAKE PDF` | (CLI) Generate executive-style PDFs from stage .md | `babok make pdf BABOK-20260208-XXXX` |
+| `MAKE ALL` | (CLI) Generate both DOCX and PDF in one run | `babok make all BABOK-20260208-XXXX` |
 
 ---
 
@@ -99,7 +105,7 @@ Help              # Show all available commands
 
 ## 🔥 COMMON WORKFLOWS
 
-### Starting a New Project:
+### Starting a New Project (with Sequential Questions):
 ```bash
 1. Launch analysis          # Initialize Stage 1
 2. [Answer questions]       # Provide project context
@@ -108,6 +114,13 @@ Help              # Show all available commands
 5. Status                   # Check progress
 6. [Repeat for stages 2-8]
 ```
+
+From v1.4 onwards, within each stage the agent:
+- asks questions **one-by-one** with progress indicator (e.g. `Question 1/5`, `Question 2/5`),
+- confirms each answer (`✅ Answer recorded: [...]`) before the next question,
+- shows a **summary of all answers** before generating the stage deliverable.
+
+Use `Next question`, `Previous question` or `Skip questions` to control the flow if needed.
 
 ### Reviewing Progress:
 ```bash
@@ -280,9 +293,10 @@ Help [command]              # Specific command details
 ```
 
 **Documentation:**
-- System Prompt: `BABOK_Agent_v1.2_System_Prompt.md`
+- System Prompt: `BABOK_Agent_System_Prompt.md`
 - Quick Start Guide: `BABOK_Agent_Quick_Start_Guide.md`
-- Implementation Guide: `BABOK_Agent_v1.1_Implementation_Guide.md` (for v1.1→v1.2 migration)
+- Command Reference: `BABOK_Agent_Command_Reference.md`
+- Project Structure Template: `BABOK_Project_Structure_Template.md`
 
 **Common Questions:**
 - "What stage am I on?" → `Status`
@@ -321,33 +335,36 @@ Help [command]              # Specific command details
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│         BABOK AGENT v1.2 - COMMAND CHEAT SHEET         │
+│         BABOK AGENT v1.8 - COMMAND CHEAT SHEET         │
 ├─────────────────────────────────────────────────────────┤
-│ START:     Launch analysis                             │
-│ STATUS:    Status                                       │
-│ APPROVE:   Approve [N]                                  │
-│ EXPORT:    Export all                                   │
-│ SUMMARY:   Summary [N]                                  │
-│ HELP:      Help                                         │
+│ START:       Launch analysis                           │
+│ STATUS:      Status                                    │
+│ APPROVE:     Approve [N]                               │
+│ EXPORT MD:   Export all                                │
+│ MAKE DOCX:   babok make docx <project_id>              │
+│ MAKE PDF:    babok make pdf <project_id>               │
+│ HELP:        Help                                      │
 ├─────────────────────────────────────────────────────────┤
 │ DEEP ANALYSIS:  Deep analysis [topic]                  │
 │ QUICK CHECK:    Quick check [query]                    │
 │ COMPARE:        Compare [A] [B]                        │
 │ CALCULATE:      Calculate ROI [scenario]               │
 ├─────────────────────────────────────────────────────────┤
-│ SHOW DATA:      Show assumptions / decisions / risks   │
-│ UPDATE:         Update [item_id]                       │
-│ VALIDATE:       Validate [N]                           │
+│ SHOW DATA:    Show assumptions / decisions / risks     │
+│ UPDATE:       Update [item_id]                         │
+│ VALIDATE:     Validate [N]                             │
 ├─────────────────────────────────────────────────────────┤
-│ MODES:          Workshop [N] | Async [N]               │
-│ QUESTIONS:      Question [topic] | Batch questions     │
+│ MODES:        Workshop [N] | Async [N]                 │
+│ QUESTIONS:    Question [topic] | Batch questions       │
+│ SEQUENTIAL:   Next question / Previous question        │
+│ BATCH MODE:   Skip questions                           │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-**Version:** 1.2  
-**Last Updated:** 2025-02-07  
+**Version:** 1.8  
+**Last Updated:** 2026-02-08  
 **Framework:** BABOK® v3  
 **License:** Proprietary
 
