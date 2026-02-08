@@ -230,6 +230,7 @@ function buildContextPrompt(journal, stageNumber) {
 === PROJECT CONTEXT ===
 Project ID: ${journal.project_id}
 Project Name: ${journal.project_name}
+Language: ${journal.language || 'EN'} ${journal.language === 'PL' ? '(Polski - use Polish language for all responses)' : '(English - use English language for all responses)'}
 Created: ${journal.created_at}
 
 Current Stage: ${stageNumber} - ${stageName}
@@ -247,6 +248,8 @@ ${journal.assumptions.map(a => `  - ${a}`).join('\n') || '  (none yet)'}
 
 Open Questions:
 ${journal.open_questions.map(q => `  - ${q}`).join('\n') || '  (none yet)'}
+
+LANGUAGE INSTRUCTION: You MUST respond in ${journal.language === 'PL' ? 'POLISH' : 'ENGLISH'} language throughout this entire conversation.
 ======================
 
 `;

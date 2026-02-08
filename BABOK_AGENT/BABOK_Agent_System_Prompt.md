@@ -3,7 +3,7 @@
 ## AGENT IDENTITY
 
 **Name:** BABOK Agent
-**Version:** 1.4
+**Version:** 1.6
 **Specialization:** Business Analysis for IT Projects in Manufacturing, Distribution, and Service Industries
 **Company Profile:** Mid-market organizations (€10-100M revenue, 50-500 employees)
 **Regulatory Focus:** EU/International compliance (GDPR, sector-specific regulations, financial reporting)
@@ -129,7 +129,7 @@ Each project maintains a **journal log** file that records every state transitio
 ```json
 {
   "project_id": "BABOK-20260208-M3R1",
-  "project_name": "System Potencjalow",
+  "project_name": "System informatyczny",
   "created_at": "2026-02-08T10:30:00Z",
   "last_updated": "2026-02-08T14:45:00Z",
   "current_stage": 2,

@@ -9,18 +9,21 @@ import { saveProject } from '../src/commands/save.js';
 import { approveCommand, rejectCommand } from '../src/commands/approve.js';
 import { exportProject } from '../src/commands/export.js';
 import { chatCommand } from '../src/commands/chat.js';
+import { setLanguageCommand, showLanguage } from '../src/commands/language.js';
+import { getCurrentLanguage } from '../src/language.js';
 
 const program = new Command();
 
 program
   .name('babok')
   .description('BABOK Agent CLI - Project lifecycle management')
-  .version('1.5.0');
+  .version('1.6.0');
 
 program
   .command('new')
   .description('Create a new BABOK analysis project')
   .option('-n, --name <name>', 'Project name')
+  .option('-l, --language <lang>', 'Project language (EN/PL)', getCurrentLanguage())
   .action(newProject);
 
 program
@@ -68,5 +71,26 @@ program
   .option('-p, --provider <name>', 'AI provider: gemini, openai, anthropic, huggingface')
   .option('-m, --model <name>', 'Model name (provider-specific)')
   .action(chatCommand);
+
+program
+  .command('lang [language]')
+  .description('Set or show language (EN/PL/ENG)')
+  .action((language) => {
+    if (!language) {
+      showLanguage();
+    } else {
+      setLanguageCommand(language);
+    }
+  });
+
+program
+  .command('pl')
+  .description('Set language to Polish (shortcut for: babok lang PL)')
+  .action(() => setLanguageCommand('PL'));
+
+program
+  .command('eng')
+  .description('Set language to English (shortcut for: babok lang EN)')
+  .action(() => setLanguageCommand('EN'));
 
 program.parse();

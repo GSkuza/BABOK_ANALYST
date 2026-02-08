@@ -2,11 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { getProjectDir, getJournalPath, STAGES } from './project.js';
 
-export function createJournal(projectId, projectName) {
+export function createJournal(projectId, projectName, language = 'EN') {
   const now = new Date().toISOString();
   const journal = {
     project_id: projectId,
     project_name: projectName,
+    language: language,
     created_at: now,
     last_updated: now,
     current_stage: 1,

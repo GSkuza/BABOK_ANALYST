@@ -38,22 +38,54 @@ export function keyValue(key, value) {
   console.log(`  ${chalk.gray(key.padEnd(16))} ${value}`);
 }
 
-export function printProjectCreated(projectId, projectName, projectDir) {
+export function printProjectCreated(projectId, projectName, projectDir, language = 'EN') {
+  const texts = {
+    EN: {
+      created: 'NEW PROJECT CREATED',
+      projectId: 'Project ID:',
+      projectName: 'Project Name:',
+      createdAt: 'Created:',
+      directory: 'Directory:',
+      journal: 'Journal:',
+      saveId: 'Save this Project ID to resume later:',
+      nextStep: 'Next step: Open your AI chat and type:',
+      beginProject: 'BEGIN NEW PROJECT',
+      provideId: 'Then provide the Project ID:',
+      language: 'Language:',
+    },
+    PL: {
+      created: 'UTWORZONO NOWY PROJEKT',
+      projectId: 'ID Projektu:',
+      projectName: 'Nazwa Projektu:',
+      createdAt: 'Utworzono:',
+      directory: 'Katalog:',
+      journal: 'Dziennik:',
+      saveId: 'Zapisz ten ID projektu, aby wznowić później:',
+      nextStep: 'Następny krok: Otwórz czat AI i wpisz:',
+      beginProject: 'ZACZNIJ NOWY PROJEKT',
+      provideId: 'Następnie podaj ID Projektu:',
+      language: 'Język:',
+    }
+  };
+  
+  const t = texts[language] || texts.EN;
+  
   console.log('');
-  console.log(chalk.bold.green('\u2705 NEW PROJECT CREATED'));
+  console.log(chalk.bold.green(`✅ ${t.created}`));
   console.log(chalk.dim(line()));
-  keyValue('Project ID:', chalk.bold.white(projectId));
-  keyValue('Project Name:', projectName);
-  keyValue('Created:', new Date().toISOString());
-  keyValue('Directory:', projectDir);
-  keyValue('Journal:', `PROJECT_JOURNAL_${projectId}.json`);
+  keyValue(t.projectId, chalk.bold.white(projectId));
+  keyValue(t.projectName, projectName);
+  keyValue(t.language, language === 'PL' ? 'Polski' : 'English');
+  keyValue(t.createdAt, new Date().toISOString());
+  keyValue(t.directory, projectDir);
+  keyValue(t.journal, `PROJECT_JOURNAL_${projectId}.json`);
   console.log(chalk.dim(line()));
   console.log('');
-  console.log(chalk.yellow(`Save this Project ID to resume later: ${chalk.bold(projectId)}`));
+  console.log(chalk.yellow(`${t.saveId} ${chalk.bold(projectId)}`));
   console.log('');
-  console.log(chalk.dim('Next step: Open your AI chat and type:'));
-  console.log(chalk.bold.white('  BEGIN NEW PROJECT'));
-  console.log(chalk.dim(`  Then provide the Project ID: ${projectId}`));
+  console.log(chalk.dim(t.nextStep));
+  console.log(chalk.bold.white(`  ${t.beginProject}`));
+  console.log(chalk.dim(`  ${t.provideId} ${projectId}`));
   console.log('');
 }
 

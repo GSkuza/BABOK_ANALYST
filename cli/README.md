@@ -7,10 +7,13 @@ Cross-platform command-line tool for managing BABOK Agent project lifecycle. Cre
 ## Table of Contents
 
 - [Installation](#installation)
+- [Language Support](#language-support)
 - [How It Works](#how-it-works)
 - [Complete Workflow](#complete-workflow)
 - [Command Reference](#command-reference)
   - [babok new](#babok-new)
+  - [babok lang](#babok-lang)
+  - [babok pl / babok eng](#babok-pl--babok-eng)
   - [babok list](#babok-list)
   - [babok status](#babok-status)
   - [babok approve](#babok-approve)
@@ -22,6 +25,48 @@ Cross-platform command-line tool for managing BABOK Agent project lifecycle. Cre
 - [Directory Structure](#directory-structure)
 - [Tips and Tricks](#tips-and-tricks)
 - [Troubleshooting](#troubleshooting)
+
+---
+
+## Language Support
+
+BABOK CLI supports **English (EN)** and **Polish (PL)** languages.
+
+### Setting Language
+
+```bash
+# Set language to English
+babok lang EN
+babok eng        # shortcut
+
+# Set language to Polish  
+babok lang PL
+babok pl         # shortcut
+
+# Check current language
+babok lang
+```
+
+### Language Behavior
+
+- **BEGIN NEW PROJECT** → Creates project in **English** (default if `babok lang EN` was set first)
+- **ZACZNIJ NOWY PROJEKT** → Creates project in **Polish** (default if `babok lang PL` was set first)
+
+**Priority Logic:**
+1. If `babok pl` set first, then `BEGIN NEW PROJECT` → Polish project
+2. If `babok eng` set first, then `ZACZNIJ NOWY PROJEKT` → English project
+3. Default (no language set) → English
+
+**Per-Project Language:**
+```bash
+# Create English project explicitly
+babok new --name "My Project" --language EN
+
+# Create Polish project explicitly
+babok new --name "Mój Projekt" --language PL
+```
+
+Once set, the project language is stored in the journal and **the AI agent will respond in that language** throughout all stages.
 
 ---
 
@@ -281,6 +326,61 @@ babok new -n "Project Name"        # Short form
 - Creates project directory under `./projects/`
 - Initializes a journal file with all 8 stages set to "not_started" (Stage 1 set to "in_progress")
 - Displays the Project ID and next steps
+
+**Language option:**
+```bash
+babok new --name "My Project" --language EN    # English project
+babok new --name "Mój Projekt" --language PL   # Polish project
+babok new -n "Project" -l PL                   # Short form
+```
+
+---
+
+### `babok lang`
+
+Set or show the default language for new projects.
+
+```bash
+babok lang              # Show current language
+babok lang EN           # Set to English
+babok lang PL           # Set to Polish
+babok lang ENG          # Alias for EN
+```
+
+**What it does:**
+- Stores language preference in `~/.babok_language`
+- Affects default language for `babok new` command
+- Affects AI agent response language when using `BEGIN NEW PROJECT` or `ZACZNIJ NOWY PROJEKT`
+
+**Language priority:**
+1. Project's stored language (highest priority)
+2. `--language` flag on `babok new`
+3. Global language setting from `babok lang`
+4. English (default)
+
+---
+
+### `babok pl` / `babok eng`
+
+Quick shortcuts to set language.
+
+```bash
+babok pl       # Shortcut for: babok lang PL
+babok eng      # Shortcut for: babok lang EN
+```
+
+**Example workflow:**
+```bash
+# Set language to Polish
+babok pl
+
+# Create new project (will be in Polish by default)
+babok new --name "Mój Projekt"
+
+# In AI chat, type:
+# ZACZNIJ NOWY PROJEKT
+# AI agent will respond in Polish throughout all stages
+```
 
 ---
 
