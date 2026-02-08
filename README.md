@@ -10,6 +10,7 @@ BABOK Analyst is a set of system prompts for AI models (Claude, ChatGPT, other L
 - Uses **Short Rationale + Evidence** methodology (concise conclusions with cited evidence)
 - Requires **human approval** at each stage (human-in-the-loop)
 - Generates complete **project documentation** in Markdown format
+- Manages **project lifecycle** with unique Project IDs, save/load, and persistent journal logs
 - Specializes in IT projects for **mid-market** companies (€10-100M revenue, 50-500 employees)
 
 ## Repository Structure
@@ -54,7 +55,7 @@ BABOK_ANALYST/
 4. Copy the **entire** content of `BABOK_AGENT/BABOK_Agent_System_Prompt.md` file and paste it into the Project Instructions field
 5. Start a new conversation in the project and type:
    ```
-   BEGIN STAGE 1
+   BEGIN NEW PROJECT
    ```
 
 ### Method 2: VS Code with Claude Code (CLI)
@@ -75,7 +76,7 @@ BABOK_ANALYST/
 4. Claude will automatically load the configuration from `.github/copilot-instructions.md`
 5. Type:
    ```
-   BEGIN STAGE 1
+   BEGIN NEW PROJECT
    ```
 
 ### Method 3: VS Code with GitHub Copilot Chat
@@ -89,7 +90,7 @@ BABOK_ANALYST/
 3. Copilot will automatically load instructions from `.github/copilot-instructions.md`
 4. Open Copilot Chat (Ctrl+Shift+I) and type:
    ```
-   BEGIN STAGE 1
+   BEGIN NEW PROJECT
    ```
 
 ### Method 4: ChatGPT or other LLM
@@ -99,7 +100,7 @@ BABOK_ANALYST/
 3. Paste the file content as system instructions
 4. Start a new conversation and type:
    ```
-   BEGIN STAGE 1
+   BEGIN NEW PROJECT
    ```
 
 ### Method 5: API (Anthropic, OpenAI, others)
@@ -118,7 +119,7 @@ message = client.messages.create(
     model="claude-sonnet-4-5-20250929",
     max_tokens=8192,
     system=system_prompt,
-    messages=[{"role": "user", "content": "BEGIN STAGE 1"}]
+    messages=[{"role": "user", "content": "BEGIN NEW PROJECT"}]
 )
 ```
 
@@ -198,32 +199,39 @@ I DON'T KNOW - I need to check with [person/department]
 
 | Command | Action |
 |---------|--------|
-| `BEGIN STAGE [N]` | Starts stage N |
-| `STAGE [N] APPROVED` | Approves stage N and proceeds to next |
-| `CORRECTION: [error] -> [fix]` | Corrects agent's error |
-| `PAUSE` | Suspends work |
-| `RESUME STAGE [N]` | Resumes work from stage N |
-| `SHOW PROGRESS` | Displays status of all stages |
-| `REGENERATE SECTION [name]` | Regenerates specific section |
-| `SKIP TO STAGE [N]` | Skips stages (not recommended) |
+| `BEGIN NEW PROJECT` | Start a new project with unique ID and timestamp |
+| `SAVE PROJECT` | Save project state (available after completing a stage) |
+| `LOAD PROJECT [project_id]` | Resume a saved project at the last active stage |
+| `Approve [N]` | Approve stage N and proceed to next |
+| `Reject [N] [reason]` | Reject stage N with reason |
+| `Status` | Display progress of all stages for current project |
+| `Pause` | Pause current session (auto-saves to journal) |
+| `Export all` | Export all completed stage deliverables |
+| `Deep analysis [topic]` | Activate deep reasoning for critical decisions |
+| `Help` | Show all available commands |
 
 ---
 
 ## Output Files
 
-The agent generates Markdown documents for each stage:
+Each project gets its own directory identified by a unique **Project ID** (e.g., `BABOK-20260208-M3R1`). The agent generates Markdown documents for each stage plus a persistent journal log:
 
 ```
-STAGE_01_Project_Initialization.md
-STAGE_02_Current_State_Analysis.md
-STAGE_03_Problem_Domain_Analysis.md
-STAGE_04_Solution_Requirements.md
-STAGE_05_Future_State_Design.md
-STAGE_06_Gap_Analysis_Roadmap.md
-STAGE_07_Risk_Assessment.md
-STAGE_08_Business_Case_ROI.md
-FINAL_Complete_Documentation.md
+BABOK_Analysis/
+└── BABOK-20260208-M3R1/                    # Project directory (unique per project)
+    ├── PROJECT_JOURNAL_BABOK-20260208-M3R1.json  # State tracking journal
+    ├── STAGE_01_Project_Initialization.md
+    ├── STAGE_02_Current_State_Analysis.md
+    ├── STAGE_03_Problem_Domain_Analysis.md
+    ├── STAGE_04_Solution_Requirements.md
+    ├── STAGE_05_Future_State_Design.md
+    ├── STAGE_06_Gap_Analysis_Roadmap.md
+    ├── STAGE_07_Risk_Assessment.md
+    ├── STAGE_08_Business_Case_ROI.md
+    └── FINAL_Complete_Documentation.md
 ```
+
+The **Project Journal** (`PROJECT_JOURNAL_*.json`) tracks all stage transitions, approvals, decisions, and assumptions — enabling exact state restoration with `LOAD PROJECT`.
 
 The recommended project folder structure is described in the `BABOK_AGENT/BABOK_Project_Structure_Template.md` file.
 
@@ -326,6 +334,6 @@ This project is not officially endorsed by IIBA.
 
 ---
 
-**Version:** 1.1.0
-**Release Date:** February 7, 2026
-**Last Updated:** 2026-02-07
+**Version:** 1.3.0
+**Release Date:** February 8, 2026
+**Last Updated:** 2026-02-08
