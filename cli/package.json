@@ -3,7 +3,9 @@
   "version": "1.6.0",
   "description": "CLI tool for BABOK Agent project lifecycle management with multi-provider AI chat",
   "bin": {
-    "babok": "./bin/babok.js"
+    "babok": "./bin/babok.js",
+    "zacznij": "./bin/zacznij.js",
+    "begin": "./bin/begin.js"
   },
   "scripts": {
     "test": "node bin/babok.js --help",

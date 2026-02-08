@@ -17,21 +17,40 @@ export const PROVIDERS = {
     name: 'Google Gemini',
     envKey: 'GEMINI_API_KEY',
     defaultModel: 'gemini-2.0-flash',
-    models: ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-2.5-pro-preview-05-06'],
+    models: [
+      'gemini-2.0-flash', 
+      'gemini-2.0-flash-lite', 
+      'gemini-1.5-pro', 
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-8b'
+    ],
     keyUrl: 'https://aistudio.google.com/app/apikey',
   },
   openai: {
     name: 'OpenAI',
     envKey: 'OPENAI_API_KEY',
     defaultModel: 'gpt-4o',
-    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini', 'o3-mini'],
+    models: [
+      'gpt-4o', 
+      'gpt-4o-mini', 
+      'o1', 
+      'o1-mini', 
+      'o3-mini',
+      'gpt-4-turbo',
+      'gpt-3.5-turbo'
+    ],
     keyUrl: 'https://platform.openai.com/api-keys',
   },
   anthropic: {
     name: 'Anthropic Claude',
     envKey: 'ANTHROPIC_API_KEY',
-    defaultModel: 'claude-sonnet-4-5-20250929',
-    models: ['claude-sonnet-4-5-20250929', 'claude-opus-4-5-20250929', 'claude-3-5-haiku-20241022'],
+    defaultModel: 'claude-3-5-sonnet-latest',
+    models: [
+      'claude-3-7-sonnet-20250219',
+      'claude-3-5-sonnet-latest', 
+      'claude-3-5-haiku-latest', 
+      'claude-3-opus-latest'
+    ],
     keyUrl: 'https://console.anthropic.com/settings/keys',
   },
   huggingface: {
@@ -42,8 +61,18 @@ export const PROVIDERS = {
       'mistralai/Mistral-Small-24B-Instruct-2501',
       'Qwen/Qwen2.5-72B-Instruct',
       'meta-llama/Llama-3.3-70B-Instruct',
+      'deepseek-ai/DeepSeek-R1',
+      'speakleash/Bielik-11B-v2',
+      'speakleash/Bielik-11B-v3.0-Instruct'
     ],
     keyUrl: 'https://huggingface.co/settings/tokens',
+  },
+  local: {
+    name: 'Local / SGLang (OpenAI-compatible)',
+    envKey: 'LOCAL_API_KEY',
+    defaultModel: 'speakleash/Bielik-11B-v3.0-Instruct',
+    models: ['speakleash/Bielik-11B-v3.0-Instruct', 'custom-model'],
+    keyUrl: 'http://localhost:30000/v1',
   },
 };
 
@@ -233,6 +262,16 @@ function askForKey(rl, providerKey, info, resolve, reject) {
   });
 }
 
+/**
+ * Interactively ask for an API key for a specific provider.
+ */
+export function promptForKeyOnly(providerKey, rl) {
+  const info = PROVIDERS[providerKey];
+  return new Promise((resolve, reject) => {
+    askForKey(rl, providerKey, info, resolve, reject);
+  });
+}
+
 // simple green text without chalk dependency in this module
 function chalk_green(s) { return `\x1b[32m${s}\x1b[0m`; }
 
@@ -258,6 +297,18 @@ export function initializeProvider(provider, apiKey, modelName) {
       activeClient = new OpenAI({ apiKey });
       break;
     }
+    case 'local': {
+      // For local servers like SGLang, Ollama (OpenAI API), vLLM
+      // We check if modelName is actually a URL, or use a default local URL
+      const baseURL = modelName?.startsWith('http') ? modelName : 'http://localhost:30000/v1';
+      activeClient = new OpenAI({ 
+        apiKey: apiKey || 'not-needed', 
+        baseURL: baseURL 
+      });
+      activeProvider = 'openai'; // Reuse OpenAI logic for sendMessageStream
+      activeModel = modelName || info.defaultModel;
+      return;
+    }
     case 'anthropic': {
       activeClient = new Anthropic({ apiKey });
       break;
@@ -270,7 +321,6 @@ export function initializeProvider(provider, apiKey, modelName) {
 
   activeProvider = provider;
   activeModel = model;
-  conversationMessages = [];
 }
 
 /**
@@ -279,6 +329,13 @@ export function initializeProvider(provider, apiKey, modelName) {
 export function startChatSession(systemPrompt, history = []) {
   systemPromptCache = systemPrompt;
   conversationMessages = [...history];
+}
+
+/**
+ * Clear current conversation history in memory.
+ */
+export function clearChatHistory() {
+  conversationMessages = [];
 }
 
 /**
@@ -293,7 +350,7 @@ export async function sendMessageStream(message, onChunk) {
     case 'gemini': {
       const chat = activeClient.startChat({
         history: conversationMessages.slice(0, -1),
-        systemInstruction: systemPromptCache,
+        systemInstruction: { parts: [{ text: systemPromptCache }] },
         generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
       });
       const result = await chat.sendMessageStream(message);
@@ -357,12 +414,24 @@ export async function sendMessageStream(message, onChunk) {
           content: m.parts[0].text,
         })),
       ];
-      const stream = activeClient.chatCompletionStream({
-        model: activeModel,
+      
+      // Better detection for direct endpoint URLs
+      const isEndpoint = activeModel.startsWith('http') || activeModel.includes('.endpoints.huggingface.cloud');
+      
+      const options = {
         messages,
         max_tokens: 8192,
         temperature: 0.7,
-      });
+      };
+
+      // When using a dedicated endpoint, we SHOULD NOT pass the 'model' property
+      if (!isEndpoint) {
+        options.model = activeModel;
+      }
+
+      const client = isEndpoint ? activeClient.endpoint(activeModel) : activeClient;
+      const stream = client.chatCompletionStream(options);
+
       for await (const chunk of stream) {
         const text = chunk.choices?.[0]?.delta?.content || '';
         fullResponse += text;

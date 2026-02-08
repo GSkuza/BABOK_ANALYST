@@ -8,10 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.6.0] - 2026-02-08
 
 ### Added
+- **Dynamic LLM Management:** New commands `babok llm list` and `babok llm change` to view and switch between 20+ supported models (Gemini 2.0, Claude 3.7, GPT-4o, DeepSeek).
+- **In-Chat Model Switching:** Ability to swap AI providers or models mid-conversation using the new `/llm` command without losing history.
 - **Bilingual Support (EN/PL):** Complete support for English and Polish languages across CLI and AI Agent.
 - **Language Management Commands:** New commands `babok pl`, `babok eng`, and `babok lang` for global language switching.
 - **Multilingual Journaling:** Project journals now store and respect language preference (EN/PL) throughout all 8 stages.
 - **Localized UI:** Bilingual implementation of all CLI status messages, project creation outputs, and error handling.
+
+### Fixed
+- **Terminal Duplication Bug:** Resolved an issue where input characters and outputs were appearing twice in some terminal environments.
+- **Project Discovery:** Improved smart path resolution for finding projects in shared workspaces or subdirectories.
+- **Gemini API Format:** Fixed `system_instruction` structure for Google Gemini SDK.
 
 ### Changed
 - **Optimized LLM Prompt:** Shortened the standalone system prompt by **92%** (from ~60k to 5,752 characters) for faster response times and significantly lower token consumption.

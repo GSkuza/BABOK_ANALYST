@@ -7,6 +7,7 @@ import {
   PROVIDERS,
   initializeProvider, 
   startChatSession, 
+  clearChatHistory,
   sendMessageStream, 
   getActiveProviderInfo,
   loadStagePrompt,
@@ -61,10 +62,13 @@ export async function chatCommand(partialId, options) {
     // Provider specified via --provider flag
     apiKey = getApiKey(provider);
     if (!apiKey) {
+      // Key missing for specifically requested provider -> prompt for just that key
       try {
-        const result = await promptForProvider();
-        provider = result.provider;
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        const { promptForKeyOnly } = await import('../llm.js');
+        const result = await promptForKeyOnly(provider, rl);
         apiKey = result.apiKey;
+        rl.close();
       } catch (err) {
         console.error(chalk.red(`\n${err.message}`));
         process.exit(1);
@@ -281,6 +285,7 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
 
     case '/clear':
       messages.length = 0;
+      clearChatHistory();
       console.log(chalk.yellow('\n✓ Conversation history cleared.'));
       return 'handled';
 
@@ -301,9 +306,62 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
       console.log(chalk.dim('  /stage N          - Switch to stage N (1-8)'));
       console.log(chalk.dim('  /status           - Show project status'));
       console.log(chalk.dim('  /provider         - Show current provider info'));
+      console.log(chalk.dim('  /llm              - Change LLM model/provider in current session'));
       console.log(chalk.dim('  /key              - Change API key'));
       console.log(chalk.dim('  /key clear [name] - Remove stored API key(s)'));
       console.log(chalk.dim('  /help, /?         - Show this help'));
+      return 'handled';
+
+    case '/llm':
+      console.log(chalk.yellow('\n  🔄 Zmiana modelu w trakcie sesji...'));
+      
+      const providers = Object.entries(PROVIDERS);
+      console.log('\n  🔌 Wybierz dostawcę:');
+      providers.forEach(([key, info], i) => {
+        const hasKey = listStoredProviders().includes(key) ? chalk.green(' [key saved]') : '';
+        console.log(`     ${i + 1}. ${info.name}${hasKey}`);
+      });
+
+      const num = await new Promise(resolve => rl.question('\n  Numer: ', resolve));
+      const idx = parseInt(num) - 1;
+
+      if (isNaN(idx) || idx < 0 || idx >= providers.length) {
+        console.log(chalk.red('\n  Błąd: Nieprawidłowy wybór.'));
+        return 'handled';
+      }
+
+      const [pKey, pInfo] = providers[idx];
+      console.log(`\n  📝 Wybierz model dla ${pInfo.name}:`);
+      pInfo.models.forEach((m, ii) => console.log(`     ${ii + 1}. ${m}`));
+
+      const mNum = await new Promise(resolve => rl.question('\n  Numer: ', resolve));
+      const mIdx = parseInt(mNum) - 1;
+
+      if (isNaN(mIdx) || mIdx < 0 || mIdx >= pInfo.models.length) {
+        console.log(chalk.red('\n  Błąd: Nieprawidłowy wybór modelu.'));
+        return 'handled';
+      }
+
+      const newModel = pInfo.models[mIdx];
+
+      // Get API Key
+      let key = getApiKey(pKey);
+      if (!key) {
+        console.log(chalk.yellow(`\n  Klucz API dla ${pInfo.name} nie został znaleziony.`));
+        key = await new Promise(resolve => rl.question('  Podaj klucz API: ', resolve));
+        if (!key.trim()) {
+          console.log(chalk.red('  Błąd: Klucz jest wymagany.'));
+          return 'handled';
+        }
+      }
+
+      // Re-initialize
+      try {
+        initializeProvider(pKey, key, newModel);
+        console.log(chalk.green(`\n✓ Model zmieniony na: ${pInfo.name} - ${newModel}`));
+      } catch (err) {
+        console.error(chalk.red(`\nBłąd: ${err.message}`));
+      }
       return 'handled';
 
     case '/key':

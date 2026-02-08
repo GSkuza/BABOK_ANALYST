@@ -1,6 +1,9 @@
 import { nanoid, customAlphabet } from 'nanoid';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const generateSuffix = customAlphabet(ALPHABET, 4);
@@ -19,8 +22,16 @@ const STAGES = [
 export { STAGES };
 
 export function getProjectsDir() {
-  const cwd = process.cwd();
-  return path.join(cwd, 'projects');
+  // 1. Check current working directory
+  const cwdProjects = path.join(process.cwd(), 'projects');
+  if (fs.existsSync(cwdProjects)) return cwdProjects;
+
+  // 2. Check workspace root (relative to this script: src/project.js -> cli/src/project.js -> D:/BABOK_ANALYST/projects)
+  const rootProjects = path.join(__dirname, '..', '..', 'projects');
+  if (fs.existsSync(rootProjects)) return rootProjects;
+
+  // Fallback to CWD
+  return cwdProjects;
 }
 
 export function getProjectDir(projectId) {
