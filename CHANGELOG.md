@@ -5,6 +5,16 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-02-08
+
+### Added
+- **Bilingual Quick Start Commands:** New `begin` and `zacznij` commands as aliases for `babok new`, enabling instant project creation in English or Polish.
+- **Enhanced CLI Entry Points:** Multiple command-line entry points for improved accessibility and user experience.
+
+### Changed
+- **LLM Management Enhancement:** Improved stability and error handling in LLM provider switching.
+- **Project Management:** Enhanced project structure and journaling system for better reliability.
+
 ## [1.6.0] - 2026-02-08
 
 ### Added

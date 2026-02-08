@@ -1,3 +1,57 @@
+# BABOK Analyst v1.7.0 - Release Notes
+
+**Release Date:** February 8, 2026
+**Status:** Stable Release
+**License:** MIT
+
+---
+
+## What's New in v1.7.0
+
+### Enhanced User Experience & Accessibility
+
+#### 1. Bilingual Quick Start Commands
+- **New commands:** `begin` and `zacznij` as direct aliases for `babok new`
+- Instant project creation with language-specific entry points
+- Improved onboarding for English and Polish users
+- **Impact:** Faster project initiation, reduced learning curve
+
+#### 2. LLM Management Enhancements
+- Improved stability in provider switching
+- Better error handling for API failures
+- Enhanced connection management for 20+ supported models
+- **Impact:** More reliable AI interactions across different providers
+
+#### 3. Project Management Improvements
+- Enhanced project structure and journaling system
+- Better reliability in project state management
+- Improved multi-project handling
+- **Impact:** More robust project lifecycle management
+
+### Technical Improvements
+- Enhanced CLI entry points for better user experience
+- Improved error messages and feedback
+- Code quality and maintainability improvements
+
+---
+
+## Upgrade Notes
+- No breaking changes from v1.6.0
+- All existing projects and configurations remain compatible
+- New commands are additions, not replacements
+
+---
+
+## Known Issues
+- None at release time
+
+---
+
+## Next Steps
+See [CHANGELOG.md](CHANGELOG.md) for complete list of changes.
+
+---
+
 # BABOK Analyst v1.1.0 - Release Notes
 
 **Release Date:** February 7, 2026
