@@ -8,13 +8,14 @@ import { loadProject } from '../src/commands/load.js';
 import { saveProject } from '../src/commands/save.js';
 import { approveCommand, rejectCommand } from '../src/commands/approve.js';
 import { exportProject } from '../src/commands/export.js';
+import { chatCommand } from '../src/commands/chat.js';
 
 const program = new Command();
 
 program
   .name('babok')
   .description('BABOK Agent CLI - Project lifecycle management')
-  .version('1.3.0');
+  .version('1.5.0');
 
 program
   .command('new')
@@ -59,5 +60,13 @@ program
   .description('Export project deliverables')
   .option('-o, --output <dir>', 'Output directory')
   .action(exportProject);
+
+program
+  .command('chat <id>')
+  .description('Interactive AI chat for current stage')
+  .option('-s, --stage <number>', 'Stage number (1-8)')
+  .option('-p, --provider <name>', 'AI provider: gemini, openai, anthropic, huggingface')
+  .option('-m, --model <name>', 'Model name (provider-specific)')
+  .action(chatCommand);
 
 program.parse();

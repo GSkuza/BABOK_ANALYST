@@ -36,7 +36,8 @@ BABOK_ANALYST/
 |
 |-- cli/                                  # Node.js CLI tool
 |   |-- bin/babok.js                      # CLI entry point
-|   |-- src/commands/                     # Command implementations
+|   |-- src/commands/                     # Command implementations (chat, approve, export...)
+|   |-- src/llm.js                        # Multi-provider LLM integration & keystore
 |   |-- src/journal.js                    # Project journal management
 |   |-- src/project.js                    # Project ID generation
 |   |-- src/display.js                    # Terminal output formatting
@@ -65,7 +66,7 @@ BABOK_ANALYST/
 
 ---
 
-## Modular Architecture (v1.4)
+## Modular Architecture (v1.5)
 
 The agent system uses a **modular architecture** where each analysis stage has its own detailed instruction file:
 
@@ -174,7 +175,7 @@ message = client.messages.create(
 
 ## BABOK CLI Tool
 
-The repository includes a **cross-platform CLI tool** for managing project lifecycle directly from the terminal. The CLI handles project creation, state tracking via journal files, and stage management — independently of any specific AI platform.
+The repository includes a **cross-platform CLI tool** for managing project lifecycle directly from the terminal. The CLI handles project creation, state tracking via journal files, stage management, and **interactive AI chat** with multiple LLM providers — independently of any specific AI platform.
 
 ### Installation
 
@@ -199,6 +200,7 @@ npm link        # Makes 'babok' command available globally
 | `babok approve <id> <stage>` | Mark a stage as approved, advance to next |
 | `babok reject <id> <stage> -r "reason"` | Reject a stage with reason |
 | `babok export <id>` | Export project deliverables to output directory |
+| `babok chat <id>` | **Interactive AI chat** for current stage |
 
 ### Quick Example
 
@@ -219,6 +221,9 @@ babok status K7M3
 # Load context for AI chat (copy & paste the output)
 babok load K7M3
 
+# Start interactive AI chat for current stage
+babok chat K7M3
+
 # Export deliverables when done
 babok export K7M3
 ```
@@ -226,6 +231,123 @@ babok export K7M3
 Partial IDs work — `babok status K7M3` matches `BABOK-20260208-K7M3`.
 
 For the full CLI guide, see: [`cli/README.md`](cli/README.md)
+
+---
+
+## AI Chat in Terminal (`babok chat`)
+
+The `babok chat` command starts an interactive AI conversation in the terminal, contextually aware of your project stage. It supports **4 LLM providers** — choose the one you prefer.
+
+### Supported Providers
+
+| Provider | Models | Get API Key |
+|----------|--------|-------------|
+| **Google Gemini** | `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-2.5-pro-preview-05-06` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini`, `o3-mini` | [platform.openai.com](https://platform.openai.com/api-keys) |
+| **Anthropic Claude** | `claude-sonnet-4-5-20250929`, `claude-opus-4-5-20250929`, `claude-3-5-haiku-20241022` | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+| **Hugging Face** | `Mistral-Small-24B`, `Qwen2.5-72B`, `Llama-3.3-70B` | [huggingface.co](https://huggingface.co/settings/tokens) |
+
+### Usage
+
+```bash
+# Interactive provider selection (first run)
+babok chat K7M3
+
+# Specify provider and stage
+babok chat K7M3 --provider openai --stage 3
+
+# Specify custom model
+babok chat K7M3 --provider anthropic --model claude-sonnet-4-5-20250929
+
+# Use Hugging Face
+babok chat K7M3 -p huggingface -m "mistralai/Mistral-Small-24B-Instruct-2501"
+```
+
+### Chat Commands (inside session)
+
+| Command | Description |
+|---------|-------------|
+| `/exit`, `/quit` | End chat session (auto-saves) |
+| `/save` | Save conversation to project |
+| `/clear` | Clear conversation history |
+| `/stage N` | Switch to stage N (1-8) |
+| `/status` | Show project status |
+| `/provider` | Show current provider & model |
+| `/key` | API key management info |
+| `/key clear [provider]` | Remove stored key(s) |
+| `/help` | Show all commands |
+
+### Features
+
+- **Streaming responses** — real-time output from LLM
+- **Stage context** — system prompt includes project info, stage instructions, decisions, and history
+- **Auto-save** — conversation saved every 5 messages and on exit
+- **Conversation history** — resume where you left off per stage
+- **Switch stages** — `/stage N` to jump between stages mid-session
+
+---
+
+## API Key Security
+
+All API keys are secured and **never committed to the repository**.
+
+### Key Storage Hierarchy
+
+| Priority | Source | Security Level |
+|----------|--------|----------------|
+| 1 | Environment variable (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `HF_API_KEY`) | Session-only, in memory |
+| 2 | `.env` file | Gitignored, plaintext local file |
+| 3 | `.babok_keystore` | Gitignored, **encrypted** with machine-specific key |
+| 4 | Interactive prompt | Asked at chat start, optionally saved to keystore |
+
+### How It Works
+
+1. **First run**: `babok chat` asks you to select a provider and enter your API key
+2. **Key encryption**: If you choose to save, the key is XOR-encrypted using a SHA-256 hash derived from `hostname + username + working directory` — the encrypted file is **useless on another machine or repo clone**
+3. **Gitignored**: `.babok_keystore`, `.env`, and `.env.*` are all in `.gitignore`
+4. **No keys in config**: `agent_config.json` (tracked by git) contains **zero API keys**
+5. **Per-provider storage**: Each provider's key is stored independently — you can have keys for all 4 providers
+
+### Setting Up API Keys
+
+**Option A: Interactive (recommended)**
+```bash
+babok chat <id>
+# → Prompts you to select provider and enter key
+# → Offers to save encrypted locally
+```
+
+**Option B: Environment variables**
+```bash
+# Windows PowerShell
+$env:OPENAI_API_KEY = "sk-..."
+$env:GEMINI_API_KEY = "AI..."
+$env:ANTHROPIC_API_KEY = "sk-ant-..."
+$env:HF_API_KEY = "hf_..."
+
+# Linux/macOS
+export OPENAI_API_KEY="sk-..."
+```
+
+**Option C: `.env` file** (gitignored)
+```env
+GEMINI_API_KEY=AI...
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+HF_API_KEY=hf_...
+```
+
+### Removing Stored Keys
+
+```bash
+# Inside chat session:
+/key clear              # Remove all stored keys
+/key clear openai       # Remove only OpenAI key
+
+# Or delete the keystore file directly:
+# Windows: del .babok_keystore
+# Linux:   rm .babok_keystore
+```
 
 ---
 
@@ -438,6 +560,6 @@ This project is not officially endorsed by IIBA.
 
 ---
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 **Release Date:** February 8, 2026
-**Last Updated:** 2026-02-08
+**Last Updated:** 2026-02-09

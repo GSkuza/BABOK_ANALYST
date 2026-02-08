@@ -24,6 +24,14 @@ export/
 # Node.js (CLI tool)
 cli/node_modules/
 
+# API keys and secrets - NEVER commit
+.env
+.env.*
+*.env
+cli/.env
+cli/.babok_keystore
+.babok_keystore
+
 # Temporary files
 *.tmp
 *.bak
