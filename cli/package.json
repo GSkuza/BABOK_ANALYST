@@ -1,6 +1,6 @@
 {
   "name": "babok-cli",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "CLI tool for BABOK Agent project lifecycle management with multi-provider AI chat and professional document export",
   "bin": {
     "babok": "./bin/babok.js",

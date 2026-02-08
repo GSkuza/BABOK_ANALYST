@@ -1,3 +1,62 @@
+# BABOK Analyst v1.8.1 - Release Notes
+
+**Release Date:** February 8, 2026
+**Status:** Hotfix Release
+**License:** MIT
+
+---
+
+## What's New in v1.8.1
+
+### Documentation & Versioning Hotfix
+
+- **Copilot Instructions Version Bump:** Updated `.github/copilot-instructions.md` from v1.4 to **v1.8.1** so that VS Code / Copilot Chat load the correct, up-to-date system prompt.
+- **Version Alignment:** Synchronized `VERSION`, CLI `cli/package.json`, and top-level `README.md` footer to **1.8.1**, matching the current feature set.
+
+### Upgrade Notes
+
+- No behavioral changes to the agent logic compared to v1.8.0.
+- Safe to update; existing projects and prompts remain fully compatible.
+
+---
+
+# BABOK Analyst v1.8.0 - Release Notes
+
+**Release Date:** February 8, 2026
+**Status:** Stable Release
+**License:** MIT
+
+---
+
+## What's New in v1.8.0
+
+### 1. Sequential Question Protocol
+
+- Agent now asks questions **one-by-one** within each stage, showing `STAGE N - QUESTION X/Y` for clear progress.
+- After each answer, the agent confirms with a short "✅ Answer recorded" summary.
+- Before generating a document, the agent presents a consolidated **summary of your answers** for that step/stage.
+
+### 2. Question Navigation Commands
+
+- New high-level commands inside the conversation:
+    - `Next question` – skip the current question and go to the next.
+    - `Previous question` – go back within the same step.
+    - `Skip questions` – show all remaining questions at once (batch mode).
+
+### 3. CEO-Ready DOCX/PDF Exports
+
+- New CLI commands:
+    - `babok make docx <project_id>` – generate professionally formatted DOCX from stage `.md` files.
+    - `babok make pdf <project_id>` – generate matching PDF exports.
+    - `babok make all <project_id>` – create both DOCX and PDF in one run.
+- Outputs are styled for executive presentation (headings, tables, headers/footers) and placed in `<project_dir>/exports`.
+
+### 4. Documentation Updates
+
+- Updated system prompts, Quick Start Guide, Command Reference, and main README to describe the sequential question flow and new export commands.
+
+---
+
 # BABOK Analyst v1.7.0 - Release Notes
 
 **Release Date:** February 8, 2026

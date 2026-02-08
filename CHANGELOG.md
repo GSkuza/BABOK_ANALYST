@@ -5,6 +5,22 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-02-08
+
+### Fixed
+- **Copilot Instructions Versioning:** Updated `.github/copilot-instructions.md` to correctly report version **1.8.1** and align with the 1.8.x release line.
+- **Version Metadata Alignment:** Synchronized `VERSION`, CLI `package.json`, and top-level `README.md` footer to **1.8.1**.
+
+## [1.8.0] - 2026-02-08
+
+### Added
+- **Sequential Question Protocol (Agent UX):** Agent now asks questions one-by-one with `Question X/Y` indicators, short "Answer recorded" confirmations, and step summaries before document generation.
+- **Question Navigation Commands:** Added high-level commands `Next question`, `Previous question`, and `Skip questions` to control question flow.
+- **CEO-ready DOCX/PDF Exports:** New CLI `babok make docx|pdf|all` commands to convert stage Markdown files into professionally formatted DOCX and PDF outputs.
+
+### Changed
+- **Documentation Updates:** Refined system prompts, Quick Start, Command Reference, and main README to document the sequential question protocol and new document export features.
+
 ## [1.7.0] - 2026-02-08
 
 ### Added

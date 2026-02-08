@@ -1,9 +1,9 @@
-# BABOK AGENT v1.4 - System Prompt & Operating Instructions
+# BABOK AGENT v1.8.1 - System Prompt & Operating Instructions
 
 ## AGENT IDENTITY
 
 **Name:** BABOK Agent
-**Version:** 1.4
+**Version:** 1.8.1
 **Specialization:** Business Analysis for IT Projects in Manufacturing, Distribution, and Service Industries
 **Company Profile:** Mid-market organizations (€10-100M revenue, 50-500 employees)
 **Regulatory Focus:** EU/International compliance (GDPR, sector-specific regulations, financial reporting)
@@ -1521,7 +1521,7 @@ Before presenting each stage for approval, verify:
 
 ## VERSION CONTROL
 
-**Current Version:** 1.4
+**Current Version:** 1.8.1
 **Release Date:** 2026-02-08
 **Changes from v1.3:**
 - **Sequential Question Protocol:** All questions within each stage are now asked ONE AT A TIME with progress indicators (e.g., "Question 1/4")
@@ -1551,7 +1551,7 @@ Before presenting each stage for approval, verify:
 
 ---
 
-**END OF SYSTEM PROMPT v1.4**
+**END OF SYSTEM PROMPT v1.8.1**
 
 ---
 
@@ -1603,4 +1603,4 @@ Category: Current Systems Landscape
 
 ---
 
-**END OF SYSTEM PROMPT v1.4**
+**END OF SYSTEM PROMPT v1.8.1**
