@@ -12,6 +12,7 @@ import { chatCommand } from '../src/commands/chat.js';
 import { setLanguageCommand, showLanguage } from '../src/commands/language.js';
 import { listModels, changeModel } from '../src/commands/llm.js';
 import { getCurrentLanguage } from '../src/language.js';
+import { makeCommand, makeDocx, makePdf } from '../src/commands/makedoc.js';
 
 const program = new Command();
 
@@ -153,5 +154,35 @@ program
   .action(() => {
     newProject({ language: 'EN' });
   });
+
+// MAKE command with subcommands for DOCX and PDF generation
+const makeCmd = program
+  .command('make')
+  .alias('MAKE')
+  .description('Generate professional DOCX/PDF documents from stage files');
+
+makeCmd
+  .command('docx <id>')
+  .alias('DOCX')
+  .description('Generate DOCX document(s) from stage files')
+  .option('-s, --stage <number>', 'Stage number (1-8) - generates only that stage')
+  .option('-o, --output <dir>', 'Output directory')
+  .action(makeDocx);
+
+makeCmd
+  .command('pdf <id>')
+  .alias('PDF')
+  .description('Generate PDF document(s) from stage files')
+  .option('-s, --stage <number>', 'Stage number (1-8) - generates only that stage')
+  .option('-o, --output <dir>', 'Output directory')
+  .action(makePdf);
+
+makeCmd
+  .command('all <id>')
+  .alias('ALL')
+  .description('Generate both DOCX and PDF documents')
+  .option('-s, --stage <number>', 'Stage number (1-8)')
+  .option('-o, --output <dir>', 'Output directory')
+  .action((id, options) => makeCommand('all', id, options));
 
 program.parse();

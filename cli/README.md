@@ -21,6 +21,9 @@ Cross-platform command-line tool for managing BABOK Agent project lifecycle. Cre
   - [babok save](#babok-save)
   - [babok load](#babok-load)
   - [babok export](#babok-export)
+  - [babok make docx](#babok-make-docx)
+  - [babok make pdf](#babok-make-pdf)
+  - [babok make all](#babok-make-all)
 - [Project Journal](#project-journal)
 - [Directory Structure](#directory-structure)
 - [Tips and Tricks](#tips-and-tricks)
@@ -513,6 +516,68 @@ babok export K7M3 -o /path/to/output
 - Copies the journal and all `.md` deliverable files from the project directory
 - Default output: `./export/<project_id>/`
 - Custom output via `--output` flag
+
+---
+
+### `babok make docx`
+
+Generate professional DOCX documents from stage files. Perfect for CEO presentations and formal documentation.
+
+```bash
+babok make docx <project_id>
+babok make docx K7M3                    # Generate all stage DOCX files
+babok make docx K7M3 --stage 1          # Generate only Stage 1
+babok make docx K7M3 -s 1 -o ./reports  # Stage 1 to custom directory
+```
+
+**Features:**
+- **Corporate styling** with professional color scheme (navy blue/accent blue)
+- **Formatted tables** with colored headers
+- **Proper typography** - Georgia font for headings, Calibri for body text
+- **Bullet points** with accent-colored markers
+- **Bold text preservation** from markdown
+- **Page margins** and spacing optimized for readability
+
+**Output:** Files saved to `<project_dir>/exports/` or custom directory via `--output`.
+
+---
+
+### `babok make pdf`
+
+Generate beautifully formatted PDF documents from stage files. CEO-ready presentation quality.
+
+```bash
+babok make pdf <project_id>
+babok make pdf K7M3                     # Generate all stage PDFs
+babok make pdf K7M3 --stage 2           # Generate only Stage 2
+babok make pdf K7M3 -s 1 -o ./reports   # Stage 1 to custom directory
+```
+
+**Features:**
+- **Executive-grade styling** with Inter/Merriweather fonts
+- **Gradient table headers** (navy blue to dark blue)
+- **Alternating row colors** for easy reading
+- **Accent-colored borders** on headings
+- **Page numbers** in footer
+- **Header with document title** on each page
+- **Professional footer** with project ID and confidentiality note
+- **Print-optimized** with proper page break handling
+
+**Output:** Files saved to `<project_dir>/exports/` or custom directory via `--output`.
+
+---
+
+### `babok make all`
+
+Generate both DOCX and PDF documents in one command.
+
+```bash
+babok make all <project_id>
+babok make all K7M3                     # Generate both formats for all stages
+babok make all K7M3 --stage 1           # Both formats for Stage 1 only
+```
+
+**Tip:** Use this before client meetings to have both editable (DOCX) and presentation (PDF) versions ready.
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "name": "babok-cli",
-  "version": "1.7.0",
-  "description": "CLI tool for BABOK Agent project lifecycle management with multi-provider AI chat",
+  "version": "1.8.0",
+  "description": "CLI tool for BABOK Agent project lifecycle management with multi-provider AI chat and professional document export",
   "bin": {
     "babok": "./bin/babok.js",
     "zacznij": "./bin/zacznij.js",
@@ -20,7 +20,10 @@
     "openai",
     "anthropic",
     "huggingface",
-    "ai-chat"
+    "ai-chat",
+    "docx",
+    "pdf",
+    "document-export"
   ],
   "author": "Grzegorz Skuza",
   "license": "MIT",
@@ -30,8 +33,11 @@
     "@huggingface/inference": "^3.6.0",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
+    "docx": "^9.0.0",
+    "marked": "^15.0.0",
     "nanoid": "^5.0.9",
-    "openai": "^4.82.0"
+    "openai": "^4.82.0",
+    "puppeteer": "^24.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
