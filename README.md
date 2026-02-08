@@ -19,9 +19,20 @@ BABOK Analyst is a set of system prompts for AI models (Claude, ChatGPT, other L
 BABOK_ANALYST/
 |
 |-- BABOK_AGENT/                          # Agent files
-|   |-- BABOK_Agent_System_Prompt.md      # Main system prompt (agent instructions)
+|   |-- BABOK_Agent_System_Prompt.md      # Main system prompt (modular, references stage files)
 |   |-- BABOK_Agent_Quick_Start_Guide.md  # Quick start guide
-|   |-- BABOK_Project_Structure_Template.md # Project folder structure template
+|   |-- BABOK_Project_Structure_Template.md # Generic project folder structure template
+|   |-- stages/                           # Individual stage instruction files
+|   |   |-- BABOK_agent_stage_1.md        # Stage 1: Project Initialization
+|   |   |-- BABOK_agent_stage_2.md        # Stage 2: Current State Analysis
+|   |   |-- BABOK_agent_stage_3.md        # Stage 3: Problem Domain Analysis
+|   |   |-- BABOK_agent_stage_4.md        # Stage 4: Solution Requirements
+|   |   |-- BABOK_agent_stage_5.md        # Stage 5: Future State Design
+|   |   |-- BABOK_agent_stage_6.md        # Stage 6: Gap Analysis & Roadmap
+|   |   |-- BABOK_agent_stage_7.md        # Stage 7: Risk Assessment
+|   |   |-- BABOK_agent_stage_8.md        # Stage 8: Business Case & ROI
+|   |-- LLM_BABOK_AGENT/                  # Standalone prompt for LLM chat
+|   |   |-- BABOK_Agent_LLM_Prompt.md     # Self-contained prompt (all stages inline)
 |
 |-- cli/                                  # Node.js CLI tool
 |   |-- bin/babok.js                      # CLI entry point
@@ -54,6 +65,33 @@ BABOK_ANALYST/
 
 ---
 
+## Modular Architecture (v1.4)
+
+The agent system uses a **modular architecture** where each analysis stage has its own detailed instruction file:
+
+```
+BABOK_AGENT/
+|-- BABOK_Agent_System_Prompt.md          # Core prompt (references stage files)
+|-- stages/
+|   |-- BABOK_agent_stage_1.md            # Detailed Stage 1 instructions
+|   |-- BABOK_agent_stage_2.md            # Detailed Stage 2 instructions
+|   |-- ...                               # Stages 3-7
+|   |-- BABOK_agent_stage_8.md            # Detailed Stage 8 instructions
+|-- LLM_BABOK_AGENT/
+|   |-- BABOK_Agent_LLM_Prompt.md         # All-in-one prompt for LLM chat windows
+```
+
+**Two usage variants:**
+
+| Variant | File | Use When |
+|---------|------|----------|
+| **Modular** | `BABOK_Agent_System_Prompt.md` + `stages/*.md` | VS Code, Claude Code, IDE-based workflows (agent can load stage files as needed) |
+| **Standalone** | `LLM_BABOK_AGENT/BABOK_Agent_LLM_Prompt.md` | Direct paste into LLM chat (Claude.ai, ChatGPT, etc.) — all stages inline, self-contained |
+
+Each stage file contains: step-by-step process, questions for human, deliverable template, quality checklist, and CLI command references.
+
+---
+
 ## How to Get Started - Step by Step
 
 ### Method 1: Claude.ai (Projects)
@@ -61,7 +99,7 @@ BABOK_ANALYST/
 1. **Clone or download the repository** (see section below)
 2. Go to [claude.ai](https://claude.ai) and create a new **Project**
 3. In project settings, click **"Project Instructions"** (Custom Instructions)
-4. Copy the **entire** content of `BABOK_AGENT/BABOK_Agent_System_Prompt.md` file and paste it into the Project Instructions field
+4. Copy the **entire** content of `BABOK_AGENT/LLM_BABOK_AGENT/BABOK_Agent_LLM_Prompt.md` file and paste it into the Project Instructions field
 5. Start a new conversation in the project and type:
    ```
    BEGIN NEW PROJECT
@@ -104,7 +142,7 @@ BABOK_ANALYST/
 
 ### Method 4: ChatGPT or other LLM
 
-1. Download the content of `BABOK_AGENT/BABOK_Agent_System_Prompt.md` file
+1. Download the content of `BABOK_AGENT/LLM_BABOK_AGENT/BABOK_Agent_LLM_Prompt.md` file
 2. In ChatGPT: Settings -> "Custom Instructions" or "System Prompt"
 3. Paste the file content as system instructions
 4. Start a new conversation and type:
@@ -114,14 +152,14 @@ BABOK_ANALYST/
 
 ### Method 5: API (Anthropic, OpenAI, others)
 
-Use the content of `BABOK_Agent_System_Prompt.md` as the `system` parameter in the API call:
+Use the content of `BABOK_Agent_LLM_Prompt.md` as the `system` parameter in the API call:
 
 ```python
 import anthropic
 
 client = anthropic.Anthropic()
 
-with open("BABOK_AGENT/BABOK_Agent_System_Prompt.md") as f:
+with open("BABOK_AGENT/LLM_BABOK_AGENT/BABOK_Agent_LLM_Prompt.md") as f:
     system_prompt = f.read()
 
 message = client.messages.create(
@@ -400,6 +438,6 @@ This project is not officially endorsed by IIBA.
 
 ---
 
-**Version:** 1.3.0
+**Version:** 1.4.0
 **Release Date:** February 8, 2026
 **Last Updated:** 2026-02-08
