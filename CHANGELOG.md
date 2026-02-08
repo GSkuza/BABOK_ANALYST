@@ -5,6 +5,18 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-02-08
+
+### Added
+- **Bilingual Support (EN/PL):** Complete support for English and Polish languages across CLI and AI Agent.
+- **Language Management Commands:** New commands `babok pl`, `babok eng`, and `babok lang` for global language switching.
+- **Multilingual Journaling:** Project journals now store and respect language preference (EN/PL) throughout all 8 stages.
+- **Localized UI:** Bilingual implementation of all CLI status messages, project creation outputs, and error handling.
+
+### Changed
+- **Optimized LLM Prompt:** Shortened the standalone system prompt by **92%** (from ~60k to 5,752 characters) for faster response times and significantly lower token consumption.
+- **Improved AI Context:** Enhanced prompt template to explicitly instruct the agent on the target language for each project.
+
 ## [1.2.0] - 2026-02-08
 
 ### Added
