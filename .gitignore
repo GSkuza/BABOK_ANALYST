@@ -17,6 +17,13 @@ Thumbs.db
 .idea/
 *.sublime-*
 
+# Project data (local analysis outputs)
+projects/
+export/
+
+# Node.js (CLI tool)
+cli/node_modules/
+
 # Temporary files
 *.tmp
 *.bak

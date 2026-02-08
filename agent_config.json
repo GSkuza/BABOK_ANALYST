@@ -1,7 +1,7 @@
 {
   "agent": {
     "name": "BABOK Agent",
-    "version": "1.0",
+    "version": "1.3",
     "specialization": "Business Analysis for IT Projects in SME/MSP sector",
     "description": "Expert Business Analyst specializing in requirements management, stakeholder engagement, process optimization, and BABOK® standards"
   },

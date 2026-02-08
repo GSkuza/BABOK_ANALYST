@@ -23,6 +23,15 @@ BABOK_ANALYST/
 |   |-- BABOK_Agent_Quick_Start_Guide.md  # Quick start guide
 |   |-- BABOK_Project_Structure_Template.md # Project folder structure template
 |
+|-- cli/                                  # Node.js CLI tool
+|   |-- bin/babok.js                      # CLI entry point
+|   |-- src/commands/                     # Command implementations
+|   |-- src/journal.js                    # Project journal management
+|   |-- src/project.js                    # Project ID generation
+|   |-- src/display.js                    # Terminal output formatting
+|   |-- package.json                      # npm package configuration
+|   |-- README.md                         # CLI Quick Start Guide
+|
 |-- .github/
 |   |-- copilot-instructions.md           # Configuration for GitHub Copilot / VS Code
 |
@@ -122,6 +131,63 @@ message = client.messages.create(
     messages=[{"role": "user", "content": "BEGIN NEW PROJECT"}]
 )
 ```
+
+---
+
+## BABOK CLI Tool
+
+The repository includes a **cross-platform CLI tool** for managing project lifecycle directly from the terminal. The CLI handles project creation, state tracking via journal files, and stage management — independently of any specific AI platform.
+
+### Installation
+
+Requires **Node.js 18+**.
+
+```bash
+git clone https://github.com/GSkuza/BABOK_ANALYST.git
+cd BABOK_ANALYST/cli
+npm install
+npm link        # Makes 'babok' command available globally
+```
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `babok new [--name "Name"]` | Create a new project with unique ID and timestamp |
+| `babok list` | List all projects with current status |
+| `babok status [id]` | Show detailed project status (all stages) |
+| `babok load <id>` | Load project context (generates text to paste into AI chat) |
+| `babok save <id>` | Save current project state snapshot |
+| `babok approve <id> <stage>` | Mark a stage as approved, advance to next |
+| `babok reject <id> <stage> -r "reason"` | Reject a stage with reason |
+| `babok export <id>` | Export project deliverables to output directory |
+
+### Quick Example
+
+```bash
+# Create a new project
+babok new --name "ERP Integration"
+# Output: Project ID: BABOK-20260208-K7M3
+
+# Check all projects
+babok list
+
+# Approve Stage 1 after completing it in AI chat
+babok approve K7M3 1
+
+# View detailed status
+babok status K7M3
+
+# Load context for AI chat (copy & paste the output)
+babok load K7M3
+
+# Export deliverables when done
+babok export K7M3
+```
+
+Partial IDs work — `babok status K7M3` matches `BABOK-20260208-K7M3`.
+
+For the full CLI guide, see: [`cli/README.md`](cli/README.md)
 
 ---
 
