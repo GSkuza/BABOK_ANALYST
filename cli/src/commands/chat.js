@@ -86,6 +86,7 @@ export async function chatCommand(partialId, options) {
         const result = await promptForProvider();
         provider = result.provider;
         apiKey = result.apiKey;
+        if (!modelName) modelName = result.model;
       } catch (err) {
         console.error(chalk.red(`\n${err.message}`));
         process.exit(1);
@@ -121,7 +122,7 @@ export async function chatCommand(partialId, options) {
 
   // Initialize provider
   try {
-    initializeProvider(provider, apiKey, modelName);
+    await initializeProvider(provider, apiKey, modelName);
   } catch (err) {
     console.error(chalk.red(`Error initializing ${PROVIDERS[provider]?.name}: ${err.message}`));
     process.exit(1);

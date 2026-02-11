@@ -18,26 +18,26 @@ export const PROVIDERS = {
     envKey: 'GEMINI_API_KEY',
     defaultModel: 'gemini-2.0-flash',
     models: [
-      'gemini-2.0-flash', 
-      'gemini-2.0-flash-lite', 
-      'gemini-1.5-pro', 
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
       'gemini-1.5-flash',
-      'gemini-1.5-flash-8b'
+      'gemini-1.5-flash-8b',
     ],
     keyUrl: 'https://aistudio.google.com/app/apikey',
   },
   openai: {
     name: 'OpenAI',
     envKey: 'OPENAI_API_KEY',
-    defaultModel: 'gpt-4o',
+    defaultModel: 'gpt-4.1',
     models: [
-      'gpt-4o', 
-      'gpt-4o-mini', 
-      'o1', 
-      'o1-mini', 
+      'gpt-4.1',
+      'gpt-4.1-mini',
+      'gpt-4.1-nano',
+      'gpt-4o',
+      'gpt-4o-mini',
+      'o3',
+      'o4-mini',
       'o3-mini',
-      'gpt-4-turbo',
-      'gpt-3.5-turbo'
     ],
     keyUrl: 'https://platform.openai.com/api-keys',
   },
@@ -56,9 +56,8 @@ export const PROVIDERS = {
   huggingface: {
     name: 'Hugging Face',
     envKey: 'HF_API_KEY',
-    defaultModel: 'mistralai/Mistral-Small-24B-Instruct-2501',
+    defaultModel: 'Qwen/Qwen2.5-72B-Instruct',
     models: [
-      'mistralai/Mistral-Small-24B-Instruct-2501',
       'Qwen/Qwen2.5-72B-Instruct',
       'meta-llama/Llama-3.3-70B-Instruct',
       'deepseek-ai/DeepSeek-R1',
@@ -66,6 +65,20 @@ export const PROVIDERS = {
       'speakleash/Bielik-11B-v3.0-Instruct'
     ],
     keyUrl: 'https://huggingface.co/settings/tokens',
+  },
+  vertex: {
+    name: 'Google Vertex AI',
+    envKey: 'VERTEX_PROJECT_ID',
+    defaultModel: 'gemini-2.5-pro-exp-03-25',
+    models: [
+      'gemini-2.5-pro-exp-03-25',
+      'gemini-2.0-pro-exp',
+      'gemini-1.5-pro',
+      'gemini-1.5-flash',
+      'gemini-2.0-flash',
+    ],
+    keyUrl: 'https://console.cloud.google.com/apis/credentials',
+    configType: 'vertex',
   },
   local: {
     name: 'Local / SGLang (OpenAI-compatible)',
@@ -128,7 +141,10 @@ export function readStoredKey(provider) {
   try {
     const encrypted = Buffer.from(entry.k, 'base64');
     const decrypted = xorCipher(encrypted, deriveSecret()).toString('utf-8');
-    if (decrypted.length >= 8 && /^[A-Za-z0-9_\-:.]+$/.test(decrypted)) return decrypted;
+    if (decrypted.length < 8) return null;
+    // Vertex AI config is stored as JSON — skip alphanumeric-only check
+    if (provider === 'vertex') return decrypted;
+    if (/^[A-Za-z0-9_\-:.]+$/.test(decrypted)) return decrypted;
     return null;
   } catch { return null; }
 }
@@ -178,6 +194,22 @@ export function getApiKey(provider) {
   const info = PROVIDERS[provider];
   if (!info) return null;
 
+  // Vertex AI: compose config from env vars instead of a single API key
+  if (provider === 'vertex') {
+    const projectId = process.env.VERTEX_PROJECT_ID;
+    if (projectId) {
+      const cfg = {
+        project_id: projectId,
+        location: process.env.VERTEX_LOCATION || 'us-central1',
+      };
+      if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        cfg.credentials_file = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+      }
+      return JSON.stringify(cfg);
+    }
+    return readStoredKey('vertex');
+  }
+
   // 1. Environment variable
   if (process.env[info.envKey]) return process.env[info.envKey];
 
@@ -194,68 +226,140 @@ export function getApiKey(provider) {
 }
 
 /**
- * Interactively select provider and enter API key.
+ * Interactively select provider, model and enter API key.
+ * Returns { provider, apiKey, model }
  */
-export function promptForProvider() {
-  return new Promise((resolve, reject) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+export async function promptForProvider() {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const ask = (q) => new Promise(resolve => rl.question(q, a => resolve(a.trim())));
 
+  try {
     const stored = listStoredProviders();
     const providerList = Object.entries(PROVIDERS);
 
+    // ── Krok 1: Wybor dostawcy ──
     process.stdout.write('\n');
-    process.stdout.write('  🔌 Select AI provider:\n\n');
+    process.stdout.write('  Wybierz dostawce AI:\n\n');
     providerList.forEach(([key, info], i) => {
-      const badge = stored.includes(key) ? chalk_green(' [key saved]') : '';
-      process.stdout.write(`     ${i + 1}. ${info.name}${badge}\n`);
+      const badge = stored.includes(key) ? chalk_green('  [klucz zapisany]') : '';
+      process.stdout.write(`    ${i + 1}. ${info.name}${badge}\n`);
     });
     process.stdout.write('\n');
 
-    rl.question('  Enter number (1-4): ', (num) => {
-      const idx = parseInt(num) - 1;
-      if (isNaN(idx) || idx < 0 || idx >= providerList.length) {
-        rl.close();
-        reject(new Error('Invalid provider selection.'));
-        return;
-      }
-      const [providerKey, info] = providerList[idx];
+    const provNum = await ask(`  Numer dostawcy (1-${providerList.length}): `);
+    const provIdx = parseInt(provNum) - 1;
+    if (isNaN(provIdx) || provIdx < 0 || provIdx >= providerList.length) {
+      throw new Error('Nieprawidlowy numer dostawcy.');
+    }
+    const [providerKey, info] = providerList[provIdx];
 
-      // Check if we already have a key
-      const existingKey = getApiKey(providerKey);
-      if (existingKey) {
-        rl.question(`  Use saved ${info.name} key? (Y/n): `, (ans) => {
-          if (!ans.trim() || ans.trim().toLowerCase().startsWith('y')) {
-            rl.close();
-            resolve({ provider: providerKey, apiKey: existingKey });
-            return;
-          }
-          askForKey(rl, providerKey, info, resolve, reject);
-        });
-        return;
-      }
-      askForKey(rl, providerKey, info, resolve, reject);
+    // ── Krok 2: Wybor modelu ──
+    process.stdout.write('\n');
+    process.stdout.write(`  Modele ${info.name}:\n\n`);
+    info.models.forEach((m, i) => {
+      const def = m === info.defaultModel ? chalk_green('  <domyslny>') : '';
+      process.stdout.write(`    ${i + 1}. ${m}${def}\n`);
     });
-  });
+    process.stdout.write('\n');
+
+    const modelNum = await ask('  Numer modelu [1]: ');
+    const modelIdx = modelNum === '' ? 0 : parseInt(modelNum) - 1;
+    const selectedModel = info.models[modelIdx >= 0 && modelIdx < info.models.length ? modelIdx : 0];
+
+    // ── Krok 3: Klucz API ──
+    let apiKey = getApiKey(providerKey);
+    if (apiKey) {
+      const ans = await ask(`  Uzyc zapisanego klucza ${info.name}? (T/n): `);
+      if (ans.toLowerCase().startsWith('n')) {
+        apiKey = await _askForKeyAsync(ask, providerKey, info);
+      }
+    } else {
+      apiKey = await _askForKeyAsync(ask, providerKey, info);
+    }
+
+    rl.close();
+    return { provider: providerKey, apiKey, model: selectedModel };
+
+  } catch (err) {
+    rl.close();
+    throw err;
+  }
 }
 
+async function _askForKeyAsync(ask, providerKey, info) {
+  if (providerKey === 'vertex') {
+    return _collectVertexConfig(ask);
+  }
+
+  process.stdout.write('\n');
+  process.stdout.write(`  Klucz API wymagany dla: ${info.name}\n`);
+  process.stdout.write(`  Pobierz na: ${info.keyUrl}\n\n`);
+  process.stdout.write('  Klucz jest przechowywany tylko lokalnie (zaszyfrowany, gitignored).\n\n');
+
+  const key = await ask('  Podaj klucz API: ');
+  if (!key) throw new Error('Nie podano klucza API.');
+
+  const saveAns = await ask('  Zapisac na przyszlosc? (T/n): ');
+  if (!saveAns.toLowerCase().startsWith('n')) {
+    storeKey(providerKey, key);
+    process.stdout.write('  Klucz zapisany (.babok_keystore, zaszyfrowany, gitignored)\n\n');
+  } else {
+    process.stdout.write('  Klucz uzywany tylko w tej sesji (nie zapisano)\n\n');
+  }
+  return key;
+}
+
+async function _collectVertexConfig(ask) {
+  process.stdout.write('\n');
+  process.stdout.write('  Konfiguracja Google Vertex AI\n');
+  process.stdout.write('  ─────────────────────────────────────────────────────\n');
+  process.stdout.write('  Wymagane: Google Cloud Project ID\n');
+  process.stdout.write('  Uwierzytelnianie: Service Account JSON  lub  ADC\n');
+  process.stdout.write('  ADC: uruchom "gcloud auth application-default login"\n\n');
+
+  const projectId = await ask('  Google Cloud Project ID: ');
+  if (!projectId) throw new Error('Project ID jest wymagany dla Vertex AI.');
+
+  const locRaw = await ask('  Region [us-central1]: ');
+  const location = locRaw || 'us-central1';
+
+  process.stdout.write('\n');
+  process.stdout.write('  Sciezka do pliku klucza Service Account JSON\n');
+  process.stdout.write('  (Enter = uzyj ADC, np. po "gcloud auth application-default login")\n\n');
+  const credFile = await ask('  Plik klucza SA (opcjonalnie): ');
+
+  const config = { project_id: projectId, location };
+  if (credFile) config.credentials_file = credFile;
+  const configStr = JSON.stringify(config);
+
+  const saveAns = await ask('  Zapisac konfiguracje na przyszlosc? (T/n): ');
+  if (!saveAns.toLowerCase().startsWith('n')) {
+    storeKey('vertex', configStr);
+    process.stdout.write('  Konfiguracja zapisana (.babok_keystore, gitignored)\n\n');
+  } else {
+    process.stdout.write('  Konfiguracja uzywana tylko w tej sesji (nie zapisano)\n\n');
+  }
+  return configStr;
+}
+
+// Legacy callback-based helper — used only by promptForKeyOnly()
 function askForKey(rl, providerKey, info, resolve, reject) {
   process.stdout.write('\n');
-  process.stdout.write(`  🔑 ${info.name} API key required.\n`);
-  process.stdout.write(`     Get one at: ${info.keyUrl}\n\n`);
-  process.stdout.write('     Your key is stored ONLY locally (encrypted, gitignored).\n');
-  process.stdout.write('     It will NEVER be committed to the repository.\n\n');
+  process.stdout.write(`  Klucz API wymagany dla: ${info.name}\n`);
+  process.stdout.write(`  Pobierz na: ${info.keyUrl}\n\n`);
+  process.stdout.write('  Klucz jest przechowywany tylko lokalnie (zaszyfrowany, gitignored).\n\n');
 
-  rl.question('  Enter API key: ', (apiKey) => {
+  rl.question('  Podaj klucz API: ', (apiKey) => {
     const key = apiKey.trim();
-    if (!key) { rl.close(); reject(new Error('No API key provided.')); return; }
+    if (!key) { rl.close(); reject(new Error('Nie podano klucza API.')); return; }
 
-    rl.question('  Save key for future sessions? (Y/n): ', (ans) => {
+    rl.question('  Zapisac na przyszlosc? (T/n): ', (ans) => {
       rl.close();
-      if (!ans.trim() || ans.trim().toLowerCase().startsWith('y')) {
+      if (!ans.trim() || !ans.trim().toLowerCase().startsWith('n')) {
         storeKey(providerKey, key);
-        process.stdout.write('  ✓ Key saved to .babok_keystore (encrypted, gitignored)\n\n');
+        process.stdout.write('  Klucz zapisany (.babok_keystore, zaszyfrowany, gitignored)\n\n');
       } else {
-        process.stdout.write('  ✓ Key used for this session only (not saved)\n\n');
+        process.stdout.write('  Klucz uzywany tylko w tej sesji (nie zapisano)\n\n');
       }
       resolve({ provider: providerKey, apiKey: key });
     });
@@ -282,7 +386,7 @@ function chalk_green(s) { return `\x1b[32m${s}\x1b[0m`; }
 /**
  * Initialize the selected provider.
  */
-export function initializeProvider(provider, apiKey, modelName) {
+export async function initializeProvider(provider, apiKey, modelName) {
   const info = PROVIDERS[provider];
   if (!info) throw new Error(`Unknown provider: ${provider}`);
   const model = modelName || info.defaultModel;
@@ -293,6 +397,21 @@ export function initializeProvider(provider, apiKey, modelName) {
       activeClient = genAI.getGenerativeModel({ model });
       break;
     }
+    case 'vertex': {
+      const { VertexAI } = await import('@google-cloud/vertexai');
+      let cfg = {};
+      try { cfg = JSON.parse(apiKey); } catch { cfg = { project_id: apiKey }; }
+      const vertexOptions = {
+        project: cfg.project_id,
+        location: cfg.location || 'us-central1',
+      };
+      if (cfg.credentials_file) {
+        vertexOptions.googleAuthOptions = { keyFilename: cfg.credentials_file };
+      }
+      const vertexAI = new VertexAI(vertexOptions);
+      activeClient = vertexAI.getGenerativeModel({ model });
+      break;
+    }
     case 'openai': {
       activeClient = new OpenAI({ apiKey });
       break;
@@ -301,9 +420,9 @@ export function initializeProvider(provider, apiKey, modelName) {
       // For local servers like SGLang, Ollama (OpenAI API), vLLM
       // We check if modelName is actually a URL, or use a default local URL
       const baseURL = modelName?.startsWith('http') ? modelName : 'http://localhost:30000/v1';
-      activeClient = new OpenAI({ 
-        apiKey: apiKey || 'not-needed', 
-        baseURL: baseURL 
+      activeClient = new OpenAI({
+        apiKey: apiKey || 'not-needed',
+        baseURL: baseURL
       });
       activeProvider = 'openai'; // Reuse OpenAI logic for sendMessageStream
       activeModel = modelName || info.defaultModel;
@@ -358,6 +477,26 @@ export async function sendMessageStream(message, onChunk) {
         const text = chunk.text();
         fullResponse += text;
         if (onChunk) onChunk(text);
+      }
+      break;
+    }
+
+    case 'vertex': {
+      // Vertex AI SDK — same startChat API but chunk.text() not available;
+      // extract text from candidates array instead.
+      const chat = activeClient.startChat({
+        history: conversationMessages.slice(0, -1).map(m => ({
+          role: m.role === 'model' ? 'model' : 'user',
+          parts: m.parts,
+        })),
+        systemInstruction: { parts: [{ text: systemPromptCache }] },
+        generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
+      });
+      const result = await chat.sendMessageStream(message);
+      for await (const chunk of result.stream) {
+        const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        fullResponse += text;
+        if (onChunk && text) onChunk(text);
       }
       break;
     }
@@ -422,6 +561,7 @@ export async function sendMessageStream(message, onChunk) {
         messages,
         max_tokens: 8192,
         temperature: 0.7,
+        provider: 'auto',
       };
 
       // When using a dedicated endpoint, we SHOULD NOT pass the 'model' property

@@ -40,17 +40,13 @@
 1. **Project Scope - What is the project about?**
    Describe the business problem or opportunity in 2-3 sentences.
 
-2. **Document/Process Types IN SCOPE:**
-   What business processes or document types does this project cover?
-   (List all that apply — e.g., invoicing, procurement, HR onboarding, production planning, customer service, etc.)
-
-3. **Current Systems Landscape:**
+2. **Current Systems Landscape:**
    - ERP System: [NAME & VERSION]
    - Other core business systems: [NAME & VERSION for each]
    - Existing solution for this area (if any): [NAME or "None currently"]
    - Other relevant systems: [LIST]
 
-4. **Regulatory Compliance Requirements:**
+3. **Regulatory Compliance Requirements:**
    Which regulations are CRITICAL for this project?
    [ ] GDPR (EU Data Protection Regulation)
    [ ] Financial reporting (SOX, local GAAP, IFRS)
@@ -60,7 +56,7 @@
    [ ] Tax compliance (VAT/GST, transfer pricing)
    [ ] Other: [SPECIFY]
 
-5. **Compliance Deadlines:**
+4. **Compliance Deadlines:**
    Are there hard deadlines driven by regulation?
    - Deadline 1: [REGULATION] by [DATE]
    - Deadline 2: [REGULATION] by [DATE]

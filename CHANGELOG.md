@@ -5,6 +5,22 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2] - 2026-02-11
+
+### Added
+- **Automated Analysis Pipeline:** New `babok run` command with context-driven execution and optional auto-run mode.
+- **Vertex AI Provider Support:** Added Google Vertex AI provider with project/region configuration and credential handling.
+- **Copilot Prompt Library:** Added `.github/prompts/` with stage-specific and full-run prompt helpers.
+- **Context Template:** Added `templates/project_context.example.json` to standardize run inputs.
+
+### Changed
+- **Provider Picker:** Interactive prompt now supports model selection and stores provider-specific defaults.
+- **Model Defaults:** Updated OpenAI and Hugging Face default models and available model lists.
+- **Stage 1 Scope Questions:** Simplified initial scope questions to remove redundant document/process list.
+
+### Fixed
+- **Chat Initialization:** Await provider initialization in `babok chat` to prevent race conditions.
+
 ## [1.8.1] - 2026-02-08
 
 ### Fixed

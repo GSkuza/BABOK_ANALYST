@@ -1,3 +1,41 @@
+# BABOK Analyst v1.8.2 - Release Notes
+
+**Release Date:** February 11, 2026
+**Status:** Minor Release
+**License:** MIT
+
+---
+
+## What's New in v1.8.2
+
+### 1. Automated CLI Pipeline
+
+- New `babok run` command to execute the analysis pipeline from a context file or short prompt.
+- Supports stage selection (`--stages 1,2,3`), language override, output target, and `--auto` for fully automated runs.
+
+### 2. Vertex AI Support
+
+- Added Google Vertex AI as a provider with project/region configuration and optional service account credentials.
+- Secure config storage for Vertex in the local encrypted keystore.
+
+### 3. Improved Provider Flow
+
+- Provider selection now includes model selection.
+- Updated OpenAI and Hugging Face default models and model lists.
+- `babok chat` now awaits provider initialization to avoid startup race conditions.
+
+### 4. Prompt Helpers and Context Template
+
+- Added `.github/prompts/` for stage-specific and full-run prompt helpers.
+- Added `templates/project_context.example.json` for standardized context input.
+
+### Upgrade Notes
+
+- No breaking changes from v1.8.1.
+- Existing projects remain compatible; new features are optional.
+
+---
+
 # BABOK Analyst v1.8.1 - Release Notes
 
 **Release Date:** February 8, 2026

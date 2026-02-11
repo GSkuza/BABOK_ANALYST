@@ -605,6 +605,6 @@ This project is not officially endorsed by IIBA.
 
 ---
 
-**Version:** 1.8.1
-**Release Date:** February 8, 2026
-**Last Updated:** 2026-02-09
+**Version:** 1.8.2
+**Release Date:** February 11, 2026
+**Last Updated:** 2026-02-11

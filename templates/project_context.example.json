@@ -1,0 +1,100 @@
+{
+  "_instructions": "Copy this file, fill in your project data, then run: babok run --context your_file.json",
+  "_remove_instructions_before_use": true,
+
+  "project_name": "SAP S/4HANA ERP Implementation",
+  "language": "PL",
+
+  "company": {
+    "name": "Przykładowa Firma Sp. z o.o.",
+    "industry": "Manufacturing",
+    "sector": "Automotive components",
+    "size": "mid-market",
+    "employees": 250,
+    "revenue_eur": "25M",
+    "locations": ["Warsaw HQ", "Gdansk plant"]
+  },
+
+  "scope": "Implementation of SAP S/4HANA system replacing legacy ERP (SAP ERP 6.0 EhP7). Project covers Finance (FI/CO), Procurement (MM), Sales (SD), and Production Planning (PP) modules. Includes migration from on-premise to private cloud.",
+
+  "systems": {
+    "erp": "SAP ERP 6.0 EhP7 (since 2012)",
+    "crm": "Salesforce Sales Cloud",
+    "wms": "Custom WMS (legacy, in-house)",
+    "hr": "Comarch HRM",
+    "bi": "SAP BusinessObjects BI 4.2",
+    "other": ["MS Office 365", "SharePoint", "EDI integration with 3 customers"]
+  },
+
+  "compliance": [
+    "GDPR (EU data protection)",
+    "E-invoicing KSeF 2026 (mandatory Poland)",
+    "IFRS 16 lease accounting",
+    "ISO 9001:2015 quality management"
+  ],
+
+  "budget": {
+    "range": "800000 - 1500000 PLN",
+    "currency": "PLN",
+    "note": "Budget approved Q1 2026, no increase expected"
+  },
+
+  "timeline": {
+    "project_start": "2026-03-01",
+    "target_go_live": "2027-09-01",
+    "hard_deadline": "2026-12-31 (KSeF compliance)",
+    "phases": ["Blueprint Q2 2026", "Realization Q3-Q4 2026", "Go-live Q1 2027"]
+  },
+
+  "stakeholders": {
+    "sponsor": "CEO (Marek Kowalski)",
+    "project_owner": "CFO (Anna Nowak)",
+    "it_manager": "IT Director (Piotr Wiśniewski)",
+    "key_users": ["Finance Manager", "Procurement Manager", "Sales Manager", "Production Planner"],
+    "external": ["SAP implementation partner (TBD)", "SAP AG support"]
+  },
+
+  "pain_points": [
+    "Manual month-end closing takes 5 business days (target: 2 days)",
+    "No real-time inventory visibility across locations",
+    "45% of purchase orders processed manually via email",
+    "No integrated sales forecasting — Excel-based",
+    "SAP ERP 6.0 end of mainstream maintenance in 2027"
+  ],
+
+  "success_criteria": {
+    "quantitative": [
+      "Reduce month-end closing from 5 to 2 business days",
+      "Achieve 95% inventory accuracy (currently ~80%)",
+      "Reduce manual PO processing by 70%",
+      "Go-live within budget ±10%"
+    ],
+    "qualitative": [
+      "Full KSeF e-invoicing compliance by December 2026",
+      "Unified data model across all business units",
+      "Improved management reporting with real-time data"
+    ]
+  },
+
+  "constraints": [
+    "No additional budget beyond approved range",
+    "Core business operations cannot be disrupted during go-live",
+    "IT team of 3 people (limited internal capacity)",
+    "Must maintain SAP BusinessObjects BI integration"
+  ],
+
+  "assumptions": [
+    "SAP S/4HANA 2023 or newer will be used",
+    "Implementation partner will be selected via RFP process",
+    "Key users will be available 30% of their time during blueprint and testing phases",
+    "Data migration will cover 3 years of historical data",
+    "Parallel run period of 1 month before full cutover"
+  ],
+
+  "risks_known": [
+    "Implementation partner selection delay",
+    "Key user availability during peak production months",
+    "Data quality issues in legacy system",
+    "KSeF regulatory deadline pressure"
+  ]
+}

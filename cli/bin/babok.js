@@ -13,13 +13,14 @@ import { setLanguageCommand, showLanguage } from '../src/commands/language.js';
 import { listModels, changeModel } from '../src/commands/llm.js';
 import { getCurrentLanguage } from '../src/language.js';
 import { makeCommand, makeDocx, makePdf } from '../src/commands/makedoc.js';
+import { runAnalysis } from '../src/commands/run.js';
 
 const program = new Command();
 
 program
   .name('babok')
   .description('BABOK Agent CLI - Project lifecycle management')
-  .version('1.6.0');
+  .version('1.8.2');
 
 program
   .command('new')
@@ -154,6 +155,21 @@ program
   .action(() => {
     newProject({ language: 'EN' });
   });
+
+program
+  .command('run')
+  .alias('RUN')
+  .description('Run BABOK analysis pipeline — interactive by default (use --auto for fully automated)')
+  .option('-c, --context <file>', 'Path to project_context.json (see templates/project_context.example.json)')
+  .option('-n, --name <name>', 'Project name (overrides context file)')
+  .option('-p, --prompt <text>', 'Short project description (alternative to --context)')
+  .option('-o, --output <dir>', 'Output directory (default: BABOK_Analysis)')
+  .option('--provider <name>', 'AI provider: gemini, openai, anthropic, huggingface, vertex')
+  .option('-m, --model <name>', 'Model name (provider-specific)')
+  .option('-l, --lang <lang>', 'Language: EN or PL (overrides context file)')
+  .option('-s, --stages <list>', 'Comma-separated stages to run, e.g. "1,2,3" (default: all)')
+  .option('--auto', 'Skip interactive review — run all stages fully automatically')
+  .action(runAnalysis);
 
 // MAKE command with subcommands for DOCX and PDF generation
 const makeCmd = program
