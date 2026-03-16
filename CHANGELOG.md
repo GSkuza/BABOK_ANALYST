@@ -5,6 +5,18 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-03-16
+
+### Added
+- **MCP Server (`babok-mcp/`):** New standalone package exposing BABOK project management as a [Model Context Protocol](https://modelcontextprotocol.io) server. Claude, GPT-4o, and any MCP-compatible AI assistant can now create projects, load stage instructions, approve stages, search deliverables, and export results — without leaving the chat interface.
+- **8 MCP Tools:** `babok_new_project`, `babok_list_projects`, `babok_get_stage`, `babok_approve_stage`, `babok_get_deliverable`, `babok_save_deliverable`, `babok_search`, `babok_export`.
+- **9 MCP Resources:** All stage prompt files (Stages 0–8) exposed as `babok://stages/{n}` URIs — the AI reads the actual BABOK instructions before working on each stage.
+- **Smoke test suite (`babok-mcp/src/test/smoke.js`):** 10 assertions covering ID generation, journal CRUD, approval flow, rejection, partial ID resolution, and deliverable I/O.
+- **`BABOK_PROJECTS_DIR` and `BABOK_AGENT_DIR` env vars:** Configure where journals and stage prompts live — works standalone or nested inside the monorepo.
+
+### Architecture
+This release adds the `babok-mcp/` package as the second component alongside `cli/`. Both share the same project/journal data model (identical JSON format).
+
 ## [1.9.0] - 2026-03-16
 
 ### Added

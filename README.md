@@ -23,7 +23,7 @@ BABOK_ANALYST/
 |   |-- BABOK_Agent_Quick_Start_Guide.md  # Quick start guide
 |   |-- BABOK_Project_Structure_Template.md # Generic project folder structure template
 |   |-- stages/                           # Individual stage instruction files
-|   |   |-- BABOK_agent_stage_0.md        # Stage 0: Project Charter (NEW in v1.9)
+|   |   |-- BABOK_agent_stage_0.md        # Stage 0: Project Charter (new in v1.9)
 |   |   |-- BABOK_agent_stage_1.md        # Stage 1: Project Initialization
 |   |   |-- BABOK_agent_stage_2.md        # Stage 2: Current State Analysis
 |   |   |-- BABOK_agent_stage_3.md        # Stage 3: Problem Domain Analysis
@@ -44,6 +44,15 @@ BABOK_ANALYST/
 |   |-- src/display.js                    # Terminal output formatting
 |   |-- package.json                      # npm package configuration
 |   |-- README.md                         # CLI Quick Start Guide
+|
+|-- babok-mcp/                            # MCP Server (NEW in v2.0)
+|   |-- bin/babok-mcp.js                  # Entry point (npx babok-mcp)
+|   |-- src/server.js                     # MCP server — 8 tools + 9 resources
+|   |-- src/lib/project.js                # Project ID & path resolution
+|   |-- src/lib/journal.js                # Journal CRUD + stage transitions
+|   |-- src/test/smoke.js                 # 10-assertion smoke test suite
+|   |-- package.json                      # npm package (babok-mcp)
+|   |-- README.md                         # Setup guide for Claude/Cursor/VS Code
 |
 |-- .github/
 |   |-- copilot-instructions.md           # Configuration for GitHub Copilot / VS Code
@@ -72,7 +81,7 @@ BABOK_ANALYST/
 
 ---
 
-## Modular Architecture (v1.9)
+## Modular Architecture (v2.0)
 
 The agent system uses a **modular architecture** where each analysis stage has its own detailed instruction file:
 
@@ -278,6 +287,71 @@ babok export K7M3
 Partial IDs work — `babok status K7M3` matches `BABOK-20260208-K7M3`.
 
 For the full CLI guide, see: [`cli/README.md`](cli/README.md)
+
+---
+
+## MCP Server — `babok-mcp` (new in v2.0)
+
+> **The biggest differentiator.** Claude and other MCP-compatible AI assistants can now manage your BABOK project lifecycle _without leaving the chat interface_.
+
+The `babok-mcp` package is a [Model Context Protocol](https://modelcontextprotocol.io) server that exposes 8 tools and 9 resources to any compatible AI client.
+
+### Setup (Claude Desktop / Claude Code)
+
+```bash
+cd BABOK_ANALYST/babok-mcp
+npm install
+```
+
+Add to `claude_desktop_config.json` (or `.claude/mcp.json` for Claude Code):
+
+```json
+{
+  "mcpServers": {
+    "babok": {
+      "command": "node",
+      "args": ["D:/BABOK_ANALYST/babok-mcp/bin/babok-mcp.js"],
+      "env": {
+        "BABOK_PROJECTS_DIR": "D:/BABOK_ANALYST/projects",
+        "BABOK_AGENT_DIR": "D:/BABOK_ANALYST/BABOK_AGENT/stages"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop — a 🔧 tool icon confirms the server is connected.
+
+### Available Tools
+
+| Tool | What it does |
+|------|-------------|
+| `babok_new_project` | Create a new project, get ID |
+| `babok_list_projects` | List all projects with stage + status |
+| `babok_get_stage` | Full stage context: prompt + journal + existing deliverable |
+| `babok_approve_stage` | Approve stage, advance to next |
+| `babok_get_deliverable` | Read a completed stage MD file |
+| `babok_save_deliverable` | Persist AI-generated content to project dir |
+| `babok_search` | Full-text search across all project files |
+| `babok_export` | Copy all deliverables to an export directory |
+
+### Example flow in Claude
+
+```
+You:    "Start a new BABOK project for SAP integration at Acme Corp"
+
+Claude: [babok_new_project → BABOK-20260316-K7M3]
+        [babok_get_stage stage_n=0 → loads Stage 0 Charter prompt]
+        → asks 3 questions about business trigger, sponsor, scope
+
+You:    [answers]
+
+Claude: [babok_save_deliverable stage_n=0 content="..."]
+        [babok_approve_stage stage_n=0]
+        → "Stage 0 approved. Moving to Stage 1: Stakeholder Mapping."
+```
+
+For the full MCP guide, see: [`babok-mcp/README.md`](babok-mcp/README.md)
 
 ---
 

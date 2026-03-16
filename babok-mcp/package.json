@@ -1,0 +1,34 @@
+{
+  "name": "babok-mcp",
+  "version": "2.0.0",
+  "description": "MCP Server for BABOK Agent — expose project management tools to Claude, GPT-4o, and any MCP-compatible AI assistant",
+  "type": "module",
+  "bin": {
+    "babok-mcp": "./bin/babok-mcp.js"
+  },
+  "main": "./src/server.js",
+  "scripts": {
+    "start": "node bin/babok-mcp.js",
+    "dev": "node --watch bin/babok-mcp.js",
+    "test": "node src/test/smoke.js"
+  },
+  "keywords": [
+    "babok",
+    "mcp",
+    "model-context-protocol",
+    "business-analysis",
+    "claude",
+    "ai-agent",
+    "project-management"
+  ],
+  "author": "Grzegorz Skuza",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.0",
+    "nanoid": "^5.0.9",
+    "zod": "^3.23.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
