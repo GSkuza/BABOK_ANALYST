@@ -500,6 +500,99 @@ server.tool(
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  TOOL 9: babok_rename_project
+// ─────────────────────────────────────────────────────────────────────────────
+
+server.tool(
+  'babok_rename_project',
+  'Rename an existing BABOK project. Updates the project_name in the journal; the directory ID does not change.',
+  {
+    project_id: z.string().describe('Full or partial project ID'),
+    new_name: z.string().min(1).describe('New project name'),
+  },
+  async ({ project_id, new_name }) => {
+    const fullId = resolveProjectId(project_id);
+    if (!fullId) throw new Error(`Project not found: ${project_id}`);
+
+    const journal = readJournal(fullId);
+    const oldName = journal.project_name;
+
+    if (oldName === new_name) {
+      return { content: [{ type: 'text', text: `Project name is already "${new_name}". No change made.` }] };
+    }
+
+    journal.project_name = new_name;
+    writeJournal(fullId, journal);
+
+    return {
+      content: [{
+        type: 'text',
+        text: [
+          '✅ PROJECT RENAMED',
+          '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          `  ID:       ${fullId}`,
+          `  Old name: ${oldName}`,
+          `  New name: ${new_name}`,
+          '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+        ].join('\n'),
+      }],
+    };
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  TOOL 10: babok_delete_project
+// ─────────────────────────────────────────────────────────────────────────────
+
+server.tool(
+  'babok_delete_project',
+  'Permanently delete a BABOK project and all its files. Requires explicit confirmation by passing the project ID as confirm_id.',
+  {
+    project_id: z.string().describe('Full or partial project ID to delete'),
+    confirm_id: z.string().describe('Must match the full resolved project ID exactly — acts as deletion confirmation'),
+  },
+  async ({ project_id, confirm_id }) => {
+    const fullId = resolveProjectId(project_id);
+    if (!fullId) throw new Error(`Project not found: ${project_id}`);
+
+    if (confirm_id !== fullId) {
+      return {
+        content: [{
+          type: 'text',
+          text: [
+            '⛔ DELETION CANCELLED — confirmation mismatch.',
+            `  Resolved project ID: ${fullId}`,
+            `  confirm_id provided: ${confirm_id}`,
+            '',
+            'To confirm deletion, set confirm_id to the exact project ID shown above.',
+          ].join('\n'),
+        }],
+      };
+    }
+
+    let journal;
+    try { journal = readJournal(fullId); } catch { journal = null; }
+    const projectDir = getProjectDir(fullId);
+
+    fs.rmSync(projectDir, { recursive: true, force: true });
+
+    return {
+      content: [{
+        type: 'text',
+        text: [
+          '🗑️  PROJECT DELETED',
+          '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+          `  ID:   ${fullId}`,
+          `  Name: ${journal?.project_name ?? '(unknown)'}`,
+          `  Directory removed: ${projectDir}`,
+          '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+        ].join('\n'),
+      }],
+    };
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  Start server
 // ─────────────────────────────────────────────────────────────────────────────
 

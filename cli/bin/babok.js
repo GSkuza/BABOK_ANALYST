@@ -15,13 +15,16 @@ import { getCurrentLanguage } from '../src/language.js';
 import { makeCommand, makeDocx, makePdf } from '../src/commands/makedoc.js';
 import { runAnalysis } from '../src/commands/run.js';
 import { diffCommand } from '../src/commands/diff.js';
+import { renameProject } from '../src/commands/rename.js';
+import { deleteProject } from '../src/commands/delete.js';
+import { setupWizard } from '../src/commands/setup.js';
 
 const program = new Command();
 
 program
   .name('babok')
   .description('BABOK Agent CLI - Project lifecycle management')
-  .version('1.9.0');
+  .version('2.0.1');
 
 program
   .command('new')
@@ -171,6 +174,29 @@ program
   .option('-s, --stages <list>', 'Comma-separated stages to run, e.g. "1,2,3" (default: all)')
   .option('--auto', 'Skip interactive review — run all stages fully automatically')
   .action(runAnalysis);
+
+program
+  .command('rename <id> [new-name]')
+  .alias('RENAME')
+  .description('Rename a project')
+  .action(renameProject);
+
+program
+  .command('delete <id>')
+  .alias('DELETE')
+  .alias('rm')
+  .alias('RM')
+  .description('Permanently delete a project (with confirmation)')
+  .option('-f, --force', 'Skip confirmation prompt')
+  .action(deleteProject);
+
+program
+  .command('setup')
+  .alias('SETUP')
+  .alias('init')
+  .alias('INIT')
+  .description('Interactive first-time setup wizard (API keys, language)')
+  .action(setupWizard);
 
 program
   .command('diff <id> [id2]')

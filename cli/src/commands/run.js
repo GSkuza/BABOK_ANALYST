@@ -4,6 +4,7 @@ import readline from 'readline';
 import chalk from 'chalk';
 import { fileURLToPath } from 'url';
 import { generateProjectId, STAGES } from '../project.js';
+import { acquireLock, releaseLock, formatLockInfo } from '../lock.js';
 import {
   getApiKey,
   initializeProvider,
@@ -427,6 +428,17 @@ export async function runAnalysis(options) {
     const fileName = STAGE_FILE_NAMES[stageNum];
     const stagePromptContent = loadStagePrompt(stageNum);
 
+    // Acquire stage lock (prevents concurrent edits in shared dirs)
+    const lockResult = acquireLock(projectId, stageNum, projectDir);
+    if (!lockResult.acquired) {
+      console.error(chalk.red(
+        `\n⛔ Stage ${stageNum} is locked by another user: ${formatLockInfo(lockResult.lock)}`
+      ));
+      console.error(chalk.dim(`   Lock file: ${projectDir}/.stage_${stageNum}.lock`));
+      stageRl?.close();
+      process.exit(1);
+    }
+
     // ── 7a. Ask user for additional input (interactive mode) ──
     let extraInput = '';
     if (stageAsk) {
@@ -527,6 +539,9 @@ export async function runAnalysis(options) {
     fs.writeFileSync(filePath, response, 'utf-8');
     previousOutputs[stageNum] = response;
     updateJournalStage(journal, stageNum, projectDir, fileName);
+
+    // Release lock for this stage
+    releaseLock(projectId, stageNum, projectDir);
   }
 
   stageRl?.close();

@@ -19,6 +19,7 @@ import {
 } from '../llm.js';
 import fs from 'fs';
 import path from 'path';
+import { acquireLock, releaseLock, formatLockInfo } from '../lock.js';
 
 /**
  * Interactive chat command for BABOK stages
@@ -120,10 +121,29 @@ export async function chatCommand(partialId, options) {
   console.log(chalk.dim(line()));
   console.log('');
 
+  // Acquire stage lock before doing any AI work
+  const lockResult = acquireLock(projectId, stageNumber);
+  if (!lockResult.acquired) {
+    console.error(chalk.red(
+      `\n⛔ Stage ${stageNumber} is currently locked by another user:\n` +
+      `   ${formatLockInfo(lockResult.lock)}\n\n` +
+      `   Wait for them to finish, or if the lock is stale (> 2 h), delete:\n` +
+      `   ${getProjectDir(projectId)}/.stage_${stageNumber}.lock`
+    ));
+    process.exit(1);
+  }
+
+  // Ensure lock is released on any exit
+  const releaseStageLock = () => releaseLock(projectId, stageNumber);
+  process.on('exit', releaseStageLock);
+  process.on('SIGINT', () => { releaseStageLock(); process.exit(0); });
+  process.on('SIGTERM', () => { releaseStageLock(); process.exit(0); });
+
   // Initialize provider
   try {
     await initializeProvider(provider, apiKey, modelName);
   } catch (err) {
+    releaseStageLock();
     console.error(chalk.red(`Error initializing ${PROVIDERS[provider]?.name}: ${err.message}`));
     process.exit(1);
   }
@@ -275,6 +295,7 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
       console.log(chalk.yellow('\n📁 Saving conversation...'));
       saveConversationHistory(projectId, stageNumber, messages);
       updateJournalWithChat(projectId, stageNumber, messages.length);
+      releaseLock(projectId, stageNumber);
       console.log(chalk.green('✓ Conversation saved. Goodbye!'));
       rl.close();
       return 'exit';
