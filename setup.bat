@@ -1,5 +1,4 @@
 @echo off
-setlocal EnableDelayedExpansion
 chcp 65001 >nul 2>&1
 
 echo.
@@ -8,92 +7,91 @@ echo   BABOK Agent CLI -- Instalator (Windows)
 echo  ========================================================
 echo.
 
-:: ── 1. Sprawdź Node.js ──────────────────────────────────────────────────────
+:: ── 1. Sprawdz Node.js ──────────────────────────────────────────────────────
 where node >nul 2>&1
-if !errorlevel! neq 0 (
+if errorlevel 1 (
     echo  [BLAD] Node.js nie jest zainstalowany.
     echo.
     echo  Pobierz i zainstaluj Node.js ze strony:
     echo    https://nodejs.org/  (wersja LTS, np. 20.x)
     echo.
     echo  Po instalacji uruchom ten skrypt ponownie.
-    echo.
-    echo  Nacisnij dowolny klawisz, aby zamknac...
-    pause >nul
-    exit /b 1
+    goto :DONE
 )
 
 for /f "tokens=1" %%v in ('node --version') do set NODE_VER=%%v
-echo  [OK] Node.js !NODE_VER! znaleziony.
+echo  [OK] Node.js %NODE_VER% znaleziony.
 
-:: ── 2. Sprawdź npm ──────────────────────────────────────────────────────────
+:: ── 2. Sprawdz npm ──────────────────────────────────────────────────────────
 where npm >nul 2>&1
-if !errorlevel! neq 0 (
+if errorlevel 1 (
     echo  [BLAD] npm nie zostal znaleziony. Zainstaluj Node.js ponownie.
-    echo  Nacisnij dowolny klawisz, aby zamknac...
-    pause >nul
-    exit /b 1
+    goto :DONE
 )
 echo  [OK] npm znaleziony.
 
-:: ── 3. Zainstaluj zależności CLI ────────────────────────────────────────────
+:: ── 3. Instaluj zaleznosci CLI ──────────────────────────────────────────────
 echo.
 echo  [INFO] Instalowanie zaleznosci CLI (cli/)...
 pushd "%~dp0cli"
 call npm install
-set NPM_ERR=!errorlevel!
+set NPM_CLI_ERR=%errorlevel%
 popd
-if !NPM_ERR! neq 0 (
+if %NPM_CLI_ERR% neq 0 (
     echo.
-    echo  [BLAD] npm install nie powiodl sie. Sprawdz polaczenie z internetem.
-    echo  Nacisnij dowolny klawisz, aby zamknac...
-    pause >nul
-    exit /b 1
+    echo  [BLAD] npm install (cli) nie powiodl sie.
+    echo  Sprawdz polaczenie z internetem i sprobuj ponownie.
+    goto :DONE
 )
 echo  [OK] Zaleznosci CLI zainstalowane.
 
-:: ── 4. Zainstaluj zależności MCP (opcjonalnie) ──────────────────────────────
+:: ── 4. Instaluj zaleznosci MCP (opcjonalnie) ────────────────────────────────
 if exist "%~dp0babok-mcp\package.json" (
     echo.
     echo  [INFO] Instalowanie zaleznosci MCP (babok-mcp/)...
     pushd "%~dp0babok-mcp"
     call npm install
+    set NPM_MCP_ERR=%errorlevel%
     popd
-    echo  [OK] Zaleznosci MCP zainstalowane.
+    if %NPM_MCP_ERR% neq 0 (
+        echo  [UWAGA] npm install (babok-mcp) nie powiodl sie - kontynuuję bez MCP.
+    ) else (
+        echo  [OK] Zaleznosci MCP zainstalowane.
+    )
 )
 
 :: ── 5. Dodaj babok do PATH (opcjonalnie) ────────────────────────────────────
 echo.
 set /p ADD_PATH=  Czy dodac 'babok' do PATH uzytkownika? (T/N):
-if /i "!ADD_PATH!"=="T" (
+if /i "%ADD_PATH%"=="T" (
     setx PATH "%PATH%;%~dp0cli\bin"
-    if !errorlevel! equ 0 (
-        echo  [OK] Dodano %~dp0cli\bin do PATH.
-        echo  [INFO] Uruchom nowy terminal, aby zmiany weszly w zycie.
+    if errorlevel 1 (
+        echo  [UWAGA] Nie udalo sie dodac do PATH. Dodaj recznie: %~dp0cli\bin
     ) else (
-        echo  [UWAGA] Nie udalo sie dodac do PATH. Zrob to recznie w Ustawieniach systemu.
+        echo  [OK] Dodano %~dp0cli\bin do PATH uzytkownika.
+        echo  [INFO] Uruchom NOWY terminal aby zmiany weszly w zycie.
     )
 )
 
-:: ── 6. Uruchom kreator konfiguracji ─────────────────────────────────────────
+:: ── 6. Kreator konfiguracji (klucze API, jezyk) ──────────────────────────────
 echo.
 set /p RUN_SETUP=  Czy uruchomic kreator konfiguracji (klucze API, jezyk)? (T/N):
-if /i "!RUN_SETUP!"=="T" (
+if /i "%RUN_SETUP%"=="T" (
     node "%~dp0cli\bin\babok.js" setup
 )
 
-:: ── Podsumowanie ─────────────────────────────────────────────────────────────
+:: ── Sukces ───────────────────────────────────────────────────────────────────
 echo.
 echo  ========================================================
-echo   Instalacja zakonczona pomyslnie!
+echo   Instalacja zakonczona!
 echo.
-echo   Uruchom nowy terminal i wpisz:
-echo     babok --help        aby zobaczyc dostepne komendy
+echo   Uruchom NOWY terminal i wpisz:
+echo     babok --help        aby zobaczyc komendy
 echo     babok new           aby utworzyc nowy projekt
 echo  ========================================================
-echo.
-echo  To okno mozesz teraz zamknac (klikajac X lub wpisujac 'exit').
-echo.
 
-:: Pozostaw okno otwarte zamiast je zamykac
+:DONE
+echo.
+echo  Wpisz EXIT aby zamknac to okno.
+echo.
 cmd /k
