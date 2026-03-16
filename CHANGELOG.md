@@ -5,6 +5,19 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-03-16
+
+### Added
+- **Stage 0: Project Charter:** New pre-Stage 1 gate (`BABOK_agent_stage_0.md`) that captures business trigger, sponsor sign-off, and scope boundary in 15–30 minutes. New projects now start at Stage 0.
+- **`babok diff` command:** Single-ID mode shows journal stage history with deliverable file preview. Two-ID mode runs an LCS-based line diff across stage deliverables with colored `+/-` output and configurable context (`--context N`).
+- **Prompt Linter (`cli/scripts/lint-stages.js`):** Validates all 9 stage files (0–8) for required sections (`## Objectives`, `## Process`), unfilled placeholders, token estimate, and file existence. Exits non-zero on errors.
+- **GitHub Actions CI (`.github/workflows/lint-prompts.yml`):** Automatically runs the stage linter on every push or PR that touches `BABOK_AGENT/stages/`.
+
+### Changed
+- **Stage validation range:** `babok approve` and `babok reject` now accept stage `0` through `8` (previously `1–8`).
+- **Completion message:** "All 8 stages complete!" updated to "All stages complete!" to accommodate variable stage counts.
+- **Journal initialization:** New projects include Stage 0 in their `stages` array with `current_stage: 0`.
+
 ## [1.8.2] - 2026-02-11
 
 ### Added
@@ -12,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Vertex AI Provider Support:** Added Google Vertex AI provider with project/region configuration and credential handling.
 - **Copilot Prompt Library:** Added `.github/prompts/` with stage-specific and full-run prompt helpers.
 - **Context Template:** Added `templates/project_context.example.json` to standardize run inputs.
+- **User Manual (PL):** Added PDF user manual for distribution.
 
 ### Changed
 - **Provider Picker:** Interactive prompt now supports model selection and stores provider-specific defaults.

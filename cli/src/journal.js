@@ -10,7 +10,7 @@ export function createJournal(projectId, projectName, language = 'EN') {
     language: language,
     created_at: now,
     last_updated: now,
-    current_stage: 1,
+    current_stage: 0,
     current_status: 'in_progress',
     stages: STAGES.map((s, i) => ({
       stage: s.stage,

@@ -6,7 +6,7 @@ An AI agent for professional business analysis compliant with **BABOK v3** (Inte
 
 BABOK Analyst is a set of system prompts for AI models (Claude, ChatGPT, other LLMs) that transforms them into business analysis experts. The agent:
 
-- Conducts a structured analysis process in **8 stages** (Stage 1-8)
+- Conducts a structured analysis process in **9 stages** (Stage 0 charter gate + Stages 1-8)
 - Uses **Short Rationale + Evidence** methodology (concise conclusions with cited evidence)
 - Requires **human approval** at each stage (human-in-the-loop)
 - Generates complete **project documentation** in Markdown format
@@ -23,6 +23,7 @@ BABOK_ANALYST/
 |   |-- BABOK_Agent_Quick_Start_Guide.md  # Quick start guide
 |   |-- BABOK_Project_Structure_Template.md # Generic project folder structure template
 |   |-- stages/                           # Individual stage instruction files
+|   |   |-- BABOK_agent_stage_0.md        # Stage 0: Project Charter (NEW in v1.9)
 |   |   |-- BABOK_agent_stage_1.md        # Stage 1: Project Initialization
 |   |   |-- BABOK_agent_stage_2.md        # Stage 2: Current State Analysis
 |   |   |-- BABOK_agent_stage_3.md        # Stage 3: Problem Domain Analysis
@@ -36,7 +37,7 @@ BABOK_ANALYST/
 |
 |-- cli/                                  # Node.js CLI tool
 |   |-- bin/babok.js                      # CLI entry point
-|   |-- src/commands/                     # Command implementations (chat, approve, export...)
+|   |-- src/commands/                     # Command implementations (chat, approve, diff, export...)
 |   |-- src/llm.js                        # Multi-provider LLM integration & keystore
 |   |-- src/journal.js                    # Project journal management
 |   |-- src/project.js                    # Project ID generation
@@ -46,15 +47,20 @@ BABOK_ANALYST/
 |
 |-- .github/
 |   |-- copilot-instructions.md           # Configuration for GitHub Copilot / VS Code
+|   |-- workflows/
+|   |   |-- lint-prompts.yml              # CI: validates stage files on every push (NEW in v1.9)
 |
 |-- .gitignore                            # Excludes local analysis files
 |-- README.md                             # This file
 ```
 
-## 8 Analysis Stages
+## Stages
+
+[![Lint Stage Prompts](https://github.com/GSkuza/BABOK_ANALYST/actions/workflows/lint-prompts.yml/badge.svg)](https://github.com/GSkuza/BABOK_ANALYST/actions/workflows/lint-prompts.yml)
 
 | Stage | Name | What You Get |
 |------|-------|----------------|
+| **Stage 0** ⭐ | Project Charter | Business trigger, sponsor sign-off, scope boundary, Go/No-Go gate |
 | **Stage 1** | Project Initialization & Stakeholder Mapping | Project scope, stakeholder register, success criteria |
 | **Stage 2** | Current State Analysis (AS-IS) | Process maps, cost baseline, system analysis |
 | **Stage 3** | Problem Domain Analysis | Problem categorization, root cause analysis, prioritization |
@@ -66,7 +72,7 @@ BABOK_ANALYST/
 
 ---
 
-## Modular Architecture (v1.8)
+## Modular Architecture (v1.9)
 
 The agent system uses a **modular architecture** where each analysis stage has its own detailed instruction file:
 
@@ -74,6 +80,7 @@ The agent system uses a **modular architecture** where each analysis stage has i
 BABOK_AGENT/
 |-- BABOK_Agent_System_Prompt.md          # Core prompt (references stage files)
 |-- stages/
+|   |-- BABOK_agent_stage_0.md            # Stage 0: Project Charter gate (new in v1.9)
 |   |-- BABOK_agent_stage_1.md            # Detailed Stage 1 instructions
 |   |-- BABOK_agent_stage_2.md            # Detailed Stage 2 instructions
 |   |-- ...                               # Stages 3-7
@@ -197,10 +204,30 @@ npm link        # Makes 'babok' command available globally
 | `babok status [id]` | Show detailed project status (all stages) |
 | `babok load <id>` | Load project context (generates text to paste into AI chat) |
 | `babok save <id>` | Save current project state snapshot |
-| `babok approve <id> <stage>` | Mark a stage as approved, advance to next |
+| `babok approve <id> <stage>` | Mark a stage as approved, advance to next (stages 0–8) |
 | `babok reject <id> <stage> -r "reason"` | Reject a stage with reason |
+| `babok diff <id> [--stage N]` | Show stage history and deliverable preview |
+| `babok diff <id1> <id2> [--stage N]` | Line diff between two projects' deliverables |
 | `babok export <id>` | Export project deliverables to output directory |
 | `babok chat <id>` | **Interactive AI chat** for current stage |
+
+### Stage diff – new in v1.9
+
+Inspect and compare deliverables directly from the terminal:
+
+```bash
+# Show stage history + deliverable preview for a single project
+babok diff K7M3
+babok diff K7M3 --stage 3
+
+# Line-by-line diff between two project versions (e.g. rejected vs reworked)
+babok diff K7M3 R9TN
+babok diff K7M3 R9TN --stage 4 --context 5
+```
+
+The two-project diff uses LCS to produce colored `+` / `-` output — no external tools needed.
+
+---
 
 ### Document export (DOCX/PDF) – new in 1.8
 
@@ -480,6 +507,7 @@ Each project gets its own directory identified by a unique **Project ID** (e.g.,
 BABOK_Analysis/
 └── BABOK-20260208-M3R1/                    # Project directory (unique per project)
     ├── PROJECT_JOURNAL_BABOK-20260208-M3R1.json  # State tracking journal
+    ├── STAGE_00_Project_Charter.md          # NEW in v1.9
     ├── STAGE_01_Project_Initialization.md
     ├── STAGE_02_Current_State_Analysis.md
     ├── STAGE_03_Problem_Domain_Analysis.md
@@ -605,6 +633,6 @@ This project is not officially endorsed by IIBA.
 
 ---
 
-**Version:** 1.8.2
-**Release Date:** February 11, 2026
-**Last Updated:** 2026-02-11
+**Version:** 1.9.0
+**Release Date:** March 16, 2026
+**Last Updated:** 2026-03-16

@@ -9,6 +9,7 @@ const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const generateSuffix = customAlphabet(ALPHABET, 4);
 
 const STAGES = [
+  { stage: 0, name: 'Project Charter' },
   { stage: 1, name: 'Project Initialization & Stakeholder Mapping' },
   { stage: 2, name: 'Current State Analysis (AS-IS)' },
   { stage: 3, name: 'Problem Domain Analysis' },

@@ -11,8 +11,8 @@ export async function approveCommand(partialId, stageStr) {
   }
 
   const stageNumber = parseInt(stageStr, 10);
-  if (isNaN(stageNumber) || stageNumber < 1 || stageNumber > 8) {
-    console.error('Error: Stage must be a number between 1 and 8.');
+  if (isNaN(stageNumber) || stageNumber < 0 || stageNumber > 8) {
+    console.error('Error: Stage must be a number between 0 and 8.');
     process.exit(1);
   }
 
@@ -34,7 +34,7 @@ export async function approveCommand(partialId, stageStr) {
       console.log(chalk.yellow(`Next: Stage ${next.stage} - ${next.name}`));
     } else {
       console.log('');
-      console.log(chalk.bold.green('All 8 stages complete! Use: babok export ' + projectId));
+      console.log(chalk.bold.green('All stages complete! Use: babok export ' + projectId));
     }
     console.log('');
   } catch (err) {
@@ -51,8 +51,8 @@ export async function rejectCommand(partialId, stageStr, options) {
   }
 
   const stageNumber = parseInt(stageStr, 10);
-  if (isNaN(stageNumber) || stageNumber < 1 || stageNumber > 8) {
-    console.error('Error: Stage must be a number between 1 and 8.');
+  if (isNaN(stageNumber) || stageNumber < 0 || stageNumber > 8) {
+    console.error('Error: Stage must be a number between 0 and 8.');
     process.exit(1);
   }
 

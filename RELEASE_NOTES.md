@@ -29,6 +29,10 @@
 - Added `.github/prompts/` for stage-specific and full-run prompt helpers.
 - Added `templates/project_context.example.json` for standardized context input.
 
+### 5. User Manual (PL)
+
+- Added PDF user manual for distribution.
+
 ### Upgrade Notes
 
 - No breaking changes from v1.8.1.

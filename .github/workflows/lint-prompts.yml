@@ -1,0 +1,28 @@
+name: Lint Stage Prompts
+
+on:
+  push:
+    paths:
+      - 'BABOK_AGENT/stages/**'
+      - 'cli/scripts/lint-stages.js'
+  pull_request:
+    paths:
+      - 'BABOK_AGENT/stages/**'
+      - 'cli/scripts/lint-stages.js'
+
+jobs:
+  lint:
+    name: Validate stage files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Lint stage files
+        run: node cli/scripts/lint-stages.js

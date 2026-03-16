@@ -1,0 +1,103 @@
+{
+  "project_id": "BABOK-TEST12345-20260210-UMXB",
+  "project_name": "test12345",
+  "language": "PL",
+  "created_at": "2026-02-10T09:35:07.225Z",
+  "last_updated": "2026-02-10T09:37:27.357Z",
+  "current_stage": 8,
+  "current_status": "completed",
+  "run_mode": "automated",
+  "stages": [
+    {
+      "stage": 1,
+      "name": "Project Initialization & Stakeholder Mapping",
+      "status": "approved",
+      "started_at": "2026-02-10T09:35:07.225Z",
+      "completed_at": "2026-02-10T09:35:27.146Z",
+      "approved_at": "2026-02-10T09:35:27.146Z",
+      "approved_by": "auto-run",
+      "deliverable_file": "STAGE_01_Project_Initialization.md",
+      "notes": ""
+    },
+    {
+      "stage": 2,
+      "name": "Current State Analysis (AS-IS)",
+      "status": "approved",
+      "started_at": "2026-02-10T09:35:27.146Z",
+      "completed_at": "2026-02-10T09:35:47.560Z",
+      "approved_at": "2026-02-10T09:35:47.560Z",
+      "approved_by": "auto-run",
+      "deliverable_file": "STAGE_02_Current_State_Analysis.md",
+      "notes": ""
+    },
+    {
+      "stage": 3,
+      "name": "Problem Domain Analysis",
+      "status": "approved",
+      "started_at": "2026-02-10T09:35:47.560Z",
+      "completed_at": "2026-02-10T09:36:01.305Z",
+      "approved_at": "2026-02-10T09:36:01.305Z",
+      "approved_by": "auto-run",
+      "deliverable_file": "STAGE_03_Problem_Domain_Analysis.md",
+      "notes": ""
+    },
+    {
+      "stage": 4,
+      "name": "Solution Requirements Definition",
+      "status": "approved",
+      "started_at": "2026-02-10T09:36:01.305Z",
+      "completed_at": "2026-02-10T09:36:17.612Z",
+      "approved_at": "2026-02-10T09:36:17.612Z",
+      "approved_by": "auto-run",
+      "deliverable_file": "STAGE_04_Solution_Requirements.md",
+      "notes": ""
+    },
+    {
+      "stage": 5,
+      "name": "Future State Design (TO-BE)",
+      "status": "approved",
+      "started_at": "2026-02-10T09:36:17.612Z",
+      "completed_at": "2026-02-10T09:36:36.739Z",
+      "approved_at": "2026-02-10T09:36:36.739Z",
+      "approved_by": "auto-run",
+      "deliverable_file": "STAGE_05_Future_State_Design.md",
+      "notes": ""
+    },
+    {
+      "stage": 6,
+      "name": "Gap Analysis & Implementation Roadmap",
+      "status": "approved",
+      "started_at": "2026-02-10T09:36:36.739Z",
+      "completed_at": "2026-02-10T09:36:49.727Z",
+      "approved_at": "2026-02-10T09:36:49.727Z",
+      "approved_by": "auto-run",
+      "deliverable_file": "STAGE_06_Gap_Analysis_Roadmap.md",
+      "notes": ""
+    },
+    {
+      "stage": 7,
+      "name": "Risk Assessment & Mitigation Strategy",
+      "status": "approved",
+      "started_at": "2026-02-10T09:36:49.727Z",
+      "completed_at": "2026-02-10T09:37:08.715Z",
+      "approved_at": "2026-02-10T09:37:08.715Z",
+      "approved_by": "auto-run",
+      "deliverable_file": "STAGE_07_Risk_Assessment.md",
+      "notes": ""
+    },
+    {
+      "stage": 8,
+      "name": "Business Case & ROI Model",
+      "status": "approved",
+      "started_at": "2026-02-10T09:37:08.715Z",
+      "completed_at": "2026-02-10T09:37:27.357Z",
+      "approved_at": "2026-02-10T09:37:27.357Z",
+      "approved_by": "auto-run",
+      "deliverable_file": "STAGE_08_Business_Case_ROI.md",
+      "notes": ""
+    }
+  ],
+  "decisions": [],
+  "assumptions": [],
+  "open_questions": []
+}

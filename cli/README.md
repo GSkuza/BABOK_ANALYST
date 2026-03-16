@@ -21,6 +21,7 @@ Cross-platform command-line tool for managing BABOK Agent project lifecycle. Cre
   - [babok save](#babok-save)
   - [babok load](#babok-load)
   - [babok export](#babok-export)
+  - [babok diff](#babok-diff)
   - [babok make docx](#babok-make-docx)
   - [babok make pdf](#babok-make-pdf)
   - [babok make all](#babok-make-all)
@@ -98,7 +99,7 @@ npm link
 
 ```bash
 babok --version
-# Output: 1.3.0
+# Output: 1.9.0
 
 babok --help
 # Shows all available commands
@@ -327,7 +328,7 @@ babok new -n "Project Name"        # Short form
 **What it does:**
 - Generates a unique Project ID (`BABOK-YYYYMMDD-XXXX`)
 - Creates project directory under `./projects/`
-- Initializes a journal file with all 8 stages set to "not_started" (Stage 1 set to "in_progress")
+- Initializes a journal file starting at **Stage 0** (Project Charter) — all subsequent stages set to "not_started"
 - Displays the Project ID and next steps
 
 **Language option:**
@@ -441,7 +442,7 @@ babok approve K7M3 2       # Approve Stage 2
 
 **Validation:**
 - Cannot approve an already-approved stage
-- Stage number must be 1-8
+- Stage number must be 0–8
 
 ---
 
@@ -458,6 +459,34 @@ babok reject K7M3 2 -r "Incomplete cost baseline"
 - Sets stage status to "rejected"
 - Records the rejection reason in the journal
 - The stage remains at its current number (no advancement)
+
+---
+
+### `babok diff`
+
+Inspect stage history or compare deliverables between two projects.
+
+```bash
+# Single-project mode: show journal stage history
+babok diff K7M3
+babok diff K7M3 --stage 3          # Focus on Stage 3 with deliverable preview
+
+# Two-project mode: line diff of deliverable files
+babok diff K7M3 R9TN               # Diff all stages between two projects
+babok diff K7M3 R9TN --stage 4     # Diff only Stage 4
+babok diff K7M3 R9TN --stage 4 --context 5   # 5 lines of context
+```
+
+**What it does (single-project):**
+- Prints stage status, timestamps, and notes from the journal
+- When `--stage N` is given, also shows the first 30 lines of the deliverable file as a preview
+
+**What it does (two-project):**
+- Runs an LCS-based line diff between the deliverable `.md` files of both projects
+- Outputs colored `+` (added) / `-` (removed) lines with surrounding context
+- Reports per-stage and total line change counts
+- Files that are identical show `✓ identical`
+- Stages present in only one project are flagged
 
 ---
 
@@ -803,5 +832,5 @@ babok approve --help      # Help for approve command
 
 ---
 
-**Version:** 1.3.0
+**Version:** 1.9.0
 **Part of:** [BABOK Analyst](https://github.com/GSkuza/BABOK_ANALYST)

@@ -1,0 +1,103 @@
+{
+  "project_id": "BABOK-TEST12345-20260210-5TXL",
+  "project_name": "test12345",
+  "language": "PL",
+  "created_at": "2026-02-10T09:47:17.726Z",
+  "last_updated": "2026-02-10T09:47:17.726Z",
+  "current_stage": 1,
+  "current_status": "in_progress",
+  "run_mode": "automated",
+  "stages": [
+    {
+      "stage": 1,
+      "name": "Project Initialization & Stakeholder Mapping",
+      "status": "in_progress",
+      "started_at": "2026-02-10T09:47:17.726Z",
+      "completed_at": null,
+      "approved_at": null,
+      "approved_by": null,
+      "deliverable_file": null,
+      "notes": ""
+    },
+    {
+      "stage": 2,
+      "name": "Current State Analysis (AS-IS)",
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "approved_at": null,
+      "approved_by": null,
+      "deliverable_file": null,
+      "notes": ""
+    },
+    {
+      "stage": 3,
+      "name": "Problem Domain Analysis",
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "approved_at": null,
+      "approved_by": null,
+      "deliverable_file": null,
+      "notes": ""
+    },
+    {
+      "stage": 4,
+      "name": "Solution Requirements Definition",
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "approved_at": null,
+      "approved_by": null,
+      "deliverable_file": null,
+      "notes": ""
+    },
+    {
+      "stage": 5,
+      "name": "Future State Design (TO-BE)",
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "approved_at": null,
+      "approved_by": null,
+      "deliverable_file": null,
+      "notes": ""
+    },
+    {
+      "stage": 6,
+      "name": "Gap Analysis & Implementation Roadmap",
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "approved_at": null,
+      "approved_by": null,
+      "deliverable_file": null,
+      "notes": ""
+    },
+    {
+      "stage": 7,
+      "name": "Risk Assessment & Mitigation Strategy",
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "approved_at": null,
+      "approved_by": null,
+      "deliverable_file": null,
+      "notes": ""
+    },
+    {
+      "stage": 8,
+      "name": "Business Case & ROI Model",
+      "status": "not_started",
+      "started_at": null,
+      "completed_at": null,
+      "approved_at": null,
+      "approved_by": null,
+      "deliverable_file": null,
+      "notes": ""
+    }
+  ],
+  "decisions": [],
+  "assumptions": [],
+  "open_questions": []
+}

@@ -14,13 +14,14 @@ import { listModels, changeModel } from '../src/commands/llm.js';
 import { getCurrentLanguage } from '../src/language.js';
 import { makeCommand, makeDocx, makePdf } from '../src/commands/makedoc.js';
 import { runAnalysis } from '../src/commands/run.js';
+import { diffCommand } from '../src/commands/diff.js';
 
 const program = new Command();
 
 program
   .name('babok')
   .description('BABOK Agent CLI - Project lifecycle management')
-  .version('1.8.2');
+  .version('1.9.0');
 
 program
   .command('new')
@@ -170,6 +171,14 @@ program
   .option('-s, --stages <list>', 'Comma-separated stages to run, e.g. "1,2,3" (default: all)')
   .option('--auto', 'Skip interactive review — run all stages fully automatically')
   .action(runAnalysis);
+
+program
+  .command('diff <id> [id2]')
+  .alias('DIFF')
+  .description('Show stage history (single ID) or diff deliverables line-by-line (two IDs)')
+  .option('-s, --stage <number>', 'Stage number to inspect/diff (0-8)')
+  .option('-c, --context <lines>', 'Lines of context around changes (two-ID mode)', '3')
+  .action(diffCommand);
 
 // MAKE command with subcommands for DOCX and PDF generation
 const makeCmd = program

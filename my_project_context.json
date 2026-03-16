@@ -1,0 +1,28 @@
+{
+  "project_name": "test12345",
+  "language": "PL",
+  "company": {
+    "name": "fa1",
+    "industry": "motoryzacja"
+  },
+  "scope": "Digitalizacja procesu zgłaszania \"potencjałów\" (wniosków racjonalizatorskich pracowników), obecnie obsługiwanego w formie papierowej.",
+  "pain_points": [
+    "brak przejrzystości dla pracowników",
+    "niekontrolowane przepływy informacji związanych z potencjałami",
+    "brak motywacji dla pracowników do zgłaszania potencjałów"
+  ],
+  "budget": {
+    "estimated": "do ustalenia"
+  },
+  "timeline": {
+    "target_date": "2026-06-01"
+  },
+  "stakeholders": {
+    "key_decision_makers": [
+      "dyrektor produkcji"
+    ]
+  },
+  "constraints": [
+    "brak"
+  ]
+}
