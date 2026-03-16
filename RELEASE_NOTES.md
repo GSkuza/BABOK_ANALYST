@@ -1,3 +1,49 @@
+# BABOK Analyst v2.0.2 - Release Notes
+
+**Release Date:** March 16, 2026
+**Status:** Patch Release
+**License:** MIT
+
+---
+
+## What's New in v2.0.2
+
+### 1. Fixed `setup.bat` (Root Installer)
+
+The root-level `setup.bat` was completely rewritten to fix multiple critical bugs:
+
+- **Removed UTF-8 box-drawing characters** (`─`, `━`) that caused cmd.exe to misparse lines when combined with `chcp 65001`
+- **Added `setlocal EnableDelayedExpansion`** so `!errorlevel!` works correctly inside `if` blocks (previously `%errorlevel%` was always 0 inside parentheses)
+- **Removed `chcp 65001`** — caused cmd.exe byte-counting mismatch leading to skipped/garbled output lines
+- **Replaced `cmd /k`** at the end with `pause >nul` — no more orphaned nested shell after installation
+- **Fixed PATH refresh** — reads fresh Machine+User registry PATH at startup; prevents "node not found" on fresh installs launched from Explorer
+- **Added Node.js fallback search** — checks standard install locations (`%ProgramFiles%`, `%LOCALAPPDATA%`) if `node` isn't on PATH
+- **Fixed `setx PATH` safety** — no longer passes the full expanded `%PATH%` (which would truncate at 1024 chars); now reads and extends only the User-scoped registry PATH
+
+### 2. New `babok-mcp/setup.bat` (MCP Server Installer)
+
+Added a dedicated one-click Windows installer for the `babok-mcp` server:
+
+- Detects Node.js (with fallback location search)
+- Runs `npm install` for MCP dependencies
+- Validates server entry point with `node --check` (no hang — does not start the server)
+- Displays the ready-to-paste JSON config block for `claude_desktop_config.json`, with dynamically resolved absolute paths (forward slashes, no `..` segments)
+- Offers to open `claude_desktop_config.json` in Notepad if Claude Desktop is installed
+- Works in any install location (not hardcoded to `D:`)
+
+### 3. Updated MCP User Manuals
+
+- **`babok-mcp-podrecznik uzytkownika.md`** (PL) — updated to v2.0.2: added `setup.bat` as install option, described `babok_rename_project` and `babok_delete_project` tools (were missing), updated tool count from 8 to 10, corrected FAQ entries for rename/delete
+- **`babok-mcp-user-manual.md`** (EN) — **new file**: full English translation of the MCP user manual, covering all 10 tools, 4 client configurations, troubleshooting, and FAQ
+
+### Upgrade Notes
+
+- No breaking changes from v2.0.1.
+- Existing projects remain fully compatible.
+- `setup.bat` can be re-run safely on existing installations.
+
+---
+
 # BABOK Analyst v1.8.2 - Release Notes
 
 **Release Date:** February 11, 2026

@@ -52,11 +52,15 @@ BABOK_ANALYST/
 |   |-- src/lib/project.js                # Project ID & path resolution
 |   |-- src/lib/journal.js                # Journal CRUD + stage transitions
 |   |-- src/test/smoke.js                 # 10-assertion smoke test suite
+|   |-- setup.bat                         # One-click MCP installer (Windows) (NEW v2.0.2)
 |   |-- package.json                      # npm package (babok-mcp)
 |   |-- README.md                         # Setup guide for Claude/Cursor/VS Code
+|   |-- babok-mcp-user-manual.md          # Full user manual (EN) (NEW v2.0.2)
 |
 |-- setup.bat                             # One-click installer (Windows) (NEW v2.0.1)
 |-- setup.sh                              # One-click installer (Linux/macOS) (NEW v2.0.1)
+|-- babok-mcp-podrecznik uzytkownika.md   # Full MCP user manual (PL) (NEW v2.0.2)
+|-- babok-mcp-user-manual.md              # Full MCP user manual (EN) (NEW v2.0.2)
 |
 |-- .github/
 |   |-- copilot-instructions.md           # Configuration for GitHub Copilot / VS Code
@@ -375,6 +379,13 @@ The `babok-mcp` package is a [Model Context Protocol](https://modelcontextprotoc
 
 ### Setup (Claude Desktop / Claude Code)
 
+**Windows (one-click):**
+```bat
+cd BABOK_ANALYST/babok-mcp
+setup.bat
+```
+
+**Manual:**
 ```bash
 cd BABOK_ANALYST/babok-mcp
 npm install

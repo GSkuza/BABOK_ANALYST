@@ -1,5 +1,5 @@
 @echo off
-chcp 65001 >nul 2>&1
+setlocal EnableDelayedExpansion
 
 echo.
 echo  ========================================================
@@ -7,91 +7,112 @@ echo   BABOK Agent CLI -- Instalator (Windows)
 echo  ========================================================
 echo.
 
-:: ── 1. Sprawdz Node.js ──────────────────────────────────────────────────────
-where node >nul 2>&1
-if errorlevel 1 (
-    echo  [BLAD] Node.js nie jest zainstalowany.
-    echo.
-    echo  Pobierz i zainstaluj Node.js ze strony:
-    echo    https://nodejs.org/  (wersja LTS, np. 20.x)
-    echo.
-    echo  Po instalacji uruchom ten skrypt ponownie.
-    goto :DONE
+:: --- 0. Odswiez PATH (fix dla Explorer z nieaktualnym PATH) ---
+powershell.exe -NoProfile -Command "[System.Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('PATH','User')" > "%TEMP%\babokpath.tmp" 2>nul
+for /f "usebackq delims=" %%P in ("%TEMP%\babokpath.tmp") do set "PATH=%%P"
+del "%TEMP%\babokpath.tmp" >nul 2>&1
+
+:: --- 1. Sprawdz Node.js ---
+node --version >nul 2>&1
+if not errorlevel 1 goto :NODE_OK
+
+:: Szukaj Node.js w standardowych lokalizacjach
+if exist "%ProgramFiles%\nodejs\node.exe" (
+    set "PATH=%ProgramFiles%\nodejs;!PATH!"
+    goto :NODE_OK
+)
+if exist "%ProgramFiles(x86)%\nodejs\node.exe" (
+    set "PATH=%ProgramFiles(x86)%\nodejs;!PATH!"
+    goto :NODE_OK
+)
+if exist "%LOCALAPPDATA%\Programs\nodejs\node.exe" (
+    set "PATH=%LOCALAPPDATA%\Programs\nodejs;!PATH!"
+    goto :NODE_OK
 )
 
-for /f "tokens=1" %%v in ('node --version') do set NODE_VER=%%v
-echo  [OK] Node.js %NODE_VER% znaleziony.
+echo  [BLAD] Node.js nie jest zainstalowany.
+echo.
+echo  Pobierz i zainstaluj ze strony: https://nodejs.org/
+echo  Zalecana wersja: LTS (np. 20.x lub nowsza)
+echo.
+echo  Po instalacji uruchom ten skrypt ponownie.
+goto :DONE
 
-:: ── 2. Sprawdz npm ──────────────────────────────────────────────────────────
-where npm >nul 2>&1
-if errorlevel 1 (
+:NODE_OK
+for /f "tokens=1" %%v in ('node --version') do set "NODE_VER=%%v"
+echo  [OK] Node.js !NODE_VER! znaleziony.
+
+:: --- 2. Sprawdz npm ---
+call npm --version >nul 2>&1
+if !errorlevel! neq 0 (
     echo  [BLAD] npm nie zostal znaleziony. Zainstaluj Node.js ponownie.
     goto :DONE
 )
 echo  [OK] npm znaleziony.
 
-:: ── 3. Instaluj zaleznosci CLI ──────────────────────────────────────────────
+:: --- 3. Instaluj zaleznosci CLI ---
 echo.
-echo  [INFO] Instalowanie zaleznosci CLI (cli/)...
+echo  [INFO] Instalowanie zaleznosci CLI...
 pushd "%~dp0cli"
 call npm install
-set NPM_CLI_ERR=%errorlevel%
+set "NPM_ERR=!errorlevel!"
 popd
-if %NPM_CLI_ERR% neq 0 (
-    echo.
-    echo  [BLAD] npm install (cli) nie powiodl sie.
+if !NPM_ERR! neq 0 (
+    echo  [BLAD] npm install nie powiodl sie.
     echo  Sprawdz polaczenie z internetem i sprobuj ponownie.
     goto :DONE
 )
 echo  [OK] Zaleznosci CLI zainstalowane.
 
-:: ── 4. Instaluj zaleznosci MCP (opcjonalnie) ────────────────────────────────
+:: --- 4. Instaluj zaleznosci MCP (opcjonalnie) ---
 if exist "%~dp0babok-mcp\package.json" (
     echo.
-    echo  [INFO] Instalowanie zaleznosci MCP (babok-mcp/)...
+    echo  [INFO] Instalowanie zaleznosci MCP...
     pushd "%~dp0babok-mcp"
     call npm install
-    set NPM_MCP_ERR=%errorlevel%
+    set "NPM_MCP_ERR=!errorlevel!"
     popd
-    if %NPM_MCP_ERR% neq 0 (
-        echo  [UWAGA] npm install (babok-mcp) nie powiodl sie - kontynuuję bez MCP.
+    if !NPM_MCP_ERR! neq 0 (
+        echo  [UWAGA] npm install MCP nie powiodl sie - kontynuuje bez MCP.
     ) else (
         echo  [OK] Zaleznosci MCP zainstalowane.
     )
 )
 
-:: ── 5. Dodaj babok do PATH (opcjonalnie) ────────────────────────────────────
+:: --- 5. Zainstaluj babok globalnie ---
 echo.
-set /p ADD_PATH=  Czy dodac 'babok' do PATH uzytkownika? (T/N):
-if /i "%ADD_PATH%"=="T" (
-    setx PATH "%PATH%;%~dp0cli\bin"
-    if errorlevel 1 (
-        echo  [UWAGA] Nie udalo sie dodac do PATH. Dodaj recznie: %~dp0cli\bin
-    ) else (
-        echo  [OK] Dodano %~dp0cli\bin do PATH uzytkownika.
-        echo  [INFO] Uruchom NOWY terminal aby zmiany weszly w zycie.
-    )
+echo  [INFO] Instalowanie komendy 'babok' globalnie...
+pushd "%~dp0cli"
+call npm install -g . 2>nul
+set "NPM_G_ERR=!errorlevel!"
+popd
+if !NPM_G_ERR! neq 0 (
+    echo  [UWAGA] Instalacja globalna nie powiodla sie.
+    echo  Mozesz potrzebowac uprawnien administratora.
+    echo  Alternatywnie uzyj: node "%~dp0cli\bin\babok.js" --help
+) else (
+    echo  [OK] Komenda 'babok' dostepna globalnie.
 )
 
-:: ── 6. Kreator konfiguracji (klucze API, jezyk) ──────────────────────────────
+:: --- 6. Kreator konfiguracji ---
 echo.
-set /p RUN_SETUP=  Czy uruchomic kreator konfiguracji (klucze API, jezyk)? (T/N):
-if /i "%RUN_SETUP%"=="T" (
+set /p "RUN_SETUP=  Uruchomic kreator konfiguracji API? (T/N): "
+if /i "!RUN_SETUP!"=="T" (
     node "%~dp0cli\bin\babok.js" setup
 )
 
-:: ── Sukces ───────────────────────────────────────────────────────────────────
+:: --- Sukces ---
 echo.
 echo  ========================================================
 echo   Instalacja zakonczona!
 echo.
-echo   Uruchom NOWY terminal i wpisz:
+echo   Otworz NOWY terminal i wpisz:
 echo     babok --help        aby zobaczyc komendy
 echo     babok new           aby utworzyc nowy projekt
 echo  ========================================================
 
 :DONE
 echo.
-echo  Wpisz EXIT aby zamknac to okno.
-echo.
-cmd /k
+echo  Nacisnij dowolny klawisz aby zamknac...
+pause >nul
+endlocal
