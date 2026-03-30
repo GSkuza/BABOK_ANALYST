@@ -1,28 +1,49 @@
 {
-  "project_name": "test12345",
-  "language": "PL",
-  "company": {
-    "name": "fa1",
-    "industry": "motoryzacja"
-  },
-  "scope": "Digitalizacja procesu zgłaszania \"potencjałów\" (wniosków racjonalizatorskich pracowników), obecnie obsługiwanego w formie papierowej.",
-  "pain_points": [
-    "brak przejrzystości dla pracowników",
-    "niekontrolowane przepływy informacji związanych z potencjałami",
-    "brak motywacji dla pracowników do zgłaszania potencjałów"
-  ],
-  "budget": {
-    "estimated": "do ustalenia"
-  },
-  "timeline": {
-    "target_date": "2026-06-01"
-  },
-  "stakeholders": {
-    "key_decision_makers": [
-      "dyrektor produkcji"
+  "schema_version": "2.0",
+  "project": {
+    "id": "BABOK-20260330-FA01",
+    "name": "test12345",
+    "language": "PL",
+    "created_at": "2026-03-30T00:00:00Z",
+    "last_updated": "2026-03-30T00:00:00Z",
+    "company": {
+      "name": "fa1",
+      "industry": "motoryzacja"
+    },
+    "scope": "Digitalizacja procesu zgłaszania \"potencjałów\" (wniosków racjonalizatorskich pracowników), obecnie obsługiwanego w formie papierowej.",
+    "pain_points": [
+      "brak przejrzystości dla pracowników",
+      "niekontrolowane przepływy informacji związanych z potencjałami",
+      "brak motywacji dla pracowników do zgłaszania potencjałów"
+    ],
+    "budget": {
+      "estimated": "do ustalenia"
+    },
+    "timeline": {
+      "target_date": "2026-06-01"
+    },
+    "stakeholders": {
+      "key_decision_makers": [
+        "dyrektor produkcji"
+      ]
+    },
+    "constraints": [
+      "brak"
     ]
   },
-  "constraints": [
-    "brak"
-  ]
+  "stages": {
+    "stage1": { "status": "not_started", "artifacts": [], "started_at": null, "completed_at": null, "approved_at": null, "approved_by": null, "iteration_count": 0 },
+    "stage2": { "status": "not_started", "artifacts": [], "started_at": null, "completed_at": null, "approved_at": null, "approved_by": null, "iteration_count": 0 },
+    "stage3": { "status": "not_started", "artifacts": [], "started_at": null, "completed_at": null, "approved_at": null, "approved_by": null, "iteration_count": 0 },
+    "stage4": { "status": "not_started", "artifacts": [], "started_at": null, "completed_at": null, "approved_at": null, "approved_by": null, "iteration_count": 0 },
+    "stage5": { "status": "not_started", "artifacts": [], "started_at": null, "completed_at": null, "approved_at": null, "approved_by": null, "iteration_count": 0 },
+    "stage6": { "status": "not_started", "artifacts": [], "started_at": null, "completed_at": null, "approved_at": null, "approved_by": null, "iteration_count": 0 },
+    "stage7": { "status": "not_started", "artifacts": [], "started_at": null, "completed_at": null, "approved_at": null, "approved_by": null, "iteration_count": 0 },
+    "stage8": { "status": "not_started", "artifacts": [], "started_at": null, "completed_at": null, "approved_at": null, "approved_by": null, "iteration_count": 0 }
+  },
+  "quality_reports": {},
+  "agent_messages": [],
+  "decisions": [],
+  "assumptions": [],
+  "risks": []
 }

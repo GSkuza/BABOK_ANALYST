@@ -1,0 +1,34 @@
+{
+  "agent": {
+    "id": "stage5",
+    "name": "Stage 5 Agent — Requirements Analysis",
+    "version": "2.0",
+    "description": "Analyses and prioritises requirements, resolves conflicts, and produces the Functional Specification Document (FSD).",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.5
+    }
+  },
+  "babok": {
+    "stage_number": 5,
+    "stage_name": "Requirements Analysis",
+    "knowledge_area": "Requirements Analysis and Design Definition",
+    "primary_deliverable": "Functional Specification Document (FSD)"
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage5"
+  },
+  "mcp_tools": ["file_system"],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage5/",
+    "artifact_type": "markdown"
+  }
+}

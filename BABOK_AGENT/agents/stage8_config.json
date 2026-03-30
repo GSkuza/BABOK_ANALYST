@@ -1,0 +1,34 @@
+{
+  "agent": {
+    "id": "stage8",
+    "name": "Stage 8 Agent — Business Case & ROI",
+    "version": "2.0",
+    "description": "Develops the financial justification for the solution including cost-benefit analysis, NPV, IRR, and payback period, and produces the Business Case.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.5
+    }
+  },
+  "babok": {
+    "stage_number": 8,
+    "stage_name": "Business Case & ROI",
+    "knowledge_area": "Solution Evaluation",
+    "primary_deliverable": "Business Case"
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage8"
+  },
+  "mcp_tools": ["file_system", "babok_sync_stage_artifact"],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage8/",
+    "artifact_type": "markdown"
+  }
+}
