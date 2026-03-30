@@ -24,6 +24,7 @@
   "author": "Grzegorz Skuza",
   "license": "MIT",
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@modelcontextprotocol/sdk": "^1.10.0",
     "nanoid": "^5.0.9",
     "zod": "^3.23.0"
