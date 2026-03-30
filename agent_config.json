@@ -98,5 +98,38 @@
     "max_tokens": 8192,
     "temperature": 0.7,
     "note": "API key is stored locally in .env file (gitignored). Run: babok chat <id> to configure."
+  },
+  "orchestrator": {
+    "config_file": "BABOK_AGENT/agents/orchestrator_config.json",
+    "enabled": true
+  },
+  "agents": {
+    "stage1": { "config_file": "BABOK_AGENT/agents/stage1_config.json", "enabled": true },
+    "stage2": { "config_file": "BABOK_AGENT/agents/stage2_config.json", "enabled": true },
+    "stage3": { "config_file": "BABOK_AGENT/agents/stage3_config.json", "enabled": true },
+    "stage4": { "config_file": "BABOK_AGENT/agents/stage4_config.json", "enabled": true },
+    "stage5": { "config_file": "BABOK_AGENT/agents/stage5_config.json", "enabled": true },
+    "stage6": { "config_file": "BABOK_AGENT/agents/stage6_config.json", "enabled": true },
+    "stage7": { "config_file": "BABOK_AGENT/agents/stage7_config.json", "enabled": true },
+    "stage8": { "config_file": "BABOK_AGENT/agents/stage8_config.json", "enabled": true },
+    "quality_audit": { "config_file": "BABOK_AGENT/agents/quality_audit_agent.md", "enabled": true }
+  },
+  "mcp": {
+    "enabled": true,
+    "server_path": "babok-mcp/src/server.js",
+    "tools_available": [
+      "file_system",
+      "babok_quality_check",
+      "babok_get_stage_artifact",
+      "babok_sync_stage_artifact",
+      "babok_create_jira_epic",
+      "babok_create_github_issues",
+      "babok_read_external_context"
+    ]
+  },
+  "context_store": {
+    "path": "my_project_context.json",
+    "schema_version": "2.0",
+    "schema_file": "BABOK_AGENT/agents/context_schema_v2.json"
   }
 }

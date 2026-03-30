@@ -1,0 +1,34 @@
+{
+  "agent": {
+    "id": "stage1",
+    "name": "Stage 1 Agent — Project Initialization",
+    "version": "2.0",
+    "description": "Initializes the project, defines scope, identifies stakeholders, and produces the Project Charter.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.5
+    }
+  },
+  "babok": {
+    "stage_number": 1,
+    "stage_name": "Project Initialization",
+    "knowledge_area": "Business Analysis Planning and Monitoring",
+    "primary_deliverable": "Project Charter"
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage1"
+  },
+  "mcp_tools": ["file_system", "babok_read_external_context"],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage1/",
+    "artifact_type": "markdown"
+  }
+}

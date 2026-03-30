@@ -1,0 +1,34 @@
+{
+  "agent": {
+    "id": "stage6",
+    "name": "Stage 6 Agent — Solution Design (TO-BE)",
+    "version": "2.0",
+    "description": "Designs the future-state solution architecture and processes, and produces the TO-BE Process Model.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.5
+    }
+  },
+  "babok": {
+    "stage_number": 6,
+    "stage_name": "Solution Design (TO-BE)",
+    "knowledge_area": "Requirements Analysis and Design Definition",
+    "primary_deliverable": "TO-BE Process Model"
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage6"
+  },
+  "mcp_tools": ["file_system", "babok_sync_stage_artifact"],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage6/",
+    "artifact_type": "markdown"
+  }
+}
