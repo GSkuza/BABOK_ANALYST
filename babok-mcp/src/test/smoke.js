@@ -129,9 +129,7 @@ const { createJournal, readJournal, approveStage, rejectStage } = await import('
 // ── Test 13: htmlToText strips tags ──────────────────────────────────────
 {
   function htmlToText(html) {
-    let text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '');
-    text = text.replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '');
-    text = text.replace(/<[^>]+>/g, ' ');
+    let text = html.replace(/<[^>]*>/g, ' ');
     text = text.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
     text = text.replace(/&nbsp;/g, ' ');
     text = text.replace(/&lt;/g, '<');

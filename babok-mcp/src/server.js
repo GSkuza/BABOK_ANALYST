@@ -1474,14 +1474,14 @@ server.tool(
 //  TOOL 16: babok_read_external_context
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Strip HTML tags and collapse whitespace for text extraction */
+/** Strip HTML tags and collapse whitespace for plain-text extraction.
+ * The output is plain text only — it is never rendered as HTML.
+ * All tags are stripped by removing angle-bracket content in a single pass.
+ */
 function htmlToText(html) {
-  // Remove script and style blocks; handle optional whitespace before closing >
-  let text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '');
-  text = text.replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '');
-  // Strip all remaining HTML tags
-  text = text.replace(/<[^>]+>/g, ' ');
-  // Decode numeric character references first
+  // Strip all HTML tags in one pass (including any script/style content tags)
+  let text = html.replace(/<[^>]*>/g, ' ');
+  // Decode numeric character references
   text = text.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
   // Decode named entities — &amp; must come last to avoid double-decoding
   text = text.replace(/&nbsp;/g, ' ');
