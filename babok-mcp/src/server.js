@@ -1476,18 +1476,23 @@ server.tool(
 
 /** Strip HTML tags and collapse whitespace for text extraction */
 function htmlToText(html) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  // Remove script and style blocks; handle optional whitespace before closing >
+  let text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '');
+  text = text.replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '');
+  // Strip all remaining HTML tags
+  text = text.replace(/<[^>]+>/g, ' ');
+  // Decode numeric character references first
+  text = text.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+  // Decode named entities — &amp; must come last to avoid double-decoding
+  text = text.replace(/&nbsp;/g, ' ');
+  text = text.replace(/&lt;/g, '<');
+  text = text.replace(/&gt;/g, '>');
+  text = text.replace(/&quot;/g, '"');
+  text = text.replace(/&amp;/g, '&');
+  // Collapse whitespace
+  text = text.replace(/[ \t]+/g, ' ');
+  text = text.replace(/\n{3,}/g, '\n\n');
+  return text.trim();
 }
 
 /** Extract headings only from text content */

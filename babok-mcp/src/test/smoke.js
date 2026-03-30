@@ -129,18 +129,18 @@ const { createJournal, readJournal, approveStage, rejectStage } = await import('
 // ── Test 13: htmlToText strips tags ──────────────────────────────────────
 {
   function htmlToText(html) {
-    return html
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"')
-      .replace(/[ \t]+/g, ' ')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+    let text = html.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '');
+    text = text.replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '');
+    text = text.replace(/<[^>]+>/g, ' ');
+    text = text.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+    text = text.replace(/&nbsp;/g, ' ');
+    text = text.replace(/&lt;/g, '<');
+    text = text.replace(/&gt;/g, '>');
+    text = text.replace(/&quot;/g, '"');
+    text = text.replace(/&amp;/g, '&');
+    text = text.replace(/[ \t]+/g, ' ');
+    text = text.replace(/\n{3,}/g, '\n\n');
+    return text.trim();
   }
   const html = '<h1>Hello</h1><p>World &amp; <strong>BABOK</strong></p>';
   const text = htmlToText(html);
