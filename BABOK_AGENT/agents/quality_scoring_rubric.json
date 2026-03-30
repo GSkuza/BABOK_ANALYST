@@ -1,0 +1,452 @@
+{
+  "version": "1.0",
+  "description": "Quality scoring rubric for BABOK Quality Audit Agent — one entry per stage",
+  "scoring": {
+    "completeness_weight": 0.40,
+    "consistency_weight": 0.30,
+    "quality_weight": 0.30,
+    "min_overall_score": 75
+  },
+  "stages": {
+    "stage1": {
+      "name": "Project Initialization & Stakeholder Mapping",
+      "required_sections": [
+        "Executive Summary",
+        "Project Scope — In Scope",
+        "Project Scope — Out of Scope",
+        "System Landscape",
+        "Stakeholder Register",
+        "RACI Matrix",
+        "Success Criteria — Quantitative KPIs",
+        "Success Criteria — ROI Targets",
+        "Regulatory Requirements",
+        "Communication Plan",
+        "Project Constraints",
+        "Assumptions & Dependencies",
+        "Open Questions"
+      ],
+      "quality_criteria": [
+        {
+          "id": "S1-Q1",
+          "description": "Every quantitative KPI has a numeric baseline value",
+          "applies_to": "Success Criteria",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S1-Q2",
+          "description": "Every quantitative KPI has a numeric target value",
+          "applies_to": "Success Criteria",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S1-Q3",
+          "description": "Every deadline is a specific calendar date (not Q1/soon/TBD)",
+          "applies_to": "Project Constraints",
+          "smart_dimension": "Time-bound"
+        },
+        {
+          "id": "S1-Q4",
+          "description": "Budget range has currency and numeric bounds",
+          "applies_to": "Project Constraints",
+          "smart_dimension": "Specific"
+        },
+        {
+          "id": "S1-Q5",
+          "description": "ROI targets include payback period, NPV and IRR",
+          "applies_to": "Success Criteria — ROI Targets",
+          "smart_dimension": "Measurable"
+        }
+      ],
+      "consistency_checks": [
+        {
+          "id": "S1-C1",
+          "description": "Scope items are consistent with regulatory requirements listed",
+          "source": "Stage 1 internal"
+        },
+        {
+          "id": "S1-C2",
+          "description": "RACI accountability assignments match stakeholder influence levels",
+          "source": "Stage 1 internal"
+        }
+      ],
+      "weights": {
+        "completeness": 0.40,
+        "consistency": 0.30,
+        "quality": 0.30
+      }
+    },
+    "stage2": {
+      "name": "Current State Analysis (AS-IS)",
+      "required_sections": [
+        "AS-IS Process Map or BPMN description",
+        "Pain Points Analysis",
+        "Baseline Metrics",
+        "System Inventory",
+        "Bottleneck Identification"
+      ],
+      "quality_criteria": [
+        {
+          "id": "S2-Q1",
+          "description": "Baseline metrics are numeric (not qualitative descriptions)",
+          "applies_to": "Baseline Metrics",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S2-Q2",
+          "description": "Each bottleneck cites a measurable impact",
+          "applies_to": "Bottleneck Identification",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S2-Q3",
+          "description": "Volume metrics include unit of measure and time period",
+          "applies_to": "Baseline Metrics",
+          "smart_dimension": "Specific"
+        }
+      ],
+      "consistency_checks": [
+        {
+          "id": "S2-C1",
+          "description": "All pain points from Stage 1 context are addressed in pain points analysis",
+          "source": "stage1"
+        },
+        {
+          "id": "S2-C2",
+          "description": "System inventory matches system landscape from Stage 1",
+          "source": "stage1"
+        }
+      ],
+      "weights": {
+        "completeness": 0.40,
+        "consistency": 0.30,
+        "quality": 0.30
+      }
+    },
+    "stage3": {
+      "name": "Problem Domain Analysis",
+      "required_sections": [
+        "Root Cause Analysis (5 Whys or Ishikawa)",
+        "Problem Prioritisation Matrix",
+        "Impact Assessment",
+        "Problem Statements"
+      ],
+      "quality_criteria": [
+        {
+          "id": "S3-Q1",
+          "description": "Each problem statement is measurable (contains numeric or observable criterion)",
+          "applies_to": "Problem Statements",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S3-Q2",
+          "description": "Root cause analysis goes at least 3 levels deep (3 Whys minimum)",
+          "applies_to": "Root Cause Analysis",
+          "smart_dimension": "Specific"
+        },
+        {
+          "id": "S3-Q3",
+          "description": "Prioritisation matrix uses two quantifiable dimensions (e.g. Impact × Likelihood)",
+          "applies_to": "Problem Prioritisation Matrix",
+          "smart_dimension": "Measurable"
+        }
+      ],
+      "consistency_checks": [
+        {
+          "id": "S3-C1",
+          "description": "Every root cause traces to a pain point from Stage 1 or bottleneck from Stage 2",
+          "source": "stage1, stage2"
+        },
+        {
+          "id": "S3-C2",
+          "description": "Compliance-related problems are ranked high priority (consistent with Stage 1 regulatory requirements)",
+          "source": "stage1"
+        }
+      ],
+      "weights": {
+        "completeness": 0.40,
+        "consistency": 0.30,
+        "quality": 0.30
+      }
+    },
+    "stage4": {
+      "name": "Solution Requirements Definition",
+      "required_sections": [
+        "Functional Requirements (FR-NNN)",
+        "Non-Functional Requirements (NFR-NNN)",
+        "User Stories with Acceptance Criteria",
+        "Requirements Traceability Matrix (RTM)",
+        "Change Control Process",
+        "Regulatory Compliance Requirements"
+      ],
+      "quality_criteria": [
+        {
+          "id": "S4-Q1",
+          "description": "Every acceptance criterion is testable (produces observable, verifiable outcome)",
+          "applies_to": "User Stories with Acceptance Criteria",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S4-Q2",
+          "description": "NFRs contain numeric thresholds (e.g. response time < 2s, availability >= 99.5%)",
+          "applies_to": "Non-Functional Requirements",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S4-Q3",
+          "description": "Each FR has a unique ID (FR-NNN format)",
+          "applies_to": "Functional Requirements",
+          "smart_dimension": "Specific"
+        },
+        {
+          "id": "S4-Q4",
+          "description": "MoSCoW prioritisation applied to all requirements",
+          "applies_to": "Functional Requirements",
+          "smart_dimension": "Relevant"
+        }
+      ],
+      "consistency_checks": [
+        {
+          "id": "S4-C1",
+          "description": "Every FR traces to at least one problem from Stage 3 RTM",
+          "source": "stage3"
+        },
+        {
+          "id": "S4-C2",
+          "description": "Regulatory compliance requirements present when Stage 1 identified applicable regulations",
+          "source": "stage1"
+        },
+        {
+          "id": "S4-C3",
+          "description": "No requirement addresses a problem not identified in Stage 3 (scope creep check)",
+          "source": "stage3"
+        }
+      ],
+      "weights": {
+        "completeness": 0.40,
+        "consistency": 0.30,
+        "quality": 0.30
+      }
+    },
+    "stage5": {
+      "name": "Future State Design (TO-BE)",
+      "required_sections": [
+        "TO-BE Process Map or Description",
+        "Key Design Decisions with Rationale",
+        "Technology Stack / Solution Architecture",
+        "Integration Points",
+        "User Experience Improvements"
+      ],
+      "quality_criteria": [
+        {
+          "id": "S5-Q1",
+          "description": "Every major problem from Stage 3 has a corresponding design element addressing it",
+          "applies_to": "TO-BE Process Map",
+          "smart_dimension": "Relevant"
+        },
+        {
+          "id": "S5-Q2",
+          "description": "Projected improvements are quantified and tied to Stage 1 KPI targets",
+          "applies_to": "User Experience Improvements",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S5-Q3",
+          "description": "Each design decision documents alternatives considered and rationale for choice",
+          "applies_to": "Key Design Decisions",
+          "smart_dimension": "Specific"
+        }
+      ],
+      "consistency_checks": [
+        {
+          "id": "S5-C1",
+          "description": "Every must-have FR from Stage 4 has a corresponding TO-BE design element",
+          "source": "stage4"
+        },
+        {
+          "id": "S5-C2",
+          "description": "Integration points match systems identified in Stage 2 system inventory",
+          "source": "stage2"
+        },
+        {
+          "id": "S5-C3",
+          "description": "No new scope items introduced without explicit change request reference",
+          "source": "stage1"
+        }
+      ],
+      "weights": {
+        "completeness": 0.40,
+        "consistency": 0.30,
+        "quality": 0.30
+      }
+    },
+    "stage6": {
+      "name": "Gap Analysis & Implementation Roadmap",
+      "required_sections": [
+        "Gap Analysis Table (AS-IS vs TO-BE)",
+        "Implementation Phases",
+        "Resource Plan",
+        "Key Milestones",
+        "Critical Path"
+      ],
+      "quality_criteria": [
+        {
+          "id": "S6-Q1",
+          "description": "Each milestone has a specific calendar date and measurable completion criterion",
+          "applies_to": "Key Milestones",
+          "smart_dimension": "Time-bound"
+        },
+        {
+          "id": "S6-Q2",
+          "description": "Each phase has estimated effort in person-days or person-months",
+          "applies_to": "Implementation Phases",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S6-Q3",
+          "description": "Critical path explicitly identifies the longest dependency chain",
+          "applies_to": "Critical Path",
+          "smart_dimension": "Specific"
+        }
+      ],
+      "consistency_checks": [
+        {
+          "id": "S6-C1",
+          "description": "Every gap traces to at least one requirement from Stage 4",
+          "source": "stage4"
+        },
+        {
+          "id": "S6-C2",
+          "description": "Total resource plan cost is within budget constraints from Stage 1",
+          "source": "stage1"
+        },
+        {
+          "id": "S6-C3",
+          "description": "Roadmap end date is on or before target date from Stage 1",
+          "source": "stage1"
+        }
+      ],
+      "weights": {
+        "completeness": 0.40,
+        "consistency": 0.30,
+        "quality": 0.30
+      }
+    },
+    "stage7": {
+      "name": "Risk Assessment & Mitigation",
+      "required_sections": [
+        "Risk Register",
+        "Risk Prioritisation Matrix",
+        "Top 5 Risks with Mitigation Plans",
+        "Data Protection Impact Assessment (DPIA, if GDPR applicable)",
+        "Residual Risk Statement"
+      ],
+      "quality_criteria": [
+        {
+          "id": "S7-Q1",
+          "description": "Each risk has a numeric likelihood score and impact score (1–5 scale)",
+          "applies_to": "Risk Register",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S7-Q2",
+          "description": "Each mitigation action is assigned to a named owner with a target date",
+          "applies_to": "Risk Register",
+          "smart_dimension": "Time-bound"
+        },
+        {
+          "id": "S7-Q3",
+          "description": "Residual risk is quantified after mitigation (not just described)",
+          "applies_to": "Residual Risk Statement",
+          "smart_dimension": "Measurable"
+        }
+      ],
+      "consistency_checks": [
+        {
+          "id": "S7-C1",
+          "description": "High-priority risks are consistent with compliance requirements from Stage 1",
+          "source": "stage1"
+        },
+        {
+          "id": "S7-C2",
+          "description": "Technical risks reference integration points from Stage 5",
+          "source": "stage5"
+        },
+        {
+          "id": "S7-C3",
+          "description": "DPIA section present when GDPR or equivalent was identified in Stage 1",
+          "source": "stage1"
+        }
+      ],
+      "weights": {
+        "completeness": 0.40,
+        "consistency": 0.30,
+        "quality": 0.30
+      }
+    },
+    "stage8": {
+      "name": "Business Case & ROI Model",
+      "required_sections": [
+        "Cost-Benefit Analysis (CBA) — 3-year projection",
+        "NPV Calculation",
+        "IRR Calculation",
+        "Payback Period",
+        "Sensitivity Analysis (pessimistic / optimistic scenarios)",
+        "Implementation Cost Breakdown",
+        "Executive Recommendation"
+      ],
+      "quality_criteria": [
+        {
+          "id": "S8-Q1",
+          "description": "Every financial parameter cites a data source (vendor quote, survey, baseline data)",
+          "applies_to": "Cost-Benefit Analysis",
+          "smart_dimension": "Specific"
+        },
+        {
+          "id": "S8-Q2",
+          "description": "Sensitivity analysis varies at least 2 key assumptions (e.g. adoption rate, implementation cost)",
+          "applies_to": "Sensitivity Analysis",
+          "smart_dimension": "Measurable"
+        },
+        {
+          "id": "S8-Q3",
+          "description": "NPV discount rate is explicitly stated and justified",
+          "applies_to": "NPV Calculation",
+          "smart_dimension": "Specific"
+        },
+        {
+          "id": "S8-Q4",
+          "description": "Executive Recommendation clearly states go/no-go with rationale",
+          "applies_to": "Executive Recommendation",
+          "smart_dimension": "Specific"
+        }
+      ],
+      "consistency_checks": [
+        {
+          "id": "S8-C1",
+          "description": "Implementation costs align with resource plan from Stage 6",
+          "source": "stage6"
+        },
+        {
+          "id": "S8-C2",
+          "description": "Savings estimates trace to KPI improvements identified in Stage 1",
+          "source": "stage1"
+        },
+        {
+          "id": "S8-C3",
+          "description": "Payback period is within the maximum acceptable period stated in Stage 1",
+          "source": "stage1"
+        },
+        {
+          "id": "S8-C4",
+          "description": "Risks and uncertainties in financial model reference Stage 7 risk register",
+          "source": "stage7"
+        }
+      ],
+      "weights": {
+        "completeness": 0.40,
+        "consistency": 0.30,
+        "quality": 0.30
+      }
+    }
+  }
+}

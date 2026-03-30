@@ -1,0 +1,41 @@
+{
+  "orchestrator": {
+    "name": "BABOK Orchestrator",
+    "version": "2.0",
+    "description": "Central coordinator for multi-agent BABOK analysis pipeline",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.3
+    },
+    "pipeline": {
+      "mode": "sequential_with_parallel_options",
+      "parallel_groups": [
+        ["stage2", "stage7_initial_risk_scan"]
+      ],
+      "mandatory_sequence": ["stage1", "stage3", "stage4", "stage5", "stage6", "stage8"]
+    },
+    "quality_gate": {
+      "enabled": true,
+      "agent": "quality_audit",
+      "min_score": 75,
+      "max_iterations": 3,
+      "escalate_to_human_after": 3
+    },
+    "mcp": {
+      "enabled": true,
+      "server_path": "../../babok-mcp/src/server.js",
+      "tools_available": [
+        "file_system",
+        "babok_quality_check",
+        "babok_get_stage_artifact",
+        "babok_sync_stage_artifact"
+      ]
+    },
+    "context": {
+      "store_path": "../../my_project_context.json",
+      "schema_version": "2.0",
+      "schema_file": "./context_schema_v2.json"
+    }
+  }
+}
