@@ -1,0 +1,410 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/GSkuza/BABOK_ANALYST/BABOK_AGENT/agents/context_schema_v2.json",
+  "title": "BABOK Context Store v2.0",
+  "description": "JSON Schema for the multi-agent BABOK project context store (my_project_context.json)",
+  "type": "object",
+  "required": ["schema_version", "project", "stages", "quality_reports", "agent_messages", "decisions", "assumptions", "risks"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "2.0",
+      "description": "Schema version — must be '2.0' for multi-agent operation"
+    },
+    "project": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": true,
+      "description": "Project metadata and original v1.x context fields",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^BABOK-[0-9]{8}-[A-Z0-9]{4}$",
+          "description": "Project ID (e.g. BABOK-20260330-A1B2)"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable project name"
+        },
+        "language": {
+          "type": "string",
+          "enum": ["EN", "PL", "DE", "FR", "ES"],
+          "default": "EN"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "company": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "industry": { "type": "string" }
+          }
+        },
+        "scope": {
+          "type": "string"
+        },
+        "pain_points": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "budget": {
+          "type": "object",
+          "properties": {
+            "estimated": { "type": "string" },
+            "currency": { "type": "string" },
+            "min": { "type": "number" },
+            "max": { "type": "number" }
+          }
+        },
+        "timeline": {
+          "type": "object",
+          "properties": {
+            "target_date": { "type": "string", "format": "date" },
+            "hard_deadline": { "type": "string", "format": "date" }
+          }
+        },
+        "stakeholders": {
+          "type": "object",
+          "properties": {
+            "key_decision_makers": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "stages": {
+      "type": "object",
+      "description": "Per-stage execution status and artefact references",
+      "required": ["stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8"],
+      "additionalProperties": false,
+      "properties": {
+        "stage1": { "$ref": "#/definitions/stageRecord" },
+        "stage2": { "$ref": "#/definitions/stageRecord" },
+        "stage3": { "$ref": "#/definitions/stageRecord" },
+        "stage4": { "$ref": "#/definitions/stageRecord" },
+        "stage5": { "$ref": "#/definitions/stageRecord" },
+        "stage6": { "$ref": "#/definitions/stageRecord" },
+        "stage7": { "$ref": "#/definitions/stageRecord" },
+        "stage8": { "$ref": "#/definitions/stageRecord" }
+      }
+    },
+    "quality_reports": {
+      "type": "object",
+      "description": "Quality Audit Agent reports per stage",
+      "additionalProperties": false,
+      "properties": {
+        "stage1": { "$ref": "#/definitions/qualityReport" },
+        "stage2": { "$ref": "#/definitions/qualityReport" },
+        "stage3": { "$ref": "#/definitions/qualityReport" },
+        "stage4": { "$ref": "#/definitions/qualityReport" },
+        "stage5": { "$ref": "#/definitions/qualityReport" },
+        "stage6": { "$ref": "#/definitions/qualityReport" },
+        "stage7": { "$ref": "#/definitions/qualityReport" },
+        "stage8": { "$ref": "#/definitions/qualityReport" }
+      }
+    },
+    "agent_messages": {
+      "type": "array",
+      "description": "Log of inter-agent messages and external context injections",
+      "items": { "$ref": "#/definitions/agentMessage" }
+    },
+    "decisions": {
+      "type": "array",
+      "description": "Log of key decisions made during the project",
+      "items": { "$ref": "#/definitions/decisionRecord" }
+    },
+    "assumptions": {
+      "type": "array",
+      "description": "Log of assumptions recorded during the project",
+      "items": { "$ref": "#/definitions/assumptionRecord" }
+    },
+    "risks": {
+      "type": "array",
+      "description": "Running list of risks identified across all stages",
+      "items": { "$ref": "#/definitions/riskRecord" }
+    }
+  },
+  "definitions": {
+    "stageRecord": {
+      "type": "object",
+      "required": ["status", "artifacts"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["not_started", "in_progress", "completed", "approved", "rejected", "escalated"]
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "path"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["markdown", "json", "pdf", "diagram"]
+              },
+              "path": {
+                "type": "string",
+                "description": "Relative path from repo root"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        },
+        "started_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "approved_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "approved_by": {
+          "type": ["string", "null"],
+          "enum": ["human", "quality_audit", null]
+        },
+        "iteration_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "default": 0
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "qualityReport": {
+      "type": "object",
+      "required": ["completeness", "consistency", "smart", "overall", "passed"],
+      "additionalProperties": false,
+      "properties": {
+        "completeness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "consistency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "smart": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "overall": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "iteration": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["severity", "section", "description", "recommendation"],
+            "additionalProperties": false,
+            "properties": {
+              "severity": {
+                "type": "string",
+                "enum": ["critical", "major", "minor"]
+              },
+              "section": { "type": "string" },
+              "description": { "type": "string" },
+              "recommendation": { "type": "string" }
+            }
+          }
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "agentMessage": {
+      "type": "object",
+      "required": ["id", "from", "to", "type", "timestamp", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique message identifier (e.g. msg-001)"
+        },
+        "from": {
+          "type": "string",
+          "enum": ["orchestrator", "stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8", "quality_audit", "human"]
+        },
+        "to": {
+          "type": "string",
+          "enum": ["orchestrator", "stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8", "quality_audit", "human", "all"]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "stage_complete",
+            "quality_approved",
+            "quality_iterate",
+            "quality_escalate",
+            "context_update",
+            "external_context",
+            "pipeline_error",
+            "human_input_required"
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "content": {
+          "type": "string",
+          "description": "Human-readable message content or JSON-encoded payload"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Optional structured metadata (e.g. quality scores, stage reference)"
+        }
+      }
+    },
+    "decisionRecord": {
+      "type": "object",
+      "required": ["id", "description", "made_at", "made_by"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Decision ID (e.g. DEC-001)"
+        },
+        "description": { "type": "string" },
+        "rationale": { "type": "string" },
+        "alternatives_considered": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "stage": {
+          "type": "string",
+          "description": "Stage in which this decision was made"
+        },
+        "made_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "made_by": {
+          "type": "string",
+          "enum": ["human", "orchestrator", "stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8"]
+        }
+      }
+    },
+    "assumptionRecord": {
+      "type": "object",
+      "required": ["id", "description", "confidence", "stage"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Assumption ID (e.g. ASS-001)"
+        },
+        "description": { "type": "string" },
+        "confidence": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "stage": { "type": "string" },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "validation_required": {
+          "type": "boolean",
+          "default": false
+        },
+        "validated_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        }
+      }
+    },
+    "riskRecord": {
+      "type": "object",
+      "required": ["id", "title", "likelihood", "impact", "mitigation"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Risk ID (e.g. R-001)"
+        },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "likelihood": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "impact": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "score": {
+          "type": "integer",
+          "description": "likelihood × impact",
+          "minimum": 1,
+          "maximum": 25
+        },
+        "category": {
+          "type": "string",
+          "enum": ["technical", "financial", "compliance", "operational", "strategic"]
+        },
+        "mitigation": { "type": "string" },
+        "owner": { "type": "string" },
+        "due_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "mitigated", "accepted", "closed"]
+        },
+        "stage": {
+          "type": "string",
+          "description": "Stage where risk was identified"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
