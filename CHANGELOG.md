@@ -5,6 +5,35 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-03-30
+
+### Added
+- **Architecture Documentation (`docs/`):** New `docs/` directory with four comprehensive documents:
+  - `L2_L3_ARCHITECTURE.md` — system design for L2/L3 agent layers
+  - `MCP_TOOLS_SPECIFICATION.md` — full MCP tools API specification
+  - `MIGRATION_GUIDE_L1_to_L2.md` — step-by-step migration guide from CLI (L1) to MCP (L2)
+  - `workflows.md` — end-to-end workflow diagrams and descriptions
+- **Document Templates (`templates/`):** Production-ready Markdown templates for all core BABOK deliverables:
+  - `BRD_Template.md` — Business Requirements Document
+  - `Risk_Register_Template.md` — Risk Register
+  - `Stakeholder_Analysis_Template.md` — Stakeholder Analysis & RACI
+  - `User_Story_Template.md` — User Story with acceptance criteria
+  - `project_context.example.json` — Reference context schema for `babok run`
+- **BABOK Agent Stages (`BABOK_AGENT/stages/`):** Individual Markdown stage instruction files for all 9 stages (0–8), usable standalone in any MCP-compatible client.
+- **Multi-Agent Orchestration (`BABOK_AGENT/agents/`):** New orchestration layer with:
+  - `orchestrator_config.json` — multi-agent pipeline configuration
+  - Per-stage agent configs (`stage1_config.json` … `stage8_config.json`)
+  - `quality_audit_agent.md` / `quality_scoring_rubric.json` — automated quality review agent
+  - `context_schema_v2.json` — updated context schema v2 for structured data exchange
+- **`BABOK_AGENT_SYSTEM_PROMPT.md`:** Root-level consolidated system prompt for quick single-file deployment to any LLM interface.
+- **`generate_manual.py`:** Automated script to build DOCX/PDF user manuals from Markdown sources.
+- **GitHub Copilot Instructions (`.github/copilot-instructions.md`):** Full 1600-line Copilot Chat instructions file enabling native VS Code integration.
+- **GitHub Prompts (`.github/prompts/`):** Stage-specific and full-run prompt files for Copilot Chat (`babok-stage-1.prompt.md` … `babok-stage-8.prompt.md`, `babok-run-all.prompt.md`).
+- **CI: Prompt Linter (`.github/workflows/lint-prompts.yml`):** GitHub Actions workflow that validates stage prompt files on every push or PR.
+
+### Changed
+- **Version bump:** `cli/package.json` and `babok-mcp/package.json` synchronized to `2.1.0`.
+
 ## [2.0.0] - 2026-03-16
 
 ### Added

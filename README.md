@@ -782,6 +782,6 @@ Contributions are welcome! Please feel free to submit:
 
 ---
 
-**Version:** 2.0.1
-**Release Date:** March 16, 2026
-**Last Updated:** 2026-03-16
+**Version:** 2.1.0
+**Release Date:** March 30, 2026
+**Last Updated:** 2026-03-30
