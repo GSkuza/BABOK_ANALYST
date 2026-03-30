@@ -323,7 +323,7 @@ Bulk-creates GitHub Issues from a Risk Register produced by Stage 7 (Risk Assess
 
 - Requires `GITHUB_TOKEN` environment variable with `repo` scope (or `public_repo` for public repos).
 - Labels are auto-created if they do not exist (e.g. `babok-risk:compliance`, `babok-risk:critical`).
-- Risk severity (derived from `likelihood × impact`) is mapped to GitHub label colour: `critical` → red `#d73a49`, `high` → orange `#e4e669`, `medium` → yellow `#f9d0c4`, `low` → green `#0075ca`.
+- Risk severity (derived from `likelihood × impact`) is mapped to GitHub label colour: `critical` → red `#d73a49`, `high` → orange `#fb8c00`, `medium` → yellow `#ffd700`, `low` → green `#28a745`.
 - Issue body is generated from a Markdown template combining description and mitigation steps.
 
 ---
