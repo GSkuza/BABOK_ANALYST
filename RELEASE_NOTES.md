@@ -1,3 +1,71 @@
+# BABOK Analyst v2.1.0 - Release Notes
+
+**Release Date:** March 30, 2026
+**Status:** Minor Release
+**License:** MIT
+
+---
+
+## What's New in v2.1.0
+
+### 1. Architecture Documentation (`docs/`)
+
+New dedicated `docs/` directory with four reference documents:
+
+- **`L2_L3_ARCHITECTURE.md`** — design blueprint for the L2 (MCP) and L3 (multi-agent) layers, including sequence diagrams and deployment topologies.
+- **`MCP_TOOLS_SPECIFICATION.md`** — complete specification for all 10 MCP tools: input schemas, output formats, error codes, and usage examples.
+- **`MIGRATION_GUIDE_L1_to_L2.md`** — step-by-step guide for teams moving from the standalone CLI (L1) to the MCP server (L2), including config diff and rollback instructions.
+- **`workflows.md`** — annotated workflow diagrams covering the full project lifecycle from initialization to final export.
+
+### 2. Document Templates (`templates/`)
+
+Production-ready Markdown templates for every core BABOK deliverable:
+
+- **`BRD_Template.md`** — Business Requirements Document with pre-filled structure for scope, stakeholders, requirements, and approval sign-off.
+- **`Risk_Register_Template.md`** — Risk Register with probability/impact matrix, mitigation plans, and owner assignments.
+- **`Stakeholder_Analysis_Template.md`** — Stakeholder Analysis including RACI matrix, communication plan, and influence/interest grid.
+- **`User_Story_Template.md`** — User Story with Given/When/Then acceptance criteria, priority fields, and estimation notes.
+- **`project_context.example.json`** — Updated reference context file for `babok run` (aligned with `context_schema_v2.json`).
+
+### 3. BABOK Agent Stage Files (`BABOK_AGENT/stages/`)
+
+All 9 stage instruction files (Stage 0 – Stage 8) are now available as individual Markdown documents. Each file can be used standalone: paste directly into any LLM chat interface or reference via MCP resource URI `babok://stages/{n}`.
+
+### 4. Multi-Agent Orchestration (`BABOK_AGENT/agents/`)
+
+New orchestration layer enabling automated multi-agent pipelines:
+
+- **`orchestrator_config.json`** — defines the agent pipeline: which model runs which stage, handoff rules, and retry logic.
+- **Per-stage configs** (`stage1_config.json` … `stage8_config.json`) — isolated model and prompt configuration for each stage.
+- **Quality Audit Agent** (`quality_audit_agent.md` + `quality_scoring_rubric.json`) — automated post-stage quality review that scores deliverables and flags gaps before human approval.
+- **`context_schema_v2.json`** — extended context schema with agent metadata, routing fields, and structured output contracts.
+
+### 5. Consolidated System Prompt (`BABOK_AGENT_SYSTEM_PROMPT.md`)
+
+New root-level `BABOK_AGENT_SYSTEM_PROMPT.md` bundles all agent instructions into a single file for one-paste deployment to Claude.ai Projects, ChatGPT Custom Instructions, or any LLM API.
+
+### 6. Automated Manual Generator (`generate_manual.py`)
+
+Python script that compiles DOCX and PDF user manuals from the Markdown source files. Supports Polish and English outputs, custom cover pages, and table-of-contents generation.
+
+### 7. GitHub Copilot Integration
+
+- **`.github/copilot-instructions.md`** — Full 1,600-line Copilot Chat instructions file. VS Code users can now run the complete BABOK workflow natively inside the editor without switching to a separate chat interface.
+- **`.github/prompts/`** — Nine stage-specific prompt files and a full-run prompt for Copilot Chat's "Ask" mode.
+
+### 8. CI: Prompt Linter
+
+- **`.github/workflows/lint-prompts.yml`** — GitHub Actions workflow that runs `cli/scripts/lint-stages.js` on every push or PR that touches `BABOK_AGENT/stages/`, catching missing sections and unfilled placeholders before merge.
+
+### Upgrade Notes
+
+- No breaking changes from v2.0.2.
+- Existing projects and journals remain fully compatible.
+- New `templates/` and `docs/` directories are additive only.
+- Multi-agent orchestration is opt-in; existing CLI and MCP workflows are unchanged.
+
+---
+
 # BABOK Analyst v2.0.2 - Release Notes
 
 **Release Date:** March 16, 2026
