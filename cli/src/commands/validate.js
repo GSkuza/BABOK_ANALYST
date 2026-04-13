@@ -98,7 +98,9 @@ export async function validateCommand(partialId, _options) {
 
   const overallStatus = failed > 0
     ? chalk.bold.red('❌ VALIDATION FAILED')
-    : chalk.bold.yellow('⚠ VALIDATION PASSED WITH WARNINGS');
+    : warnings > 0
+      ? chalk.bold.yellow('⚠ VALIDATION PASSED WITH WARNINGS')
+      : chalk.bold.green('✅ VALIDATION PASSED');
   console.log(`  ${overallStatus}`);
   console.log('');
 

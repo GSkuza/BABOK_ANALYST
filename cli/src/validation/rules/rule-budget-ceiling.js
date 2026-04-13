@@ -9,6 +9,8 @@
  * clearly higher (> 2x the Stage 1 upper bound).
  */
 
+/** Threshold: Stage 8 cost must not exceed Stage 1 budget ceiling by more than this factor. */
+const BUDGET_OVERAGE_THRESHOLD = 1.5;
 const CURRENCY_NUM_RE = /[€$£]?\s*(\d[\d,. ]*\d|\d)\s*(?:k|K|thousand|million|M)?/g;
 
 function extractNumbers(text) {
@@ -56,8 +58,8 @@ export function check(artifacts) {
 
   const maxCost = Math.max(...costNums);
 
-  // Flag if Stage 8 costs exceed Stage 1 budget ceiling by more than 50%
-  if (maxCost > budgetCeiling * 1.5) {
+  // Flag if Stage 8 costs exceed Stage 1 budget ceiling by more than the threshold
+  if (maxCost > budgetCeiling * BUDGET_OVERAGE_THRESHOLD) {
     return [
       {
         ruleId: 'BUDGET-CEILING',

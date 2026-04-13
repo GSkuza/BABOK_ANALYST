@@ -24,24 +24,12 @@ import {
   rejectStage,
   updateStageStatus,
 } from '../../cli/src/journal.js';
-import { getJournalPath, getProjectDir } from '../../cli/src/project.js';
+import { getJournalPath, getProjectDir, STAGES } from '../../cli/src/project.js';
 
 // Helper: build a test journal directly without going through project.js paths
 function buildJournalInDir(projectId, projectDir) {
   fs.mkdirSync(projectDir, { recursive: true });
-  // Inline createJournal logic but writing to the explicit dir
   const now = new Date().toISOString();
-  const STAGES = [
-    { stage: 0, name: 'Project Charter' },
-    { stage: 1, name: 'Project Initialization & Stakeholder Mapping' },
-    { stage: 2, name: 'Current State Analysis (AS-IS)' },
-    { stage: 3, name: 'Problem Domain Analysis' },
-    { stage: 4, name: 'Solution Requirements Definition' },
-    { stage: 5, name: 'Future State Design (TO-BE)' },
-    { stage: 6, name: 'Gap Analysis & Implementation Roadmap' },
-    { stage: 7, name: 'Risk Assessment & Mitigation Strategy' },
-    { stage: 8, name: 'Business Case & ROI Model' },
-  ];
   const journal = {
     project_id: projectId,
     project_name: 'Test Project',

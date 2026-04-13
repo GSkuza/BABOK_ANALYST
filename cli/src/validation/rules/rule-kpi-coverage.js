@@ -5,6 +5,9 @@
  * are represented with baseline metric data in Stage 2 Baseline Metrics section.
  */
 
+/** Minimum fraction of Stage 1 KPI terms that must appear in Stage 2 baseline. */
+const MIN_KPI_COVERAGE_RATIO = 0.5;
+
 const KPI_DIMENSION_KEYWORDS = [
   'processing time', 'cycle time', 'throughput', 'error rate', 'cost', 'hours',
   'days', 'minutes', 'percentage', 'volume', 'count', 'number of', 'invoice',
@@ -52,7 +55,7 @@ export function check(artifacts) {
   const covered = kpiTerms.filter(kw => baselineSection.includes(kw));
   const coverageRatio = covered.length / kpiTerms.length;
 
-  if (coverageRatio < 0.5) {
+  if (coverageRatio < MIN_KPI_COVERAGE_RATIO) {
     const uncovered = kpiTerms.filter(kw => !baselineSection.includes(kw));
     return [
       {

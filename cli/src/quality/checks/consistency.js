@@ -3,6 +3,11 @@
  * within a single stage deliverable.
  */
 
+const STOP_WORDS = new Set([
+  'the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'will',
+  'are', 'not', 'all', 'per', 'see', 'any',
+]);
+
 /**
  * Extract text content between two headings.
  * Returns an empty string if the heading is not found.
@@ -40,10 +45,9 @@ function extractSectionText(content, keywords) {
  * Used to detect if names from one section appear in another.
  */
 function extractSignificantWords(text, minLength = 3) {
-  const stopWords = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'will', 'are', 'not', 'all', 'per', 'see', 'any']);
   return [...text.matchAll(/\b([A-Z][a-zA-Z]{2,})\b/g)]
     .map(m => m[1].toLowerCase())
-    .filter(w => !stopWords.has(w));
+    .filter(w => !STOP_WORDS.has(w));
 }
 
 /**

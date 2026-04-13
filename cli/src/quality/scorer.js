@@ -85,7 +85,7 @@ export async function scoreStage(projectId, stageNumber, options = {}) {
     smartResult.score * wQual;
 
   const roundedOverall = Math.round(overall * 10) / 10;
-  const minScore = rubric.scoring?.min_overall_score ?? 75;
+  const minScore = rubric.scoring?.min_overall_score ?? 75; // 75 is the BABOK standard default
 
   /** @type {ScoreReport} */
   const report = {
