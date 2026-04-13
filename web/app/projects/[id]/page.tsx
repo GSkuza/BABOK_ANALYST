@@ -5,7 +5,17 @@ import Link from 'next/link';
 import { StageProgressBar } from '../../../components/StageProgressBar';
 import type { Project } from '../../../lib/babok-client';
 
-const STAGE_NAMES = ['Charter','Initialization','Current State','Problem Domain','Requirements','Future State','Gap Analysis','Risk Assessment','Business Case'];
+// Index 0 unused; stages are 1-8 per BABOK framework
+const STAGE_NAMES: Record<number, string> = {
+  1: 'Project Initialization',
+  2: 'Current State (AS-IS)',
+  3: 'Problem Domain',
+  4: 'Solution Requirements',
+  5: 'Future State (TO-BE)',
+  6: 'Gap Analysis & Roadmap',
+  7: 'Risk Assessment',
+  8: 'Business Case & ROI',
+};
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
