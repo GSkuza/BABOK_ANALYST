@@ -5,6 +5,24 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-04-13
+
+### Added
+- **Per-stage LLM routing in orchestrator pipeline:** Stages 3, 4, 6, and 8 (Deep Analysis) can now use a separate, more capable model while lighter stages (1, 2, 5, 7) use the default model.
+  - New `createLlmClient(provider, apiKey, modelName)` factory in `cli/src/llm.js` — stateless, reusable, no global state side effects.
+  - `cli/src/orchestrator/engine.js`: `DEEP_ANALYSIS_STAGES = {3, 4, 6, 8}` constant; `runPipeline()` accepts new `deepAnalysisClient` option and routes accordingly; progress events include `mode: 'deep_analysis' | 'standard'`.
+  - `cli/src/commands/run.js`: `--orchestrate` path initializes both `llmClient` and `deepAnalysisClient` with full provider selection.
+  - New **`--deep-model <name>`** CLI flag on `babok run` — specifies model for deep-analysis stages (falls back to `--model` when omitted).
+
+### Usage
+```bash
+# Gemini Flash for stages 1,2,5,7 + Gemini Pro for stages 3,4,6,8
+babok run --orchestrate --provider gemini --model gemini-2.0-flash --deep-model gemini-1.5-pro
+
+# OpenAI: gpt-4o-mini standard, o3 for deep analysis
+babok run --orchestrate --provider openai --model gpt-4o-mini --deep-model o3
+```
+
 ## [2.1.0] - 2026-04-13
 
 ### Added

@@ -443,6 +443,99 @@ export async function initializeProvider(provider, apiKey, modelName) {
 }
 
 /**
+ * Create a stateless, reusable LLM client without touching global state.
+ * Each chat() call is a single-turn, non-streaming request.
+ * Use in the orchestrator pipeline for per-stage model routing.
+ *
+ * @param {string} provider
+ * @param {string} apiKey
+ * @param {string} [modelName]
+ * @returns {{ chat: (systemPrompt: string, userMessage: string) => Promise<string>, providerName: string, modelName: string }}
+ */
+export function createLlmClient(provider, apiKey, modelName) {
+  const info = PROVIDERS[provider];
+  if (!info) throw new Error(`createLlmClient: unknown provider "${provider}"`);
+  const model = modelName || info.defaultModel;
+
+  const chat = async (systemPrompt, userMessage) => {
+    switch (provider) {
+      case 'gemini': {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const genModel = genAI.getGenerativeModel({
+          model,
+          systemInstruction: systemPrompt,
+          generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
+        });
+        const result = await genModel.generateContent(userMessage);
+        return result.response.text();
+      }
+      case 'vertex': {
+        const { VertexAI } = await import('@google-cloud/vertexai');
+        let cfg = {};
+        try { cfg = JSON.parse(apiKey); } catch { cfg = { project_id: apiKey }; }
+        const vertexOptions = {
+          project: cfg.project_id,
+          location: cfg.location || 'us-central1',
+        };
+        if (cfg.credentials_file) {
+          vertexOptions.googleAuthOptions = { keyFilename: cfg.credentials_file };
+        }
+        const vertexAI = new VertexAI(vertexOptions);
+        const genModel = vertexAI.getGenerativeModel({ model });
+        const result = await genModel.generateContent({
+          contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+        });
+        return result.response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      }
+      case 'openai':
+      case 'local': {
+        const baseURL = provider === 'local'
+          ? (model?.startsWith('http') ? model : 'http://localhost:30000/v1')
+          : undefined;
+        const client = new OpenAI({ apiKey: apiKey || 'not-needed', ...(baseURL ? { baseURL } : {}) });
+        const resp = await client.chat.completions.create({
+          model: provider === 'local' ? info.defaultModel : model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage },
+          ],
+          max_tokens: 8192,
+          temperature: 0.7,
+        });
+        return resp.choices?.[0]?.message?.content || '';
+      }
+      case 'anthropic': {
+        const client = new Anthropic({ apiKey });
+        const resp = await client.messages.create({
+          model,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMessage }],
+          max_tokens: 8192,
+        });
+        return resp.content?.[0]?.text || '';
+      }
+      case 'huggingface': {
+        const hf = new HfInference(apiKey);
+        const resp = await hf.chatCompletion({
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage },
+          ],
+          max_tokens: 8192,
+        });
+        return resp.choices?.[0]?.message?.content || '';
+      }
+      default:
+        throw new Error(`createLlmClient: unsupported provider "${provider}"`);
+    }
+  };
+
+  return { chat, providerName: info.name, modelName: model };
+}
+
+/**
  * Start chat session (sets system prompt, optionally loads history).
  */
 export function startChatSession(systemPrompt, history = []) {

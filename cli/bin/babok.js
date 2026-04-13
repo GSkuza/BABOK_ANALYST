@@ -27,7 +27,7 @@ const program = new Command();
 program
   .name('babok')
   .description('BABOK Agent CLI - Project lifecycle management')
-  .version('2.0.1');
+  .version('2.1.1');
 
 program
   .command('new')
@@ -174,6 +174,7 @@ program
   .option('-o, --output <dir>', 'Output directory (default: BABOK_Analysis)')
   .option('--provider <name>', 'AI provider: gemini, openai, anthropic, huggingface, vertex')
   .option('-m, --model <name>', 'Model name (provider-specific)')
+  .option('--deep-model <name>', 'Model for deep-analysis stages (3,4,6,8); defaults to --model')
   .option('-l, --lang <lang>', 'Language: EN or PL (overrides context file)')
   .option('-s, --stages <list>', 'Comma-separated stages to run, e.g. "1,2,3" (default: all)')
   .option('--auto', 'Skip interactive review — run all stages fully automatically')

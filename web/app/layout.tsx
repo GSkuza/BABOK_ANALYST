@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: 'system-ui, sans-serif', margin: 0, background: '#f5f5f5' }}>
+      <body suppressHydrationWarning style={{ fontFamily: 'system-ui, sans-serif', margin: 0, background: '#f5f5f5' }}>
         <nav style={{ background: '#1a1a2e', color: 'white', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
           <span style={{ fontWeight: 'bold', fontSize: 18 }}>🧠 BABOK Analyst</span>
           <a href="/" style={{ color: '#aaa', textDecoration: 'none' }}>Dashboard</a>

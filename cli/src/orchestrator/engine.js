@@ -25,9 +25,12 @@ function stageNumberFromKey(key) {
   return match ? parseInt(match[1], 10) : 0;
 }
 
+// Stages requiring a more capable (deep analysis) model per BABOK system prompt
+const DEEP_ANALYSIS_STAGES = new Set([3, 4, 6, 8]);
+
 /**
  * @param {string} projectId
- * @param {{ maxParallel?: number, dryRun?: boolean, stopAfterStage?: number, onProgress?: Function, llmClient?: object }} options
+ * @param {{ maxParallel?: number, dryRun?: boolean, stopAfterStage?: number, onProgress?: Function, llmClient?: object, deepAnalysisClient?: object }} options
  * @returns {Promise<{ projectId: string, stagesCompleted: string[], stagesFailed: string[], totalDurationMs: number, artefacts: Object }>}
  */
 export async function runPipeline(projectId, options = {}) {
@@ -36,6 +39,7 @@ export async function runPipeline(projectId, options = {}) {
     stopAfterStage,
     onProgress,
     llmClient: providedClient,
+    deepAnalysisClient: providedDeepClient,
   } = options;
 
   // Load orchestrator config (informational — pipeline shape is defined below)
@@ -49,6 +53,8 @@ export async function runPipeline(projectId, options = {}) {
 
   // Noop client when none provided
   const llmClient = providedClient ?? { chat: async () => '[Mock response]' };
+  // Falls back to llmClient when no separate deep-analysis client is configured
+  const deepAnalysisClient = providedDeepClient ?? llmClient;
 
   const emit = (event) => onProgress?.(event);
 
@@ -63,16 +69,18 @@ export async function runPipeline(projectId, options = {}) {
   const runStage = async (stageKey) => {
     const stageNumber = stageNumberFromKey(stageKey);
     const stageConfig = stageConfigs[`stage${stageNumber}`] ?? {};
+    const isDeepStage = DEEP_ANALYSIS_STAGES.has(stageNumber);
+    const clientForStage = isDeepStage ? deepAnalysisClient : llmClient;
 
-    emit({ type: 'stage_started', stage: stageKey });
+    emit({ type: 'stage_started', stage: stageKey, mode: isDeepStage ? 'deep_analysis' : 'standard' });
 
     try {
       const execResult = await executeStage(
-        stageKey, stageConfig, context, llmClient, { dryRun, projectId }
+        stageKey, stageConfig, context, clientForStage, { dryRun, projectId }
       );
 
       const qualityResult = await runQualityLoop(
-        projectId, stageNumber, execResult.artefact, llmClient, {
+        projectId, stageNumber, execResult.artefact, clientForStage, {
           dryRun,
           onIteration: (e) => emit({
             type: e.escalated ? 'quality_escalate' : 'quality_iteration',

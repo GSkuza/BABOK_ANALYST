@@ -9,6 +9,7 @@ import { acquireLock, releaseLock, formatLockInfo } from '../lock.js';
 import {
   getApiKey,
   initializeProvider,
+  createLlmClient,
   startChatSession,
   sendMessageStream,
   loadStagePrompt,
@@ -310,10 +311,8 @@ export async function runAnalysis(options) {
     const projectId = generateProjectIdWithTitle(projectName);
     const projectDir = getProjectDir(projectId);
     fs.mkdirSync(projectDir, { recursive: true });
-    writeContext(projectId, {
-      projectName,
-      startedAt: new Date().toISOString(),
-    });
+    writeContext(projectId, { projectName, startedAt: new Date().toISOString() });
+
     console.log('');
     console.log(chalk.bold.blue('╔══════════════════════════════════════╗'));
     console.log(chalk.bold.blue('║   BABOK Orchestrator Engine [AUTO]   ║'));
@@ -323,9 +322,51 @@ export async function runAnalysis(options) {
     console.log(chalk.cyan('  ID      : ') + chalk.bold(projectId));
     console.log(chalk.cyan('  Output  : ') + chalk.dim(projectDir));
     console.log('');
+
+    // ── Provider selection for orchestrator ──
+    let orchProvider = options.provider || null;
+    let orchApiKey = null;
+    let orchModel = options.model || null;
+
+    if (orchProvider && PROVIDERS[orchProvider]) {
+      orchApiKey = getApiKey(orchProvider);
+      if (!orchApiKey) {
+        console.error(chalk.red(`\nError: No API key found for provider: ${orchProvider}`));
+        console.error(chalk.dim(`  Set ${PROVIDERS[orchProvider].envKey} in .env  or run: babok llm key`));
+        process.exit(1);
+      }
+    } else {
+      try {
+        const sel = await promptForProvider();
+        orchProvider = sel.provider;
+        orchApiKey = sel.apiKey;
+        if (!orchModel) orchModel = sel.model;
+      } catch (err) {
+        console.error(chalk.red(`\n${err.message}`));
+        process.exit(1);
+      }
+    }
+    if (!orchModel) orchModel = PROVIDERS[orchProvider]?.defaultModel;
+
+    const llmClient = createLlmClient(orchProvider, orchApiKey, orchModel);
+    console.log(chalk.cyan('  Provider  : ') + chalk.bold(`${llmClient.providerName} / ${llmClient.modelName}`));
+
+    // ── Deep analysis client for stages 3, 4, 6, 8 ──
+    let deepAnalysisClient = llmClient;
+    if (options.deepModel) {
+      deepAnalysisClient = createLlmClient(orchProvider, orchApiKey, options.deepModel);
+      console.log(chalk.cyan('  Deep model: ') + chalk.bold(options.deepModel) + chalk.dim('  (stages 3,4,6,8)'));
+    }
+    console.log('');
+
     const result = await runPipeline(projectId, {
-      dryRun: options.auto,
-      onProgress: (e) => console.log(chalk.cyan('  [orchestrator]'), e.type, e.stage || ''),
+      dryRun: false,
+      llmClient,
+      deepAnalysisClient,
+      onProgress: (e) => {
+        const modeTag = e.mode === 'deep_analysis' ? chalk.magenta(' [DEEP]') : '';
+        console.log(chalk.cyan('  [orchestrator]'), e.type, e.stage || '', modeTag);
+      },
     });
     console.log(chalk.green('\n  ✅ Pipeline complete!'), result.stagesCompleted.length, 'stages');
     if (result.stagesFailed.length > 0) {
