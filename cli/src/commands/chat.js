@@ -20,6 +20,7 @@ import {
 import fs from 'fs';
 import path from 'path';
 import { acquireLock, releaseLock, formatLockInfo } from '../lock.js';
+import { runDebate } from '../reasoning/debate.js';
 
 /**
  * Interactive chat command for BABOK stages
@@ -203,10 +204,27 @@ export async function chatCommand(partialId, options) {
       console.log(chalk.blue(`\n🤖 BABOK Agent (${providerName}): `));
       
       try {
-        const response = await sendMessageStream(trimmed, (chunk) => {
+        let response = await sendMessageStream(trimmed, (chunk) => {
           process.stdout.write(chunk);
         });
         console.log(''); // New line after response
+
+        // ── Debate pass (--debate flag, deep-analysis stages only) ──
+        if (options.debate) {
+          const llmClientForDebate = {
+            chat: async (systemPrompt, userMessage) => {
+              startChatSession(systemPrompt, []);
+              return sendMessageStream(userMessage, null);
+            },
+          };
+          const contextForDebate = { stage: stageNumber, journal_summary: journal.project_name };
+          const debateResult = await runDebate(stageNumber, contextForDebate, llmClientForDebate, {});
+          if (debateResult) {
+            console.log(chalk.magenta('\n[debate] Synthesised response:'));
+            console.log(debateResult.synthesis);
+            response = debateResult.synthesis;
+          }
+        }
 
         // Track messages
         messages.push({ role: 'user', parts: [{ text: trimmed }] });

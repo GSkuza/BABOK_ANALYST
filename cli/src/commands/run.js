@@ -16,6 +16,8 @@ import {
   promptForProvider,
   listStoredProviders,
 } from '../llm.js';
+import { runDebate, markDebateInJournal } from '../reasoning/debate.js';
+import { runCoVe } from '../reasoning/verify.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -536,6 +538,41 @@ export async function runAnalysis(options) {
     }
 
     const filePath = path.join(projectDir, fileName);
+
+    // ── 7b-debate: Multi-perspective debate (--debate flag, deep stages only) ──
+    if (options.debate) {
+      const llmClient = {
+        chat: async (systemPrompt, userMessage) => {
+          startChatSession(systemPrompt, []);
+          return sendWithTimeout(userMessage, null);
+        },
+      };
+      const debateResult = await runDebate(stageNum, context, llmClient, { model: modelName });
+      if (debateResult) {
+        console.log(chalk.magenta(`  [debate] Stage ${stageNum} debate complete (${debateResult.metadata.latencyMs}ms)`));
+        response = debateResult.synthesis;
+        markDebateInJournal(journal, stageNum, debateResult.metadata, projectDir);
+      }
+    }
+
+    // ── 7b-verify: Chain-of-Verification (--verify flag, all stages) ──
+    if (options.verify) {
+      const llmClient = {
+        chat: async (systemPrompt, userMessage) => {
+          startChatSession(systemPrompt, []);
+          return sendWithTimeout(userMessage, null);
+        },
+      };
+      const { corrected, verificationReport } = await runCoVe(
+        stageNum, response, context, llmClient, { projectDir }
+      );
+      console.log(chalk.blue(
+        `  [verify] Stage ${stageNum}: ${verificationReport.questionsTotal} checks, ` +
+        `${verificationReport.refutedCount} refuted`
+      ));
+      response = corrected;
+    }
+
     fs.writeFileSync(filePath, response, 'utf-8');
     previousOutputs[stageNum] = response;
     updateJournalStage(journal, stageNum, projectDir, fileName);

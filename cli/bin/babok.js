@@ -89,6 +89,7 @@ program
   .option('-s, --stage <number>', 'Stage number (1-8)')
   .option('-p, --provider <name>', 'AI provider: gemini, openai, anthropic, huggingface')
   .option('-m, --model <name>', 'Model name (provider-specific)')
+  .option('--debate', 'Enable Analyst→Critic→Synthesiser debate for deep-analysis stages (3,4,6,8)')
   .action(chatCommand);
 
 program
@@ -175,6 +176,8 @@ program
   .option('-l, --lang <lang>', 'Language: EN or PL (overrides context file)')
   .option('-s, --stages <list>', 'Comma-separated stages to run, e.g. "1,2,3" (default: all)')
   .option('--auto', 'Skip interactive review — run all stages fully automatically')
+  .option('--debate', 'Enable Analyst→Critic→Synthesiser debate for deep-analysis stages (3,4,6,8)')
+  .option('--verify', 'Enable Chain-of-Verification (CoVe) fact-check pass on all stages')
   .action(runAnalysis);
 
 program
