@@ -18,6 +18,8 @@ import { diffCommand } from '../src/commands/diff.js';
 import { renameProject } from '../src/commands/rename.js';
 import { deleteProject } from '../src/commands/delete.js';
 import { setupWizard } from '../src/commands/setup.js';
+import { scoreCommand } from '../src/commands/score.js';
+import { validateCommand } from '../src/commands/validate.js';
 
 const program = new Command();
 
@@ -235,5 +237,17 @@ makeCmd
   .option('-s, --stage <number>', 'Stage number (1-8)')
   .option('-o, --output <dir>', 'Output directory')
   .action((id, options) => makeCommand('all', id, options));
+
+program
+  .command('score <id> <stage>')
+  .alias('SCORE')
+  .description('Score stage quality against the rubric (stage: 1-8 or "all")')
+  .action(scoreCommand);
+
+program
+  .command('validate <id>')
+  .alias('VALIDATE')
+  .description('Run cross-stage consistency validation')
+  .action(validateCommand);
 
 program.parse();

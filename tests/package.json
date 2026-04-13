@@ -1,0 +1,10 @@
+{
+  "name": "babok-tests",
+  "version": "1.0.0",
+  "description": "Test suite for BABOK CLI",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/unit/project.test.js tests/unit/journal.test.js tests/unit/scoring.test.js tests/unit/validation.test.js tests/integration/cli-workflow.test.js"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "babok-analyst",
+  "version": "1.0.0",
+  "description": "BABOK Analyst — root workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/unit/project.test.js tests/unit/journal.test.js tests/unit/scoring.test.js tests/unit/validation.test.js tests/integration/cli-workflow.test.js"
+  }
+}
