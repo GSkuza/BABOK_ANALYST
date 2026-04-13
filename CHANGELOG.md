@@ -5,34 +5,100 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] - 2026-03-30
+## [2.1.0] - 2026-04-13
 
 ### Added
-- **Architecture Documentation (`docs/`):** New `docs/` directory with four comprehensive documents:
-  - `L2_L3_ARCHITECTURE.md` — system design for L2/L3 agent layers
-  - `MCP_TOOLS_SPECIFICATION.md` — full MCP tools API specification
-  - `MIGRATION_GUIDE_L1_to_L2.md` — step-by-step migration guide from CLI (L1) to MCP (L2)
-  - `workflows.md` — end-to-end workflow diagrams and descriptions
-- **Document Templates (`templates/`):** Production-ready Markdown templates for all core BABOK deliverables:
-  - `BRD_Template.md` — Business Requirements Document
-  - `Risk_Register_Template.md` — Risk Register
-  - `Stakeholder_Analysis_Template.md` — Stakeholder Analysis & RACI
-  - `User_Story_Template.md` — User Story with acceptance criteria
-  - `project_context.example.json` — Reference context schema for `babok run`
-- **BABOK Agent Stages (`BABOK_AGENT/stages/`):** Individual Markdown stage instruction files for all 9 stages (0–8), usable standalone in any MCP-compatible client.
-- **Multi-Agent Orchestration (`BABOK_AGENT/agents/`):** New orchestration layer with:
-  - `orchestrator_config.json` — multi-agent pipeline configuration
-  - Per-stage agent configs (`stage1_config.json` … `stage8_config.json`)
-  - `quality_audit_agent.md` / `quality_scoring_rubric.json` — automated quality review agent
-  - `context_schema_v2.json` — updated context schema v2 for structured data exchange
-- **`BABOK_AGENT_SYSTEM_PROMPT.md`:** Root-level consolidated system prompt for quick single-file deployment to any LLM interface.
-- **`generate_manual.py`:** Automated script to build DOCX/PDF user manuals from Markdown sources.
-- **GitHub Copilot Instructions (`.github/copilot-instructions.md`):** Full 1600-line Copilot Chat instructions file enabling native VS Code integration.
-- **GitHub Prompts (`.github/prompts/`):** Stage-specific and full-run prompt files for Copilot Chat (`babok-stage-1.prompt.md` … `babok-stage-8.prompt.md`, `babok-run-all.prompt.md`).
-- **CI: Prompt Linter (`.github/workflows/lint-prompts.yml`):** GitHub Actions workflow that validates stage prompt files on every push or PR.
+
+#### 🌐 Web UI (Next.js 15 App Router) — `web/`
+- New `web/` application with full **Next.js 15.5 App Router** setup.
+- **Dashboard** — lists all projects with stage progress bars.
+- **New project form** — name + language selection.
+- **Project detail view** — stage pipeline with status indicators.
+- **Stage view** — deliverable Markdown renderer + Approve/Reject buttons.
+- **Export page** — one-click ZIP download of all deliverables.
+- **API routes:** `GET/POST /projects`, `GET /projects/[id]`, `GET/POST /projects/[id]/stages/[n]`, `GET /projects/[id]/export`.
+- **Components:** `StageProgressBar`, `QualityScoreCard`, `DeliverableViewer`, `ApproveRejectButtons`.
+- **`lib/babok-client.ts`** — typed API client for server-side communication.
+
+#### 🤖 AI Reasoning Engine — `cli/src/reasoning/`
+- **Phase 1 — Quality Scorer (`F3-T1`):**
+  - `cli/src/quality/scorer.js` — `scoreStage()` / `scoreAll()` with rubric-based scoring: completeness (40%), SMART quality (30%), cross-stage consistency (30%).
+  - `cli/src/quality/checks/completeness.js` — heading-regex section detector.
+  - `cli/src/quality/checks/smart.js` — numeric / date / currency / ROI heuristics.
+  - `cli/src/quality/checks/consistency.js` — intra-stage cross-reference checks.
+  - New CLI command: **`babok score <id> <stage|all>`** with chalk score cards.
+- **Phase 1 — Cross-Stage Consistency Validator (`F1-T3`):**
+  - `cli/src/validation/cross-stage-validator.js` — `validateProject()` engine with 6 built-in rules:
+    - FR Traceability (FR IDs → RTM coverage)
+    - Budget Ceiling (Stage 8 vs Stage 1)
+    - Integration Coverage (Stage 5 vs Stage 2)
+    - KPI Coverage (Stage 2 vs Stage 1)
+    - Critical Risk Owner (Stage 7)
+    - Roadmap Date (Stage 6 vs Stage 1)
+  - New CLI command: **`babok validate <id>`** — exits with code 1 on validation errors.
+- **Phase 2 — Multi-Agent Debate Pattern (`F1-T1`):** adversarial reasoning loop for higher-quality stage outputs.
+- **Phase 2 — Chain-of-Verification (`F1-T2`):** LLM self-verification pass on generated deliverables.
+- **Phase 2 — Gold Standard Evaluation Suite (`F3-T2`):** automated benchmark comparison against reference outputs.
+
+#### 📥 Document Ingestion Pipeline (`F2-T2`) — `cli/src/`
+- `cli/src/lib/document-parser.js` — parses **PDF / DOCX / XLSX / CSV / TXT / MD** files.
+- `cli/src/commands/ingest.js` — new **`babok ingest <file>`** command with LLM-based document classification and tagging.
+- `cli/src/reasoning/prompts/ingest_tagger.md` — LLM classification prompt.
+- Ingested documents are listed in `babok status` output.
+
+#### 🗺️ Visual Process Mapping (`F5-T2`) — `cli/src/`
+- `cli/src/reasoning/process-mapper.js` — `generateProcessDiagram()` with automatic retry.
+- `cli/src/reasoning/prompts/process_to_mermaid.md` — LLM prompt generating Mermaid flowcharts.
+- New **`--diagram`** flag for the `babok run` command (available for Stage 2 AS-IS and Stage 5 TO-BE).
+
+#### 🏗️ Architecture & Agent Configuration — `docs/`, `BABOK_AGENT/`
+- `docs/L2_L3_ARCHITECTURE.md` — full L2/L3 agent layer design.
+- `docs/MCP_TOOLS_SPECIFICATION.md` — MCP tools API reference.
+- `docs/MIGRATION_GUIDE_L1_to_L2.md` — CLI-to-MCP migration guide.
+- `docs/workflows.md` — end-to-end workflow diagrams.
+- `BABOK_AGENT/agents/` — multi-agent orchestration layer:
+  - `orchestrator_config.json`, per-stage agent configs (`stage1_config.json` … `stage8_config.json`).
+  - `quality_audit_agent.md` / `quality_scoring_rubric.json`.
+  - `context_schema_v2.json` — updated context schema v2.
+- `BABOK_AGENT_SYSTEM_PROMPT.md` — consolidated root-level system prompt.
+- `DEVELOPER_TASKS.md` — full module breakdown with DoD and test plans for all 6 feature pillars.
+
+#### 📦 Document Templates — `templates/`
+- `BRD_Template.md`, `Risk_Register_Template.md`, `Stakeholder_Analysis_Template.md`, `User_Story_Template.md`.
+- `project_context.example.json` — reference context schema.
+
+#### 🧪 Test Suite (`F6-T1`) — `tests/`
+- **73 tests** passing (native `node:test` runner, ESM):
+  - `tests/unit/project.test.js` (15 assertions)
+  - `tests/unit/journal.test.js` (16 assertions)
+  - `tests/unit/scoring.test.js` (14 assertions)
+  - `tests/unit/validation.test.js` (18 assertions)
+  - `tests/integration/cli-workflow.test.js` (10 steps)
+- Fixture files: `valid_stage1.md`, `invalid_stage1_missing_raci.md`, `valid_stage4.md`, etc.
+- Test helpers: `mock-llm.js`, `temp-project.js`.
+
+#### 📚 Knowledge Base — `knowledge/`
+- 16 JSON benchmark / industry / regulatory / anti-pattern files.
+- `knowledge/README.md`.
+
+#### 🛠️ Developer Tooling
+- `generate_manual.py` — automated DOCX/PDF user manual generation from Markdown sources.
+- `.github/copilot-instructions.md` — 1600-line Copilot Chat integration file.
+- `.github/prompts/` — stage-specific Copilot Chat prompt files (`babok-stage-1.prompt.md` … `babok-run-all.prompt.md`).
+- `.github/workflows/lint-prompts.yml` — CI prompt linter on push/PR.
 
 ### Changed
-- **Version bump:** `cli/package.json` and `babok-mcp/package.json` synchronized to `2.1.0`.
+- **Version bump:** All packages synchronized to `2.1.0` (`cli`, `babok-mcp`, `web`, root workspace).
+- **`babok-mcp/` context migrated to v2.0:** Updated `agent_config` and stage configs to use new `context_schema_v2.json`.
+- **6 new L2 MCP tools** added to `babok-mcp/`: extending the MCP server API surface.
+
+### Fixed
+- **`cli/src/lib/document-parser.js`:** Replaced vulnerable **`xlsx`** dependency with **`exceljs`** (security fix — `xlsx` had unpatched CVE).
+- **`cli/src/lib/htmlToText()`:** Simplified tag-filter logic to resolve two CodeQL security warnings (tag injection path).
+- **`web/`:** `STAGE_NAMES` constant corrected to use 1-based `Record<number, string>` (was 0-based, causing off-by-one display errors).
+
+### Security
+- Removed `xlsx@^0.18.5` from `cli/package.json`; replaced with `exceljs@^4.4.0` — no known CVEs.
 
 ## [2.0.0] - 2026-03-16
 
