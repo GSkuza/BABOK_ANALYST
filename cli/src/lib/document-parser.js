@@ -99,33 +99,41 @@ async function parseDocx(filePath, fileName) {
 }
 
 async function parseXlsx(filePath, fileName) {
-  let XLSX;
+  let ExcelJS;
   try {
-    const mod = await import('xlsx');
-    XLSX = mod.default;
+    const mod = await import('exceljs');
+    ExcelJS = mod.default ?? mod;
   } catch (err) {
     const isNotInstalled = err.code === 'MODULE_NOT_FOUND' || err.message.includes('Cannot find');
     throw new Error(isNotInstalled
-      ? 'xlsx is not installed. Run: npm install xlsx'
-      : `Failed to load xlsx: ${err.message}`
+      ? 'exceljs is not installed. Run: npm install exceljs'
+      : `Failed to load exceljs: ${err.message}`
     );
   }
 
   let workbook;
   try {
-    workbook = XLSX.readFile(filePath);
+    workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
   } catch (err) {
     throw new Error(`Failed to parse XLSX: ${err.message}`);
   }
 
   const sections = [];
-  for (const sheetName of workbook.SheetNames) {
-    const sheet = workbook.Sheets[sheetName];
-    const csvText = XLSX.utils.sheet_to_csv(sheet);
+  workbook.eachSheet((worksheet, sheetId) => {
+    const rows = [];
+    worksheet.eachRow({ includeEmpty: false }, (row) => {
+      const cells = [];
+      row.eachCell({ includeEmpty: true }, (cell) => {
+        cells.push(cell.text ?? String(cell.value ?? ''));
+      });
+      rows.push(cells.join(','));
+    });
+    const csvText = rows.join('\n');
     if (csvText.trim()) {
-      sections.push({ content: csvText.trim(), pageOrSheet: sheetName });
+      sections.push({ content: csvText.trim(), pageOrSheet: worksheet.name });
     }
-  }
+  });
 
   if (sections.length === 0) {
     sections.push({ content: '', pageOrSheet: 1 });
