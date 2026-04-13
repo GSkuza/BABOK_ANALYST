@@ -1,0 +1,53 @@
+{
+  "project_name": "Document Management System Implementation",
+  "industry": "manufacturing",
+  "company_size": {
+    "revenue_eur": 35000000,
+    "employees": 220
+  },
+  "document_types": [
+    "incoming_supplier_invoices",
+    "outgoing_customer_invoices",
+    "purchase_orders",
+    "delivery_notes",
+    "quality_certificates",
+    "technical_drawings",
+    "contracts_supplier",
+    "contracts_customer"
+  ],
+  "current_systems": {
+    "erp": "SAP ERP 6.0 EhP7",
+    "accounting": "SAP FI/CO",
+    "dms": null,
+    "crm": "Salesforce",
+    "wms": "Custom in-house WMS"
+  },
+  "regulations": ["gdpr", "e-invoicing-eu", "iso-9001", "financial-reporting-ifrs"],
+  "budget": {
+    "min": 150000,
+    "max": 300000,
+    "currency": "EUR"
+  },
+  "target_date": "2026-12-31",
+  "primary_driver": "compliance",
+  "stakeholders": {
+    "sponsor": "CEO",
+    "finance_lead": "CFO",
+    "it_lead": "IT Manager",
+    "compliance_lead": "Quality Manager"
+  },
+  "current_pain_points": [
+    "Manual paper-based invoice processing averaging 45 minutes per invoice",
+    "No version control for technical drawings leading to production errors",
+    "Audit document retrieval takes 2-3 days",
+    "3 full-time employees dedicated to filing and archiving"
+  ],
+  "baseline_metrics": {
+    "invoice_processing_time_min": 45,
+    "approval_cycle_days": 5,
+    "annual_paper_cost_eur": 28000,
+    "annual_storage_cost_eur": 12000,
+    "error_rate_percent": 8.5,
+    "fte_in_document_handling": 3
+  }
+}

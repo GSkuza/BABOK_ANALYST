@@ -1,0 +1,14 @@
+{
+  "projectId": "BABOK-BABOK_ANALYSIS-20260210-KQCW",
+  "stage": 1,
+  "timestamp": "2026-04-13T08:19:15.641Z",
+  "scores": {
+    "completeness": 100,
+    "consistency": 100,
+    "quality": 100,
+    "overall": 100
+  },
+  "passed": true,
+  "issues": [],
+  "rubricVersion": "1.0"
+}

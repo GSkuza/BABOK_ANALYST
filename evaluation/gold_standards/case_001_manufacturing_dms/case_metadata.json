@@ -1,0 +1,10 @@
+{
+  "industry": "manufacturing",
+  "company_size": "mid-market (€35M revenue, 220 employees)",
+  "primary_driver": "compliance",
+  "complexity": "medium-high",
+  "author": "BABOK Analyst Team",
+  "date": "2025-01-15",
+  "description": "Manufacturing company implementing a Document Management System (DMS) to replace paper-based processes, achieve GDPR compliance, and prepare for EU e-invoicing mandates.",
+  "use_case": "End-to-end document lifecycle management covering incoming/outgoing invoices, purchase orders, delivery notes, quality certificates, and technical drawings. Integration with SAP ERP 6.0."
+}

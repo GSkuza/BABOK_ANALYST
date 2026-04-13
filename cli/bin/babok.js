@@ -18,6 +18,8 @@ import { diffCommand } from '../src/commands/diff.js';
 import { renameProject } from '../src/commands/rename.js';
 import { deleteProject } from '../src/commands/delete.js';
 import { setupWizard } from '../src/commands/setup.js';
+import { scoreCommand } from '../src/commands/score.js';
+import { validateCommand } from '../src/commands/validate.js';
 
 const program = new Command();
 
@@ -87,6 +89,7 @@ program
   .option('-s, --stage <number>', 'Stage number (1-8)')
   .option('-p, --provider <name>', 'AI provider: gemini, openai, anthropic, huggingface')
   .option('-m, --model <name>', 'Model name (provider-specific)')
+  .option('--debate', 'Enable Analyst→Critic→Synthesiser debate for deep-analysis stages (3,4,6,8)')
   .action(chatCommand);
 
 program
@@ -173,6 +176,8 @@ program
   .option('-l, --lang <lang>', 'Language: EN or PL (overrides context file)')
   .option('-s, --stages <list>', 'Comma-separated stages to run, e.g. "1,2,3" (default: all)')
   .option('--auto', 'Skip interactive review — run all stages fully automatically')
+  .option('--debate', 'Enable Analyst→Critic→Synthesiser debate for deep-analysis stages (3,4,6,8)')
+  .option('--verify', 'Enable Chain-of-Verification (CoVe) fact-check pass on all stages')
   .action(runAnalysis);
 
 program
@@ -235,5 +240,17 @@ makeCmd
   .option('-s, --stage <number>', 'Stage number (1-8)')
   .option('-o, --output <dir>', 'Output directory')
   .action((id, options) => makeCommand('all', id, options));
+
+program
+  .command('score <id> <stage>')
+  .alias('SCORE')
+  .description('Score stage quality against the rubric (stage: 1-8 or "all")')
+  .action(scoreCommand);
+
+program
+  .command('validate <id>')
+  .alias('VALIDATE')
+  .description('Run cross-stage consistency validation')
+  .action(validateCommand);
 
 program.parse();
