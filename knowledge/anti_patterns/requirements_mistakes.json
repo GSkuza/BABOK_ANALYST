@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Gold-Plating Requirements",
+    "symptoms": [
+      "Requirements include features that stakeholders did not explicitly request",
+      "BA or developer adds 'nice-to-have' features without business justification",
+      "Scope creep driven by technical team's enthusiasm rather than business need",
+      "Features are added 'because the technology can do it'"
+    ],
+    "correction": "Apply YAGNI principle (You Aren't Gonna Need It). Every requirement must trace to a stakeholder need and measurable business value. Use MoSCoW prioritization and require business sponsor sign-off for all Must-Have items."
+  },
+  {
+    "name": "Vague and Unmeasurable Requirements",
+    "symptoms": [
+      "Requirements use subjective language: 'fast', 'user-friendly', 'easy to use', 'scalable', 'flexible'",
+      "No acceptance criteria defined for user stories",
+      "Stakeholders can't agree whether the requirement has been met in testing",
+      "Requirements like 'the system should be intuitive'"
+    ],
+    "correction": "Apply SMART criteria: Specific, Measurable, Achievable, Relevant, Time-bound. Every requirement needs a testable acceptance criterion. Replace 'fast' with 'response time ≤ 2 seconds for 95th percentile of requests under 100 concurrent users'."
+  },
+  {
+    "name": "Scope Creep Without Change Control",
+    "symptoms": [
+      "New requirements are added informally during development without impact analysis",
+      "Stakeholders say 'while you're at it, can you also add...'",
+      "Project timeline keeps expanding without budget adjustment",
+      "Development team complains about constantly shifting requirements"
+    ],
+    "correction": "Implement formal change control process: all new requirements after baseline must go through Change Request (CR) form with impact assessment covering cost, schedule, and risk. Steering committee approves/rejects CRs. Document all decisions."
+  },
+  {
+    "name": "Requirements Written as Solutions",
+    "symptoms": [
+      "Requirements describe HOW to build, not WHAT business problem to solve",
+      "Example: 'The system must use a SQL database with stored procedures' instead of 'The system must retain transaction history for 7 years'",
+      "Technical decisions are embedded in requirements before solution design",
+      "Vendor or IT team has already decided technology before requirements are gathered"
+    ],
+    "correction": "Use 'shall' language focused on observable system behavior and business outcomes. Keep technology decisions out of requirements documentation. Separate business requirements (what) from solution requirements (how) into distinct sections."
+  },
+  {
+    "name": "Missing Non-Functional Requirements (NFRs)",
+    "symptoms": [
+      "Requirements document contains only functional features, no performance or security specs",
+      "No defined SLAs for response times, availability, or throughput",
+      "Security requirements absent until penetration test reveals vulnerabilities",
+      "GDPR and compliance requirements not captured as hard constraints"
+    ],
+    "correction": "Use standard NFR categories as checklist: Performance (response time, throughput), Security (authentication, authorization, encryption), Reliability (uptime SLA, RTO/RPO), Scalability, Compliance (GDPR, industry regulations), Usability, Maintainability. NFRs must be elicited and documented alongside functional requirements."
+  },
+  {
+    "name": "Conflicting Requirements Not Resolved",
+    "symptoms": [
+      "Finance requires all documents retained for 10 years; GDPR requires deletion after 3 years",
+      "Sales wants customer portal access to all orders; Security wants data minimization",
+      "Two stakeholders give contradictory answers to the same question",
+      "Requirements document contains internal contradictions"
+    ],
+    "correction": "Document all conflicts explicitly in an open issues register. Escalate to Steering Committee for resolution with clear options and their implications. Never resolve conflicts by ignoring one requirement. Document the decision rationale for audit purposes."
+  },
+  {
+    "name": "Requirements Collected from Wrong Stakeholders",
+    "symptoms": [
+      "Only management interviewed; end users not consulted",
+      "IT dictates requirements without business stakeholder involvement",
+      "Subject matter experts excluded because 'they're too busy'",
+      "Requirements approved by people who won't use the system"
+    ],
+    "correction": "Use RACI matrix to identify all stakeholder groups. BABOK stakeholder matrix analysis is mandatory at project start. End users must participate in requirements workshops and user story validation. Approval authority must include those accountable for business outcomes."
+  },
+  {
+    "name": "Requirements Baseline Not Frozen",
+    "symptoms": [
+      "Requirements keep changing after development has started",
+      "No formal sign-off exists on requirements baseline",
+      "Stakeholders re-open agreed requirements without change control",
+      "Development team builds based on email conversations rather than signed-off documents"
+    ],
+    "correction": "Establish a formal requirements baseline approval gate before development begins. Use digital signatures or documented meeting minutes as approval evidence. After baseline, all changes must go through Change Request process. Version control requirements documents."
+  },
+  {
+    "name": "Assuming Rather Than Asking",
+    "symptoms": [
+      "BA makes assumptions about stakeholder needs without validation",
+      "Phrases like 'users obviously need X' without user confirmation",
+      "Design decisions made based on BA's intuition rather than stakeholder input",
+      "Important edge cases not addressed because 'that would never happen'"
+    ],
+    "correction": "Apply 'assumption busting' technique in requirements workshops. Explicitly document all assumptions made and validate each with relevant stakeholders. Use 'Five Whys' to understand root causes before proposing solutions. Edge cases must be systematically elicited."
+  },
+  {
+    "name": "Requirements Traceability Matrix (RTM) Not Maintained",
+    "symptoms": [
+      "Cannot determine which features address which business requirements",
+      "Test cases exist but don't link to specific requirements",
+      "During UAT, stakeholders raise issues about missing features that were never formally required",
+      "Post-go-live: scope disputes about what was and wasn't in the contract"
+    ],
+    "correction": "Create and maintain RTM throughout the project lifecycle: Business Requirement → Functional Requirement → User Story → Test Case → UAT Test Case. Every requirement must have a test case. RTM review is a mandatory gate at each project phase."
+  },
+  {
+    "name": "Ignoring Integration Requirements",
+    "symptoms": [
+      "Integration points with existing systems treated as afterthoughts",
+      "API availability and data format compatibility not verified until development",
+      "Requirements document describes standalone functionality but ignores system-to-system data flows",
+      "Integration complexity underestimated in project plan"
+    ],
+    "correction": "Create interface catalog during requirements phase: for each system interface, document data flows, frequency, format, security requirements, and error handling. Validate technical feasibility with IT before finalizing requirements. Integration requirements often represent 30-40% of total scope."
+  },
+  {
+    "name": "No Definition of Done for Requirements",
+    "symptoms": [
+      "Requirements are marked 'complete' before acceptance criteria are defined",
+      "No agreement on what level of detail a requirement must have before development begins",
+      "User stories are added to sprint without testing criteria",
+      "Team debates what 'done' means during sprint review"
+    ],
+    "correction": "Define 'Definition of Ready' for requirements: acceptance criteria written, stakeholder approval obtained, technical feasibility confirmed, dependencies identified. Define 'Definition of Done' for delivery: acceptance criteria met, tested in staging, business stakeholder signed off, documentation updated."
+  }
+]

@@ -1,0 +1,108 @@
+{
+  "regulation": "ISO/IEC 27001:2022 – Information Security Management Systems",
+  "jurisdiction": "International (ISO/IEC standard; certification by accredited certification bodies worldwide). Increasingly required as procurement condition by enterprise clients, public sector, and regulated industries in EU and globally.",
+  "description": "ISO 27001:2022 (updated from 2013 edition) defines requirements for establishing, implementing, maintaining, and continually improving an Information Security Management System (ISMS). Provides a risk-based framework for managing information security threats. Certification demonstrates to clients and regulators that an organization has systematic controls for protecting information assets. Closely aligned with GDPR Article 32 security requirements.",
+  "requirements": [
+    {
+      "id": "ISO27001-4",
+      "title": "Context of the Organization",
+      "description": "Determine external and internal issues relevant to information security, identify interested parties (customers, regulators, employees) and their requirements. Define the scope of the ISMS (which systems, locations, processes are covered).",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-6.1",
+      "title": "Information Security Risk Assessment",
+      "description": "Establish and maintain a documented process for risk identification, analysis, and evaluation. Identify owners for each risk. Use a consistent risk acceptance criteria. Risk register must be reviewed at least annually and after significant changes.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-6.2",
+      "title": "Information Security Objectives",
+      "description": "Establish measurable information security objectives at relevant organizational levels, aligned with risk treatment decisions. Track progress and communicate objectives to relevant staff.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-7.2",
+      "title": "Competence and Awareness",
+      "description": "Ensure all staff with information security responsibilities have required competence. Implement information security awareness programme covering: security policy, incident reporting, acceptable use. Document training records.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-8.2",
+      "title": "Information Security Risk Treatment",
+      "description": "Select and implement appropriate risk treatment options (accept, avoid, transfer, mitigate). Produce Statement of Applicability (SoA) documenting which Annex A controls are applicable and why excluded controls were omitted. Obtain risk owner sign-off.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-A5",
+      "title": "Annex A – Organizational Controls (37 controls)",
+      "description": "Includes: information security policies, roles and responsibilities, threat intelligence, information security in project management, supplier relationships, incident management, business continuity, legal/regulatory compliance. All 37 controls must be assessed in SoA.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-A6",
+      "title": "Annex A – People Controls (8 controls)",
+      "description": "Covers: pre-employment screening, terms and conditions of employment, information security awareness training, disciplinary process, responsibilities after termination, confidentiality agreements, remote working security, and reporting information security events.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-A7",
+      "title": "Annex A – Physical Controls (14 controls)",
+      "description": "Physical security perimeters, access control to secure areas, securing offices and facilities, physical security monitoring, protecting against physical and environmental threats, clear desk and clear screen policy, equipment maintenance, secure disposal.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-A8",
+      "title": "Annex A – Technological Controls (34 controls)",
+      "description": "User endpoint devices, privileged access management, access control (RBAC, MFA), information access restriction, secure authentication, capacity management, malware protection, technical vulnerability management, configuration management, data leakage prevention, backup, logging and monitoring, network security, web filtering, secure coding, change management.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-9.1",
+      "title": "Monitoring, Measurement, Analysis and Evaluation",
+      "description": "Define what to monitor (security events, KPIs, audit results), methods for obtaining valid results, frequency, responsibilities, and when results are analysed and communicated. Security dashboard with defined metrics required.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-9.2",
+      "title": "Internal Audit Programme",
+      "description": "Conduct internal ISMS audits at planned intervals to verify conformance with ISO 27001 requirements and own ISMS policies. Auditors must be impartial (not audit own work). Document audit programme, criteria, scope, findings, and conclusions.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-9.3",
+      "title": "Management Review",
+      "description": "Top management must review the ISMS at planned intervals (at least annually). Review inputs: internal audit results, risk assessment, objectives performance, interested party feedback. Outputs: decisions on continual improvement, resource needs, policy updates.",
+      "mandatory": true
+    },
+    {
+      "id": "ISO27001-10",
+      "title": "Continual Improvement and Nonconformity Management",
+      "description": "React to nonconformities, implement corrective actions, and verify effectiveness. Maintain documented evidence of nonconformities and corrective actions. Continuously improve ISMS effectiveness based on audit findings, incidents, and management reviews.",
+      "mandatory": true
+    }
+  ],
+  "checklist": [
+    "✅ Defined and documented ISMS scope – boundaries, locations, and exclusions documented",
+    "✅ Completed information asset inventory – classified by sensitivity (public, internal, confidential, restricted)",
+    "✅ Completed information security risk assessment – threats, vulnerabilities, likelihood, and impact documented",
+    "✅ Produced risk treatment plan with accepted residual risks signed off by management",
+    "✅ Created Statement of Applicability (SoA) – all 93 Annex A controls assessed",
+    "✅ Written and approved Information Security Policy (signed by top management)",
+    "✅ Implemented access control policy – RBAC, MFA for privileged access, quarterly access reviews",
+    "✅ Deployed endpoint protection (anti-malware, EDR) on all company devices",
+    "✅ Implemented patch management process – critical patches within 72 hours, others monthly",
+    "✅ Configured security monitoring and SIEM – log collection from critical systems",
+    "✅ Created incident response procedure – detection, containment, eradication, recovery, lessons learned",
+    "✅ Completed supplier security assessments – security questionnaires for critical vendors",
+    "✅ Signed information security clauses in vendor contracts",
+    "✅ Implemented secure development lifecycle (SDLC) for in-house software",
+    "✅ Business continuity plan tested – RTO and RPO defined for critical systems",
+    "✅ Physical security measures implemented – access control, CCTV, clean desk policy",
+    "✅ Annual security awareness training completed by all staff – records retained",
+    "✅ Internal ISMS audit completed – findings documented and tracked",
+    "✅ Management review meeting held – minutes and decisions documented",
+    "✅ Selected certification body and initial audit (Stage 1 + Stage 2) planned"
+  ],
+  "penalties": "ISO 27001 is a voluntary standard; non-certification itself carries no legal penalty. However: failure to achieve/maintain certification may result in loss of client contracts (especially public sector or financial services); insurance premium increases for cyber liability; contractual penalties if certification was a contractual obligation. Indirect: GDPR Article 32 requires appropriate technical measures – ISO 27001 certification provides a strong compliance defence. Cyber incident costs for non-certified organizations average €3.4 million (IBM Cost of Data Breach Report 2024)."
+}

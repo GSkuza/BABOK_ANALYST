@@ -20,6 +20,7 @@ import { deleteProject } from '../src/commands/delete.js';
 import { setupWizard } from '../src/commands/setup.js';
 import { scoreCommand } from '../src/commands/score.js';
 import { validateCommand } from '../src/commands/validate.js';
+import { ingestCommand } from '../src/commands/ingest.js';
 
 const program = new Command();
 
@@ -178,6 +179,8 @@ program
   .option('--auto', 'Skip interactive review — run all stages fully automatically')
   .option('--debate', 'Enable Analyst→Critic→Synthesiser debate for deep-analysis stages (3,4,6,8)')
   .option('--verify', 'Enable Chain-of-Verification (CoVe) fact-check pass on all stages')
+  .option('--diagram', 'Generate Mermaid process diagrams for Stage 2 (AS-IS) and Stage 5 (TO-BE)')
+  .option('--orchestrate', 'Use orchestrator engine for automated multi-stage pipeline')
   .action(runAnalysis);
 
 program
@@ -248,7 +251,13 @@ program
   .action(scoreCommand);
 
 program
-  .command('validate <id>')
+  .command('ingest <file>')
+  .alias('INGEST')
+  .description('Ingest a document (PDF/DOCX/XLSX/CSV/TXT/MD) into project context')
+  .option('-p, --project <id>', 'Project ID (partial match supported)')
+  .action(ingestCommand);
+
+program
   .alias('VALIDATE')
   .description('Run cross-stage consistency validation')
   .action(validateCommand);

@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://babok-analyst.local/schemas/industry.schema.json",
+  "title": "Industry Knowledge File",
+  "description": "JSON Schema for BABOK Analyst industry knowledge files. Defines structure for manufacturing, distribution, services, and other industry profiles.",
+  "type": "object",
+  "required": ["industry", "description", "processes", "kpis", "pain_points", "typical_systems"],
+  "additionalProperties": true,
+  "properties": {
+    "industry": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Industry name (e.g., 'Manufacturing', 'Distribution', 'Services')"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Narrative description of the industry, typical company profile, and revenue range"
+    },
+    "processes": {
+      "type": "array",
+      "minItems": 5,
+      "description": "List of key business processes in this industry",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Process name (e.g., 'Procure-to-Pay', 'Order-to-Cash')"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "description": "Detailed description of the process scope, departments involved, and key activities"
+          }
+        }
+      }
+    },
+    "kpis": {
+      "type": "array",
+      "minItems": 5,
+      "description": "Key Performance Indicators with baseline and target values for this industry",
+      "items": {
+        "type": "object",
+        "required": ["name", "baseline", "target", "unit"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "KPI name"
+          },
+          "baseline": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Typical baseline value for mid-market companies in this industry"
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Best-in-class or achievable target value"
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Unit of measurement including description of what is being measured"
+          }
+        }
+      }
+    },
+    "pain_points": {
+      "type": "array",
+      "minItems": 5,
+      "description": "Common pain points and challenges in this industry relevant to IT and process improvement projects",
+      "items": {
+        "type": "string",
+        "minLength": 10
+      }
+    },
+    "typical_systems": {
+      "type": "array",
+      "minItems": 3,
+      "description": "List of commonly used IT systems in this industry, organized by system category",
+      "items": {
+        "type": "string",
+        "minLength": 5
+      }
+    },
+    "regulatory_considerations": {
+      "type": "array",
+      "description": "Key regulatory requirements and compliance considerations specific to this industry",
+      "items": {
+        "type": "string",
+        "minLength": 10
+      }
+    }
+  }
+}

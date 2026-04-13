@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Ignoring Implementation and Change Management Costs",
+    "symptoms": [
+      "ROI calculation includes only software license cost as investment",
+      "Internal staff time for implementation not included in costs",
+      "Change management, training, and communication costs omitted",
+      "Post-go-live hypercare and support costs not modeled"
+    ],
+    "correction": "Total Cost of Ownership (TCO) must include: software licenses, implementation services (typically 40-55% of project cost), internal FTE time, training and change management (budget 15-20% of project cost), hardware/infrastructure, data migration, post-go-live support (Year 1 typically €40k-€120k). Rule of thumb: if a vendor quotes €X for licenses, total project cost is typically 2-4X."
+  },
+  {
+    "name": "Benefits Claimed Without Evidence Baseline",
+    "symptoms": [
+      "ROI claims 'we will save 50% of invoice processing time' without measuring current state",
+      "Benefit estimates based on vendor marketing materials, not actual company data",
+      "No before/after measurement plan to verify claimed benefits post-implementation",
+      "Projections made without interviewing the people actually doing the work"
+    ],
+    "correction": "Establish measurable baseline BEFORE calculating benefits. Measure: current invoice processing time (stopwatch study, min 30 samples), current error rates, current FTE hours per task, current cost per transaction. Benefit claims must reference baseline data with confidence intervals. Plan post-implementation measurement at 3, 6, and 12 months."
+  },
+  {
+    "name": "Double-Counting Benefits",
+    "symptoms": [
+      "Time savings counted as both 'FTE cost reduction' and 'productivity increase'",
+      "Same benefit claimed in multiple line items",
+      "Paper cost savings and storage savings overlap without clear separation",
+      "Benefits summed across departments that share the same underlying work"
+    ],
+    "correction": "Create a benefit inventory mapping each benefit claim to a specific cost line. Each euro of benefit should appear exactly once. Use a benefit dependency network (benefits map) to trace benefits to enabling changes, to initiative deliverables. Have a finance controller review for double-counting before presentation."
+  },
+  {
+    "name": "Over-Optimistic Adoption Rate Assumptions",
+    "symptoms": [
+      "ROI model assumes 100% user adoption from Day 1",
+      "Benefits are modeled at full capacity from go-live month",
+      "No ramp-up period for user learning curve",
+      "Resistance to change and workarounds not factored into benefit timeline"
+    ],
+    "correction": "Apply an S-curve adoption model: Month 1-3: 20-30% of projected benefits; Month 4-6: 50-70%; Month 7-12: 80-90%; Year 2+: 100% (if change management is excellent). Best-in-Class achieves 85% adoption at 6 months (Prosci benchmark). Conservative model should assume 12-18 months to full benefit realization."
+  },
+  {
+    "name": "Ignoring Disruption and Productivity Dip During Implementation",
+    "symptoms": [
+      "ROI model shows positive returns from Month 1",
+      "No 'J-curve' effect modeled during system cutover",
+      "Staff time for testing, training, and data migration not counted as cost",
+      "Go-live weekend and hypercare period not in project budget"
+    ],
+    "correction": "Model the implementation dip: during implementation, business productivity typically drops 10-25% for 1-3 months as staff split time between BAU and project work. Include this as a cost (lost productivity). Post-go-live: expect 15-30% productivity decrease for 1-2 months during learning curve. These costs typically delay break-even by 3-6 months."
+  },
+  {
+    "name": "Using Fully-Loaded FTE Cost Instead of Marginal Cost",
+    "symptoms": [
+      "ROI model calculates FTE savings based on annual salary when no headcount reduction is planned",
+      "'Saving 0.5 FTE' is valued at 50% of annual salary when the person stays employed",
+      "Benefit claimed as cost avoidance when no actual budget line is eliminated",
+      "Savings reported as hard benefits when they are actually redeployment of capacity"
+    ],
+    "correction": "Distinguish between hard savings (actual budget reduction or headcount elimination) and soft savings (redeployment of freed capacity). Hard savings: use actual salary + overhead. Soft savings: use a realization factor (30-50%) to reflect uncertainty that freed time generates real value. For capacity redeployment, only count value if a new revenue-generating or cost-saving activity is specifically identified."
+  },
+  {
+    "name": "Selecting Discount Rate Arbitrarily",
+    "symptoms": [
+      "NPV calculated using 10% discount rate 'because that's what we always use'",
+      "Discount rate not aligned with company's weighted average cost of capital (WACC)",
+      "Same discount rate applied to certain and uncertain cash flows",
+      "Sensitivity analysis not performed for different discount rate assumptions"
+    ],
+    "correction": "Use company's actual hurdle rate or WACC for base case. Mid-market EU companies typically use 8-15% hurdle rate. For IT projects with uncertain benefits, add 2-5% risk premium. Perform sensitivity analysis: calculate NPV at WACC-2%, WACC, and WACC+3%. Present range of NPV outcomes, not single point estimate."
+  },
+  {
+    "name": "Ignoring Opportunity Cost and Alternative Investments",
+    "symptoms": [
+      "Business case presented in isolation without comparing to alternative uses of capital",
+      "No comparison to 'do nothing' scenario with explicit cost of inaction",
+      "Alternative vendors or solutions not compared on equivalent ROI basis",
+      "Strategic opportunity cost of delaying investment not quantified"
+    ],
+    "correction": "Present business case with three scenarios: (1) Do nothing – cost of inaction including regulatory risk, competitive disadvantage, growing technical debt; (2) Proposed solution; (3) Alternative approach. Use NPV comparison across alternatives. Include qualitative factors (strategic fit, risk, speed) alongside financial metrics. Decision-makers need comparative data."
+  }
+]

@@ -4,6 +4,7 @@ import readline from 'readline';
 import chalk from 'chalk';
 import { fileURLToPath } from 'url';
 import { generateProjectId, STAGES } from '../project.js';
+import { getProjectDir } from '../project.js';
 import { acquireLock, releaseLock, formatLockInfo } from '../lock.js';
 import {
   getApiKey,
@@ -18,6 +19,9 @@ import {
 } from '../llm.js';
 import { runDebate, markDebateInJournal } from '../reasoning/debate.js';
 import { runCoVe } from '../reasoning/verify.js';
+import { generateProcessDiagram } from '../reasoning/process-mapper.js';
+import { runPipeline } from '../orchestrator/engine.js';
+import { writeContext } from '../orchestrator/context-manager.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -300,6 +304,36 @@ function sendWithTimeout(userMessage, onChunk) {
 
 export async function runAnalysis(options) {
 
+  // ── --orchestrate: delegate to the automated multi-stage pipeline engine ──
+  if (options.orchestrate) {
+    const projectName = options.name || 'Orchestrated Project';
+    const projectId = generateProjectIdWithTitle(projectName);
+    const projectDir = getProjectDir(projectId);
+    fs.mkdirSync(projectDir, { recursive: true });
+    writeContext(projectId, {
+      projectName,
+      startedAt: new Date().toISOString(),
+    });
+    console.log('');
+    console.log(chalk.bold.blue('╔══════════════════════════════════════╗'));
+    console.log(chalk.bold.blue('║   BABOK Orchestrator Engine [AUTO]   ║'));
+    console.log(chalk.bold.blue('╚══════════════════════════════════════╝'));
+    console.log('');
+    console.log(chalk.cyan('  Project : ') + chalk.bold(projectName));
+    console.log(chalk.cyan('  ID      : ') + chalk.bold(projectId));
+    console.log(chalk.cyan('  Output  : ') + chalk.dim(projectDir));
+    console.log('');
+    const result = await runPipeline(projectId, {
+      dryRun: options.auto,
+      onProgress: (e) => console.log(chalk.cyan('  [orchestrator]'), e.type, e.stage || ''),
+    });
+    console.log(chalk.green('\n  ✅ Pipeline complete!'), result.stagesCompleted.length, 'stages');
+    if (result.stagesFailed.length > 0) {
+      console.log(chalk.yellow('  ⚠️  Failed stages:'), result.stagesFailed.join(', '));
+    }
+    return;
+  }
+
   // ── 1. Provider / API key selection (first!) ──
   let provider = options.provider || null;
   let apiKey = null;
@@ -571,6 +605,28 @@ export async function runAnalysis(options) {
         `${verificationReport.refutedCount} refuted`
       ));
       response = corrected;
+    }
+
+    // ── diagram: Mermaid process diagram (--diagram flag, stages 2 and 5) ──
+    if (options.diagram && (stageNum === 2 || stageNum === 5)) {
+      try {
+        const diagramLlm = {
+          chat: async (systemPrompt, userMessage) => {
+            startChatSession(systemPrompt, []);
+            return sendWithTimeout(userMessage, null);
+          },
+        };
+        const diagramResult = await generateProcessDiagram(response, diagramLlm, {});
+        if (diagramResult && diagramResult.mermaidSyntax) {
+          response += `\n\n## Process Diagram\n\n\`\`\`mermaid\n${diagramResult.mermaidSyntax}\n\`\`\`\n`;
+          console.log(chalk.cyan(`  [diagram] Stage ${stageNum} ${diagramResult.diagramType} diagram generated`));
+          if (diagramResult.warnings.length > 0) {
+            diagramResult.warnings.forEach(w => console.log(chalk.yellow(`  [diagram] Warning: ${w}`)));
+          }
+        }
+      } catch (err) {
+        console.log(chalk.yellow(`  [diagram] Skipped: ${err.message}`));
+      }
     }
 
     fs.writeFileSync(filePath, response, 'utf-8');

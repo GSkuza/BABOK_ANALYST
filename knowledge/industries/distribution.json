@@ -1,0 +1,132 @@
+{
+  "industry": "Distribution",
+  "description": "Companies engaged in wholesale distribution, logistics, and supply chain management. Acts as intermediary between manufacturers and retailers/end customers. Includes wholesale distributors, 3PL providers, importers/exporters, and online fulfillment centers. Mid-market distributors typically manage 5,000-50,000 SKUs, process 100-2,000 orders per day, and have revenues of €10-100M.",
+  "processes": [
+    {
+      "name": "Inbound Logistics (Receive-to-Put-Away)",
+      "description": "Process from advance shipping notice (ASN) receipt through carrier scheduling, unloading, quality inspection, barcode/RFID scanning, and directed put-away to optimal warehouse locations. Includes cross-docking for high-velocity SKUs."
+    },
+    {
+      "name": "Order Management (Order-to-Ship)",
+      "description": "Customer order receipt via EDI, web portal, phone, or email; order validation, credit check, available-to-promise (ATP) check, pick/pack/ship execution, carrier selection, and shipment confirmation. SLA management for same-day or next-day shipping commitments."
+    },
+    {
+      "name": "Inventory Management",
+      "description": "Perpetual inventory tracking using FIFO/FEFO/LIFO costing, cycle counting programs, ABC-XYZ analysis, min/max replenishment triggers, slow-mover and obsolescence management, and multi-location inventory balancing."
+    },
+    {
+      "name": "Supplier Replenishment (Plan-to-Purchase)",
+      "description": "Demand-driven replenishment using statistical forecasting (moving average, exponential smoothing), vendor-managed inventory (VMI), purchase order generation, lead time management, and supplier performance tracking."
+    },
+    {
+      "name": "Returns Management (Reverse Logistics)",
+      "description": "Customer return authorization (RMA), return receipt and inspection, disposition decision (restock, repair, destroy, return to vendor), credit note issuance, and supplier warranty claims. Critical for e-commerce fulfillment operations."
+    },
+    {
+      "name": "Accounts Payable and Supplier Invoicing",
+      "description": "High-volume supplier invoice processing (often 500-5,000 invoices/month), three-way PO/GR/invoice matching, dispute resolution, early payment discount capture, and supplier portal integration. GDPR-compliant vendor master management."
+    },
+    {
+      "name": "Customer Billing and Collections",
+      "description": "Invoice generation based on shipment confirmation, customer-specific pricing and discount rules, EDI invoice transmission, credit limit monitoring, dunning process, and cash application."
+    },
+    {
+      "name": "Transport Management",
+      "description": "Carrier selection and rate shopping, load planning and consolidation, shipment tracking, proof of delivery (POD) management, freight cost allocation, and carrier performance measurement."
+    }
+  ],
+  "kpis": [
+    {
+      "name": "Order Fill Rate",
+      "baseline": "92-95",
+      "target": "98.5+",
+      "unit": "% of order lines shipped complete on first attempt"
+    },
+    {
+      "name": "Warehouse Picking Accuracy",
+      "baseline": "98.5-99.0",
+      "target": "99.9",
+      "unit": "% of picks without errors"
+    },
+    {
+      "name": "Invoice Processing Time",
+      "baseline": "4-7",
+      "target": "0.5-1",
+      "unit": "days per supplier invoice"
+    },
+    {
+      "name": "On-Time Shipment Rate",
+      "baseline": "91-94",
+      "target": "98+",
+      "unit": "% of orders shipped on promised date"
+    },
+    {
+      "name": "Inventory Accuracy (Cycle Count)",
+      "baseline": "95-97",
+      "target": "99.5+",
+      "unit": "% match between system and physical count"
+    },
+    {
+      "name": "Days Inventory Outstanding (DIO)",
+      "baseline": "35-55",
+      "target": "20-30",
+      "unit": "days of inventory on hand"
+    },
+    {
+      "name": "Cost per Order Line",
+      "baseline": "4.50-8.00",
+      "target": "2.00-3.50",
+      "unit": "EUR per order line picked and shipped"
+    },
+    {
+      "name": "Supplier Invoice Exception Rate",
+      "baseline": "15-25",
+      "target": "<5",
+      "unit": "% of invoices requiring manual intervention"
+    },
+    {
+      "name": "Return Processing Time",
+      "baseline": "3-7",
+      "target": "1-2",
+      "unit": "days from customer return receipt to credit note issuance"
+    },
+    {
+      "name": "Dock-to-Stock Time",
+      "baseline": "4-8",
+      "target": "1-2",
+      "unit": "hours from goods receipt to available-for-sale"
+    }
+  ],
+  "pain_points": [
+    "Manual processing of high-volume supplier invoices (often paper or unstructured PDF) creates bottlenecks in Accounts Payable, leading to missed early-payment discounts worth 1-3% of invoice value",
+    "Lack of automated EDI/API integration with key suppliers and customers forces manual re-keying of orders and shipping confirmations, introducing errors and delays",
+    "Paper-based proof of delivery (POD) documents get lost or delayed, causing disputes with customers and delaying cash collection by 7-14 days",
+    "Disconnected systems between WMS, ERP, and TMS create inventory discrepancies, requiring manual reconciliation during month-end closing",
+    "Inability to provide real-time shipment visibility to customers increases inbound call volume by 20-30% and erodes customer satisfaction",
+    "Manual processing of customer returns (RMA) delays credit note issuance and creates cash flow issues for customers, leading to payment disputes",
+    "Physical document storage for customs documentation, certificates of origin, and import records makes audit preparation extremely burdensome",
+    "Non-compliance with electronic invoicing mandates in target markets creates barriers to winning government and large corporate contracts",
+    "Slow approval workflows for vendor master changes and new supplier onboarding create procurement bottlenecks and supply chain delays",
+    "Fragmented pricing and contract document management leads to incorrect invoicing and costly revenue leakage (estimated 0.5-2% of revenue)"
+  ],
+  "typical_systems": [
+    "ERP: SAP Business One, Microsoft Dynamics 365 Business Central, Infor CloudSuite Distribution, Epicor Prophet 21, NetSuite",
+    "WMS (Warehouse Management System): Manhattan Associates, Blue Yonder (JDA), Körber, HighJump/Korber, SAP EWM",
+    "TMS (Transport Management System): Oracle TMS, MercuryGate, C.H. Robinson Navisphere, Transplace",
+    "EDI Platform: SPS Commerce, TrueCommerce, Cleo, OpenText GXS",
+    "Document Management: SharePoint Online, DocuWare, Laserfiche, M-Files",
+    "E-invoicing Platform: Basware, Tungsten Network (Kofax), Tradeshift, Coupa",
+    "Forecasting/Planning: Relex Solutions, Blue Yonder, Streamline, Lokad",
+    "CRM: Salesforce, Microsoft Dynamics 365 Sales"
+  ],
+  "regulatory_considerations": [
+    "GDPR – Customer and employee personal data in CRM, HR systems, and shipping documents; requires data processing agreements with logistics partners",
+    "E-invoicing mandates – B2B and B2G electronic invoicing requirements vary by country (KSeF/Poland, XRechnung/Germany, FatturaPA/Italy, Chorus Pro/France)",
+    "Customs and import/export documentation – EUR.1 movement certificates, certificates of origin, customs declarations (SAD), import licenses",
+    "Food safety (if distributing food) – HACCP documentation, temperature monitoring records, lot traceability (EU Regulation 178/2002)",
+    "Pharmaceutical distribution (GDP) – Good Distribution Practice documentation, temperature-controlled storage records, qualified person oversight",
+    "Consumer product safety – CE declaration of conformity documentation, REACH substance declarations, RoHS compliance records",
+    "VAT compliance – Intra-EU trade (Intrastat reporting), reverse charge documentation, cross-border B2C VAT (OSS scheme)",
+    "Anti-bribery/corruption – Due diligence documentation for foreign business partners (EU Whistleblower Directive compliance)"
+  ]
+}

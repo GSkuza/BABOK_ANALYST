@@ -1,0 +1,90 @@
+{
+  "regulation": "Krajowy System e-Faktur (KSeF) – Polish National e-Invoicing System",
+  "jurisdiction": "Poland (EU member state). Mandatory for all VAT-registered entities in Poland from 1 February 2026 for large taxpayers; all VAT taxpayers from 1 April 2026. B2G mandate already in force.",
+  "description": "KSeF is the Polish centralized e-invoicing platform operated by the Ministry of Finance (Ministerstwo Finansów). All B2B and B2C structured invoices (Faktury Ustrukturyzowane) must be issued through KSeF using the standardized FA(2) XML schema. The system assigns a unique KSeF number (numer KSeF) and timestamp to each invoice. KSeF replaces traditional paper and PDF invoices for domestic B2B transactions. Invoices are stored in KSeF for 10 years. Significant technical and operational changes required for ERP and billing systems.",
+  "requirements": [
+    {
+      "id": "KSEF-R01",
+      "title": "Mandatory Use of KSeF Platform",
+      "description": "All VAT-registered taxpayers in Poland must issue B2B invoices exclusively through KSeF from mandatory date. Voluntary use permitted from 1 January 2022. Invoices must be submitted via KSeF API in real-time or near real-time.",
+      "mandatory": true
+    },
+    {
+      "id": "KSEF-R02",
+      "title": "FA(2) XML Schema Compliance",
+      "description": "Invoices must conform to the official FA(2) logical structure (Struktura Logiczna Faktury). Schema published by Ministerstwo Finansów. Key fields: seller NIP (tax ID), buyer NIP (for VAT payers), invoice date, delivery date, net amounts, VAT rates, VAT amounts, gross amount. All amounts in PLN by default; EUR invoices must include exchange rate.",
+      "mandatory": true
+    },
+    {
+      "id": "KSEF-R03",
+      "title": "API Authentication via Token",
+      "description": "Companies must obtain KSeF API authentication token from MF portal. Authentication methods: qualified e-signature, trusted profile (ePUAP), token. Technical integration requires OAuth 2.0 or token-based API calls. Token management must be maintained (rotation, revocation).",
+      "mandatory": true
+    },
+    {
+      "id": "KSEF-R04",
+      "title": "UPO (Urzędowe Poświadczenie Odbioru) Storage",
+      "description": "For each successfully submitted invoice, KSeF returns a UPO (Official Receipt Confirmation) containing KSeF number, submission timestamp, and SHA-256 hash of the invoice XML. UPO must be stored alongside the invoice for audit purposes. KSeF number is the legally binding invoice identifier.",
+      "mandatory": true
+    },
+    {
+      "id": "KSEF-R05",
+      "title": "Offline Mode (Tryb Offline)",
+      "description": "When KSeF is temporarily unavailable (planned maintenance windows announced by MF; emergency outages), invoices may be issued in offline mode using a pre-assigned range of invoice numbers. Offline invoices must be submitted to KSeF within 1 business day of system restoration. Specific XML metadata must flag offline mode.",
+      "mandatory": true
+    },
+    {
+      "id": "KSEF-R06",
+      "title": "Invoice Correction (Faktura Korygująca) via KSeF",
+      "description": "Credit notes and debit notes (corrective invoices) must also be issued through KSeF using the correction invoice structure. Original KSeF number must be referenced. Buyer must accept correction through KSeF (or via separate agreement). This affects VAT correction procedures.",
+      "mandatory": true
+    },
+    {
+      "id": "KSEF-R07",
+      "title": "Invoice Access for Buyers",
+      "description": "Buyers (VAT payers) can access invoices issued to them via KSeF API or portal using their own NIP authentication. Buyer must ensure their NIP is provided by sellers. Receipt of invoice in KSeF constitutes legal delivery without separate email/post delivery.",
+      "mandatory": true
+    },
+    {
+      "id": "KSEF-R08",
+      "title": "10-Year KSeF Storage",
+      "description": "MF stores invoices in KSeF for 10 years. Companies are still required to maintain their own invoice records per Polish accounting law (Ustawa o rachunkowości) but KSeF storage satisfies the retention requirement for invoices submitted through KSeF.",
+      "mandatory": true
+    },
+    {
+      "id": "KSEF-R09",
+      "title": "ERP/Billing System Integration Requirements",
+      "description": "ERP/billing systems must implement: FA(2) XML generation from invoice data, KSeF API integration (submit, status check, retrieve), error handling and retry logic, UPO storage and retrieval, offline mode with queue management. MF provides test environment (środowisko testowe) for integration validation.",
+      "mandatory": true
+    },
+    {
+      "id": "KSEF-R10",
+      "title": "NIP Validation and Buyer Identification",
+      "description": "Seller must include valid NIP of buyer (for VAT-registered buyers). NIP validation against VIES/Polish business registry recommended. For non-VAT-registered buyers (consumers, B2C), different simplified invoice rules may apply.",
+      "mandatory": true
+    }
+  ],
+  "checklist": [
+    "✅ Register company in KSeF portal (Ministerstwo Finansów) – obtain entity KSeF access",
+    "✅ Obtain and configure KSeF API authentication token (qualified e-signature or trusted profile)",
+    "✅ Map all existing invoice fields to FA(2) schema – identify gaps in master data",
+    "✅ Implement FA(2) XML generator in ERP/billing system",
+    "✅ Validate FA(2) XML output against official MF schema validator (xsd validation)",
+    "✅ Connect to KSeF test environment and complete end-to-end integration testing",
+    "✅ Test invoice submission workflow: send, status check, receive KSeF number and UPO",
+    "✅ Implement UPO storage – link KSeF number to invoice record in ERP",
+    "✅ Implement offline mode queue with automatic resubmission on system restoration",
+    "✅ Test correction invoice (Faktura Korygująca) via KSeF workflow",
+    "✅ Implement error handling for all documented KSeF API error codes (400, 401, 404, 429, 500)",
+    "✅ Implement retry logic with exponential backoff for transient API failures",
+    "✅ Configure monitoring and alerting for KSeF submission failures",
+    "✅ Update master data: ensure all customer NIP numbers are validated and stored in ERP",
+    "✅ Train finance and accounting staff on KSeF workflow changes",
+    "✅ Update VAT records/JPK_V7 reporting to use KSeF numbers",
+    "✅ Validate that ERP can receive and process invoices from suppliers via KSeF",
+    "✅ Complete parallel testing (paper vs. KSeF) during voluntary phase",
+    "✅ Obtain legal sign-off on KSeF implementation from tax advisor",
+    "✅ Go-live cutover plan prepared with rollback procedure"
+  ],
+  "penalties": "Failure to issue invoices through KSeF after mandatory date: fine of up to 100% of VAT amount on the invoice. Additionally, buyers may not be able to claim input VAT on invoices not issued through KSeF. Tax authority gains real-time visibility into all invoices, enabling immediate cross-referencing with JPK_V7 VAT returns – discrepancies will trigger faster audits. Voluntary use before mandate: incentive of accelerated VAT refund (25 days instead of 60 days)."
+}

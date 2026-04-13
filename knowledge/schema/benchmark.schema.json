@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://babok-analyst.local/schemas/benchmark.schema.json",
+  "title": "Benchmark Knowledge File",
+  "description": "JSON Schema for BABOK Analyst benchmark knowledge files. Defines structure for industry benchmark data with sourced data points.",
+  "type": "object",
+  "required": ["category", "description", "data_points"],
+  "additionalProperties": true,
+  "properties": {
+    "category": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Benchmark category name (e.g., 'Document Automation and Intelligent Document Processing')"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Description of what this benchmark covers and the data sources used"
+    },
+    "data_points": {
+      "type": "array",
+      "minItems": 3,
+      "description": "Individual benchmark data points with metric, value, source citation, and year",
+      "items": {
+        "type": "object",
+        "required": ["metric", "value", "source", "year"],
+        "additionalProperties": false,
+        "properties": {
+          "metric": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Name of the metric being benchmarked"
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Benchmark value including units, ranges, and context"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 5,
+            "description": "Citation for the data source including organization name and report title"
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2100,
+            "description": "Year the data was published or collected"
+          }
+        }
+      }
+    }
+  }
+}

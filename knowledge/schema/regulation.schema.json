@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://babok-analyst.local/schemas/regulation.schema.json",
+  "title": "Regulation Knowledge File",
+  "description": "JSON Schema for BABOK Analyst regulation knowledge files. Defines structure for regulatory frameworks, compliance checklists, and penalty information.",
+  "type": "object",
+  "required": ["regulation", "jurisdiction", "description", "requirements", "checklist", "penalties"],
+  "additionalProperties": true,
+  "properties": {
+    "regulation": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Full official name of the regulation (e.g., 'General Data Protection Regulation (GDPR)')"
+    },
+    "jurisdiction": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Geographic scope and applicability (country, region, or international)"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Narrative overview of the regulation including effective date, key principles, and who it applies to"
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Individual compliance requirements derived from the regulation",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "description", "mandatory"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Z0-9_\\-]+$",
+            "description": "Unique identifier for the requirement (e.g., 'GDPR-ART5', 'ISO27001-6.1')"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Short title of the requirement"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "description": "Detailed description of what is required and how to comply"
+          },
+          "mandatory": {
+            "type": "boolean",
+            "description": "Whether this requirement is mandatory (true) or conditional/optional (false)"
+          }
+        }
+      }
+    },
+    "checklist": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Practical compliance checklist items for implementation teams",
+      "items": {
+        "type": "string",
+        "minLength": 5
+      }
+    },
+    "penalties": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Description of penalties and consequences for non-compliance"
+    }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "regulation": "General Data Protection Regulation (GDPR)",
+  "jurisdiction": "European Union (applies to all organizations processing personal data of EU residents, regardless of organization location)",
+  "description": "EU Regulation 2016/679, effective 25 May 2018. Governs the collection, processing, storage, and transfer of personal data. Applies to all mid-market companies processing EU customer, employee, or supplier personal data. Enforced by national Data Protection Authorities (DPAs). Key principle: privacy by design and default.",
+  "requirements": [
+    {
+      "id": "GDPR-ART5",
+      "title": "Lawfulness, Fairness and Transparency",
+      "description": "Personal data must be processed lawfully (one of six legal bases: consent, contract, legal obligation, vital interest, public task, legitimate interest), fairly, and in a transparent manner. Privacy notices must be clear, concise, and accessible.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART5-E",
+      "title": "Storage Limitation",
+      "description": "Personal data must not be kept longer than necessary for its purpose. Organizations must define and enforce retention schedules for each data category (e.g., employee records: 10 years after leaving; customer invoices: 5-7 years for tax purposes; marketing contacts: until consent withdrawn).",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART13-14",
+      "title": "Right to Information (Privacy Notice)",
+      "description": "Data subjects must be informed at point of collection: identity of controller, DPO contact, purposes and legal basis, recipients, retention period, rights available, right to withdraw consent, right to lodge complaint with DPA.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART15",
+      "title": "Right of Access (Subject Access Request)",
+      "description": "Data subjects may request a copy of all personal data held about them within 30 days (extendable to 90 days for complex requests). Response must be free of charge for first request. Organizations must have a documented SAR procedure.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART16",
+      "title": "Right to Rectification",
+      "description": "Data subjects may request correction of inaccurate personal data. System must support data correction workflows with audit trail showing what was changed, by whom, and when.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART17",
+      "title": "Right to Erasure ('Right to be Forgotten')",
+      "description": "Data subjects may request deletion of their personal data when: no longer necessary for purpose, consent withdrawn, data unlawfully processed, or legal obligation requires erasure. Exception: legal retention obligations override this right.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART20",
+      "title": "Right to Data Portability",
+      "description": "For data processed on basis of consent or contract, data subjects may request their data in machine-readable format (JSON, CSV, XML) for transfer to another controller. Applies to digitally collected data.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART25",
+      "title": "Data Protection by Design and by Default",
+      "description": "Privacy considerations must be embedded in system design from the outset, not bolted on afterwards. Default settings must be the most privacy-protective available. Requires privacy impact assessment during system procurement/development.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART28",
+      "title": "Data Processing Agreements (DPA) with Processors",
+      "description": "When engaging third-party service providers (cloud vendors, payroll processors, IT support) who process personal data on your behalf, a formal Data Processing Agreement must be in place covering: processing instructions, security measures, sub-processor obligations, cooperation with DPA.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART30",
+      "title": "Records of Processing Activities (RoPA)",
+      "description": "Organizations with 250+ employees (or processing high-risk data) must maintain written records of all processing activities including: purpose, data categories, data subjects, recipients, transfers to third countries, retention periods, security measures. Must be available to supervisory authority on request.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART32",
+      "title": "Security of Processing",
+      "description": "Implement appropriate technical and organizational measures: pseudonymization and encryption, ongoing confidentiality/integrity/availability assurance, regular testing and evaluation of security measures. Risk-based approach: higher risk data requires stronger measures.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART33",
+      "title": "Personal Data Breach Notification (to DPA)",
+      "description": "Data breaches must be reported to the national DPA within 72 hours of becoming aware. Report must include: nature of breach, categories and approximate number of data subjects affected, likely consequences, measures taken or proposed.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART34",
+      "title": "Notification to Data Subjects After Breach",
+      "description": "If a breach is likely to result in high risk to data subjects' rights and freedoms, affected individuals must be notified without undue delay, in clear and plain language, describing nature of breach and recommended protective measures.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART35",
+      "title": "Data Protection Impact Assessment (DPIA)",
+      "description": "Mandatory before high-risk processing: large-scale systematic monitoring, large-scale processing of special category data, systematic evaluation using automated processing/profiling, or new technologies. DPIA must assess necessity, proportionality, and risk mitigation measures.",
+      "mandatory": true
+    },
+    {
+      "id": "GDPR-ART37",
+      "title": "Data Protection Officer (DPO) Appointment",
+      "description": "DPO appointment mandatory for: public authorities, organizations whose core activities require large-scale systematic monitoring, organizations whose core activities involve large-scale processing of special categories. DPO must have expert knowledge of data protection law.",
+      "mandatory": false
+    },
+    {
+      "id": "GDPR-ART46",
+      "title": "Transfers to Third Countries",
+      "description": "Personal data may only be transferred outside the EEA where: adequacy decision exists (e.g., UK, Japan, Israel), or appropriate safeguards in place (Standard Contractual Clauses - SCCs, Binding Corporate Rules). US transfers: Standard Contractual Clauses required (EU-US Data Privacy Framework since 2023).",
+      "mandatory": true
+    }
+  ],
+  "checklist": [
+    "✅ Conducted data mapping audit – identified all personal data flows (internal and to third parties)",
+    "✅ Created/updated Records of Processing Activities (RoPA) document",
+    "✅ Identified legal basis for each processing activity – documented in RoPA",
+    "✅ Updated privacy notices on website, apps, contracts, and HR documents",
+    "✅ Implemented cookie consent management on website (TCF 2.2 compliant)",
+    "✅ Signed Data Processing Agreements with all third-party processors (cloud vendors, payroll, IT support)",
+    "✅ Updated Standard Contractual Clauses (2021 SCCs) for transfers to third countries",
+    "✅ Created data subject rights procedures (SAR, rectification, erasure, portability workflows)",
+    "✅ Defined retention schedules for all data categories – implemented technical enforcement",
+    "✅ Completed DPIA for high-risk processing activities",
+    "✅ Implemented encryption at rest (AES-256) and in transit (TLS 1.3) for personal data",
+    "✅ Set up role-based access control (RBAC) – least privilege principle",
+    "✅ Configured comprehensive audit logging – who accessed what personal data, when",
+    "✅ Created and tested personal data breach response procedure (72-hour DPA notification)",
+    "✅ Appointed DPO (if required) or identified responsible person for data protection queries",
+    "✅ Conducted GDPR awareness training for all staff handling personal data",
+    "✅ Reviewed and updated data protection clauses in customer and supplier contracts",
+    "✅ Configured backup procedures with encryption for personal data backups",
+    "✅ Documented lawful basis for marketing communications (consent records maintained)",
+    "✅ Annual GDPR compliance review scheduled"
+  ],
+  "penalties": "Administrative fines up to €20 million or 4% of total worldwide annual turnover (whichever is higher) for most serious infringements (Art. 83(5)). Less serious infringements: up to €10 million or 2% of turnover (Art. 83(4)). Additionally: criminal sanctions in some member states, civil liability/compensation claims from data subjects, reputational damage. Examples: Meta fined €1.2 billion (Ireland DPA, 2023); Amazon fined €746 million (Luxembourg CNPD, 2021)."
+}
