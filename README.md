@@ -32,13 +32,31 @@ BABOK_ANALYST/
 |   |   |-- BABOK_agent_stage_6.md        # Stage 6: Gap Analysis & Roadmap
 |   |   |-- BABOK_agent_stage_7.md        # Stage 7: Risk Assessment
 |   |   |-- BABOK_agent_stage_8.md        # Stage 8: Business Case & ROI
+|   |-- agents/                           # Multi-agent orchestration layer (NEW v2.1.0)
+|   |   |-- orchestrator_config.json      # Pipeline: model routing, handoff, retry rules
+|   |   |-- stage1_config.json … stage8_config.json  # Per-stage model & prompt config
+|   |   |-- quality_audit_agent.md        # Automated post-stage quality review agent
+|   |   |-- quality_scoring_rubric.json   # Scoring rubric (completeness/SMART/consistency)
+|   |   |-- context_schema_v2.json        # Extended context schema v2
 |   |-- LLM_BABOK_AGENT/                  # Standalone prompt for LLM chat
 |   |   |-- BABOK_Agent_LLM_Prompt.md     # Self-contained prompt (all stages inline)
 |
 |-- cli/                                  # Node.js CLI tool
 |   |-- bin/babok.js                      # CLI entry point
 |   |-- src/commands/                     # Command implementations
-|   |-- src/lock.js                       # File-locking for team collaboration (NEW v2.0.1)
+|   |   |-- ingest.js                     # babok ingest <file> (NEW v2.1.0)
+|   |-- src/quality/                      # Quality scoring engine (NEW v2.1.0)
+|   |   |-- scorer.js                     # scoreStage() / scoreAll()
+|   |   |-- checks/completeness.js        # Section completeness checker
+|   |   |-- checks/smart.js               # SMART criteria heuristics
+|   |   |-- checks/consistency.js         # Cross-stage consistency checks
+|   |-- src/validation/                   # Validation engine (NEW v2.1.0)
+|   |   |-- cross-stage-validator.js      # validateProject() — 6 built-in rules
+|   |-- src/reasoning/                    # AI reasoning engine (NEW v2.1.0)
+|   |   |-- process-mapper.js             # generateProcessDiagram() — Mermaid output
+|   |   |-- prompts/                      # LLM prompt templates
+|   |-- src/lib/document-parser.js        # PDF/DOCX/XLSX/CSV/TXT/MD parser (NEW v2.1.0)
+|   |-- src/lock.js                       # File-locking for team collaboration
 |   |-- src/llm.js                        # Multi-provider LLM integration & keystore
 |   |-- src/journal.js                    # Project journal management
 |   |-- src/project.js                    # Project ID generation
@@ -52,18 +70,61 @@ BABOK_ANALYST/
 |   |-- src/lib/project.js                # Project ID & path resolution
 |   |-- src/lib/journal.js                # Journal CRUD + stage transitions
 |   |-- src/test/smoke.js                 # 10-assertion smoke test suite
-|   |-- setup.bat                         # One-click MCP installer (Windows) (NEW v2.0.2)
+|   |-- setup.bat                         # One-click MCP installer (Windows)
 |   |-- package.json                      # npm package (babok-mcp)
 |   |-- README.md                         # Setup guide for Claude/Cursor/VS Code
-|   |-- babok-mcp-user-manual.md          # Full user manual (EN) (NEW v2.0.2)
+|   |-- babok-mcp-user-manual.md          # Full user manual (EN)
 |
-|-- setup.bat                             # One-click installer (Windows) (NEW v2.0.1)
-|-- setup.sh                              # One-click installer (Linux/macOS) (NEW v2.0.1)
-|-- babok-mcp-podrecznik uzytkownika.md   # Full MCP user manual (PL) (NEW v2.0.2)
-|-- babok-mcp-user-manual.md              # Full MCP user manual (EN) (NEW v2.0.2)
+|-- web/                                  # Web UI — Next.js 15 App Router (NEW v2.1.0)
+|   |-- app/                              # App Router pages & API routes
+|   |   |-- page.tsx                      # Dashboard — project list + progress bars
+|   |   |-- projects/                     # Project detail, stage view, export page
+|   |   |-- api/                          # REST API routes (projects, stages, export)
+|   |-- components/                       # Reusable React components
+|   |-- lib/babok-client.ts               # Typed API client (server-side)
+|   |-- next.config.js
+|   |-- package.json
+|
+|-- docs/                                 # Architecture & reference docs (NEW v2.1.0)
+|   |-- L2_L3_ARCHITECTURE.md             # L2/L3 agent layer design with sequence diagrams
+|   |-- MCP_TOOLS_SPECIFICATION.md        # Full MCP tools API reference
+|   |-- MIGRATION_GUIDE_L1_to_L2.md       # CLI → MCP migration guide
+|   |-- workflows.md                      # End-to-end workflow diagrams
+|
+|-- templates/                            # BABOK deliverable templates (NEW v2.1.0)
+|   |-- BRD_Template.md                   # Business Requirements Document
+|   |-- Risk_Register_Template.md         # Risk Register with probability/impact matrix
+|   |-- Stakeholder_Analysis_Template.md  # Stakeholder Analysis + RACI matrix
+|   |-- User_Story_Template.md            # User Story with Given/When/Then criteria
+|   |-- project_context.example.json      # Reference context file for babok run
+|
+|-- knowledge/                            # BABOK knowledge base (NEW v2.1.0)
+|   |-- benchmarks/                       # Industry benchmark data
+|   |-- industries/                       # Industry-specific reference data
+|   |-- regulations/                      # Regulatory requirements by jurisdiction
+|   |-- anti_patterns/                    # Known BA anti-patterns
+|   |-- technology/                       # Technology reference data
+|   |-- schema/
+|   |-- README.md
+|
+|-- tests/                                # Automated test suite — 73 tests (NEW v2.1.0)
+|   |-- unit/                             # Unit tests (project, journal, scoring, validation)
+|   |-- integration/                      # Integration tests (CLI workflow)
+|   |-- fixtures/                         # Sample deliverable files for testing
+|   |-- helpers/                          # mock-llm.js, temp-project.js
+|
+|-- evaluation/                           # Gold standard evaluation suite (NEW v2.1.0)
+|
+|-- setup.bat                             # One-click installer (Windows)
+|-- setup.sh                              # One-click installer (Linux/macOS)
+|-- generate_manual.py                    # DOCX/PDF manual generator (NEW v2.1.0)
+|-- babok-mcp-podrecznik uzytkownika.md   # Full MCP user manual (PL)
+|-- babok-mcp-user-manual.md              # Full MCP user manual (EN)
+|-- BABOK_AGENT_SYSTEM_PROMPT.md          # Consolidated root-level system prompt (NEW v2.1.0)
 |
 |-- .github/
-|   |-- copilot-instructions.md           # Configuration for GitHub Copilot / VS Code
+|   |-- copilot-instructions.md           # Configuration for GitHub Copilot / VS Code (1,600 lines)
+|   |-- prompts/                          # Stage-specific Copilot Chat prompt files (NEW v2.1.0)
 |   |-- workflows/
 |   |   |-- lint-prompts.yml              # CI: validates stage files on every push
 |
@@ -251,14 +312,14 @@ babok setup
 
 | Command | Description |
 |---------|-------------|
-| `babok setup` | **First-time setup wizard** — API keys, language, optional first project (NEW v2.0.1) |
+| `babok setup` | **First-time setup wizard** — API keys, language, optional first project |
 | `babok new [--name "Name"]` | Create a new project with unique ID and timestamp |
 | `babok list` | List all projects with current status |
 | `babok status [id]` | Show detailed project status (all stages) |
 | `babok load <id>` | Load project context (generates text to paste into AI chat) |
 | `babok save <id>` | Save current project state snapshot |
-| `babok rename <id> [new-name]` | **Rename a project** (NEW v2.0.1) |
-| `babok delete <id>` | **Permanently delete a project** with confirmation (NEW v2.0.1) |
+| `babok rename <id> [new-name]` | Rename a project |
+| `babok delete <id>` | Permanently delete a project with confirmation |
 | `babok approve <id> <stage>` | Mark a stage as approved, advance to next (stages 0–8) |
 | `babok reject <id> <stage> -r "reason"` | Reject a stage with reason |
 | `babok diff <id> [--stage N]` | Show stage history and deliverable preview |
@@ -266,6 +327,10 @@ babok setup
 | `babok export <id>` | Export project deliverables to output directory |
 | `babok chat <id>` | **Interactive AI chat** for current stage |
 | `babok run [--context file.json]` | **Automated 8-stage pipeline** (interactive or `--auto`) |
+| `babok run --diagram` | Run pipeline with auto-generated Mermaid process diagrams (NEW v2.1.0) |
+| `babok ingest <file>` | **Ingest a document** (PDF/DOCX/XLSX/CSV/TXT/MD) into the project (NEW v2.1.0) |
+| `babok score <id> <stage\|all>` | **Quality score** for a stage or all stages (NEW v2.1.0) |
+| `babok validate <id>` | **Cross-stage consistency validation** — 6 built-in rules (NEW v2.1.0) |
 | `babok make docx <id>` | Generate DOCX document(s) from stage files |
 | `babok make pdf <id>` | Generate PDF document(s) from stage files |
 | `babok make all <id>` | Generate DOCX + PDF in one run |
@@ -352,7 +417,95 @@ For the full CLI guide, see: [`cli/README.md`](cli/README.md)
 
 ---
 
-## Team Collaboration & File Locking — NEW in v2.0.1
+## Document Ingestion (`babok ingest`) — NEW in v2.1.0
+
+The `babok ingest` command allows you to feed existing documents into a project so the AI agent can use them as context during analysis. Supported formats: **PDF, DOCX, XLSX, CSV, TXT, MD**.
+
+```bash
+# Ingest a supplier contract into a project
+babok ingest path/to/contract.pdf --project K7M3
+
+# Ingest an Excel data export
+babok ingest data_export.xlsx --project K7M3
+```
+
+- Documents are parsed and classified by the LLM automatically
+- Ingested files are listed in `babok status` output
+- Source: `cli/src/commands/ingest.js` + `cli/src/lib/document-parser.js`
+
+---
+
+## Quality Scoring & Cross-Stage Validation — NEW in v2.1.0
+
+### `babok score` — Stage Quality Scorer
+
+Scores a deliverable (or all stages) against a rubric with three dimensions:
+
+| Dimension | Weight | What It Checks |
+|-----------|--------|----------------|
+| **Completeness** | 40% | All required sections present |
+| **SMART quality** | 30% | Numeric targets, dates, currencies, ROI present |
+| **Consistency** | 30% | Cross-references match within the stage |
+
+```bash
+babok score K7M3 1          # Score Stage 1 only
+babok score K7M3 all        # Score all completed stages
+```
+
+Output: color-coded score card in the terminal (chalk).
+
+### `babok validate` — Cross-Stage Consistency Validator
+
+Validates that all approved stages are internally consistent. Six built-in rules:
+
+| Rule | What It Checks |
+|------|----------------|
+| FR Traceability | All FR IDs in Stage 4 appear in the RTM |
+| Budget Ceiling | Stage 8 cost ≤ budget ceiling set in Stage 1 |
+| Integration Coverage | Every system in Stage 2 addressed in Stage 5 TO-BE |
+| KPI Coverage | Every KPI from Stage 1 measured in Stage 2 baseline |
+| Critical Risk Owner | Every HIGH risk in Stage 7 has an assigned owner |
+| Roadmap Date | Stage 6 go-live date does not precede Stage 1 hard deadline |
+
+```bash
+babok validate K7M3         # Validates all approved stages; exits with code 1 on errors
+```
+
+---
+
+## Web UI (`web/`) — NEW in v2.1.0
+
+The repository now ships a **Next.js 15 App Router** web interface for teams who prefer a browser-based workflow.
+
+### Features
+
+- **Dashboard** — lists all projects with stage progress bars
+- **New project form** — name + language selection
+- **Project detail view** — stage pipeline with status indicators
+- **Stage view** — renders deliverable Markdown + Approve / Reject buttons
+- **Export page** — one-click ZIP download of all stage deliverables
+- **Mermaid diagram viewer** — inline rendering of auto-generated process maps
+
+### Running the Web UI
+
+```bash
+cd web
+npm install
+npm run dev        # http://localhost:3000
+```
+
+### API Routes
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/projects` | GET / POST | List or create projects |
+| `/api/projects/[id]` | GET | Get project detail + stage list |
+| `/api/projects/[id]/stages/[n]` | GET / POST | Read or save a stage deliverable |
+| `/api/projects/[id]/export` | GET | Download all deliverables as ZIP |
+
+---
+
+## Team Collaboration & File Locking
 
 When multiple analysts work on the **same project directory** (e.g. on a shared network drive), concurrent edits to the same stage can overwrite each other. v2.0.1 introduces **automatic file locking**:
 
@@ -747,11 +900,37 @@ The agent is designed in compliance with GDPR, BABOK Code of Conduct, and ISO 27
 
 ---
 
+## Test Suite — NEW in v2.1.0
+
+The repository ships **73 automated tests** (native `node:test` runner, ESM) covering the full CLI stack:
+
+| File | Tests | What It Covers |
+|------|-------|----------------|
+| `tests/unit/project.test.js` | 15 | Project ID generation, path resolution |
+| `tests/unit/journal.test.js` | 16 | Journal CRUD, stage transitions |
+| `tests/unit/scoring.test.js` | 14 | Quality scorer rubric logic |
+| `tests/unit/validation.test.js` | 18 | Cross-stage validation rules |
+| `tests/integration/cli-workflow.test.js` | 10 | End-to-end CLI workflow steps |
+
+Run the tests:
+
+```bash
+cd cli
+npm test
+```
+
+---
+
 ## Additional Resources
 
 - [IIBA BABOK Guide v3](https://www.iiba.org/babok-guide/)
 - [IIBA Agile Extension](https://www.iiba.org/agile-extension/)
 - [BABOK Glossary](https://www.iiba.org/babok-guide/glossary/)
+- [`docs/`](docs/) — L2/L3 architecture, MCP tools specification, migration guide, workflow diagrams
+- [`templates/`](templates/) — Ready-to-use BRD, Risk Register, Stakeholder Analysis, User Story templates
+- [`knowledge/`](knowledge/) — 16 JSON benchmark, industry, regulatory, and anti-pattern reference files
+- [`CHANGELOG.md`](CHANGELOG.md) — full version history
+- [`RELEASE_NOTES.md`](RELEASE_NOTES.md) — detailed release notes per version
 
 ---
 
@@ -783,5 +962,5 @@ Contributions are welcome! Please feel free to submit:
 ---
 
 **Version:** 2.1.0
-**Release Date:** March 30, 2026
-**Last Updated:** 2026-03-30
+**Release Date:** April 13, 2026
+**Last Updated:** 2026-04-13
