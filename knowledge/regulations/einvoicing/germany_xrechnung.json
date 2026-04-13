@@ -1,0 +1,87 @@
+{
+  "regulation": "XRechnung and ZUGFeRD – German Electronic Invoicing Standards",
+  "jurisdiction": "Germany (EU member state). B2G (business to government) mandatory since 27 November 2020 (federal level) and progressively at Länder level. B2B mandatory e-invoicing announced for 2025 onwards under Wachstumschancengesetz (Growth Opportunities Act).",
+  "description": "Germany uses two complementary e-invoicing standards. XRechnung is the mandatory XML-based standard for B2G invoices (based on European norm EN 16931). ZUGFeRD (Zentraler User Guide des Forums elektronische Rechnung Deutschland) v2.x is a hybrid format embedding structured XML (based on UN/CEFACT CII syntax) within a human-readable PDF/A-3 file – enabling both automated processing and visual reading. Both formats comply with EU Directive 2014/55/EU. From 2025, Germany is introducing mandatory B2B e-invoicing (Pflicht zur E-Rechnung) requiring recipients to be able to receive structured invoices; B2B issuance mandate follows in 2027.",
+  "requirements": [
+    {
+      "id": "XRECH-R01",
+      "title": "B2G: XRechnung or ZUGFeRD 2.x for Government Invoices",
+      "description": "All invoices to federal German government agencies must be submitted electronically via the OZG-RE (Online-Zugang-Gesetz Rechnungseingang) portal or agency-specific portals. XRechnung XML (UBL 2.1 or UN/CEFACT CII syntax) is the standard. ZUGFeRD 2.1 'EN 16931' profile also accepted.",
+      "mandatory": true
+    },
+    {
+      "id": "XRECH-R02",
+      "title": "EN 16931 Compliance (European Norm)",
+      "description": "Both XRechnung and ZUGFeRD must comply with EU Directive 2014/55/EU and the European Norm EN 16931-1 (semantic data model) and EN 16931-3 (syntax binding). This ensures cross-border interoperability across EU member states using PEPPOL network.",
+      "mandatory": true
+    },
+    {
+      "id": "XRECH-R03",
+      "title": "Mandatory Data Elements (Pflichtangaben)",
+      "description": "Required invoice fields per EN 16931: seller tax ID (Steuernummer or USt-IdNr.), buyer reference (Leitweg-ID for government, buyer reference for B2B), invoice date, delivery/service date, payment due date, line items with quantity/unit/price, VAT amount and rate, total amounts. Buyer reference (BT-10) is mandatory for B2G.",
+      "mandatory": true
+    },
+    {
+      "id": "XRECH-R04",
+      "title": "Leitweg-ID for B2G Invoices",
+      "description": "The Leitweg-ID is a routing identifier for German government agencies (analogous to GLN in GS1). Must be obtained from the contracting authority and included in XRechnung field BT-10. Format: XX-YYYYYYY-ZZ (e.g., 04011000-1234567890-06). Critical for correct routing to the right procurement department.",
+      "mandatory": true
+    },
+    {
+      "id": "XRECH-R05",
+      "title": "ZUGFeRD PDF/A-3 Technical Requirements",
+      "description": "ZUGFeRD files must be valid PDF/A-3 (ISO 19005-3) with embedded XML attachment named 'factur-x.xml' (ZUGFeRD 2.x / Factur-X) or 'ZUGFeRD-invoice.xml' (older versions). The PDF must reference the XML using the XMP metadata standards. Supported profiles: MINIMUM, BASIC WL, BASIC, EN 16931, EXTENDED, XRECHNUNG.",
+      "mandatory": true
+    },
+    {
+      "id": "XRECH-R06",
+      "title": "B2B E-Invoicing Receipt Capability (from 2025)",
+      "description": "From 1 January 2025, all German VAT-registered businesses must be technically capable of receiving structured e-invoices (XRechnung or ZUGFeRD) from suppliers. Suppliers may still issue non-structured invoices (paper/PDF) until 2027, with exceptions for small businesses (<€800,000 annual revenue) until 2028.",
+      "mandatory": true
+    },
+    {
+      "id": "XRECH-R07",
+      "title": "B2B E-Invoice Issuance (from 2027-2028)",
+      "description": "From 1 January 2027, large businesses (annual revenue >€800,000 in 2026) must issue structured e-invoices for domestic B2B transactions. Small businesses: mandatory from 1 January 2028. Domestic B2C invoices excluded from mandatory structured format.",
+      "mandatory": false
+    },
+    {
+      "id": "XRECH-R08",
+      "title": "Archiving Requirements (GoBD)",
+      "description": "E-invoices (including XRechnung/ZUGFeRD) must be archived in compliance with GoBD (Grundsätze zur ordnungsmäßigen Führung und Aufbewahrung von Büchern, Aufzeichnungen und Unterlagen in elektronischer Form). Retention: 10 years for accounting records including invoices. Original XML must be retained unaltered. Audit trail of processing required.",
+      "mandatory": true
+    },
+    {
+      "id": "XRECH-R09",
+      "title": "PEPPOL Network Compatibility",
+      "description": "For cross-border B2G invoicing within EU, PEPPOL (Pan-European Public Procurement On-Line) network is used. Companies submitting invoices to non-German EU government agencies should use PEPPOL BIS Billing 3.0 format (also EN 16931 compliant). Requires PEPPOL access point provider.",
+      "mandatory": false
+    },
+    {
+      "id": "XRECH-R10",
+      "title": "VAT Transaction Reporting (Umsatzsteuer-Voranmeldung)",
+      "description": "E-invoice data should be consistent with VAT pre-notifications (UStVA) filed monthly or quarterly. German tax authorities increasingly cross-reference invoice data with VAT returns. Discrepancies trigger audits. Future reporting system (ViDA – VAT in the Digital Age) will require near-real-time VAT reporting.",
+      "mandatory": true
+    }
+  ],
+  "checklist": [
+    "✅ Determine which customer types require XRechnung/ZUGFeRD (federal government, Länder, municipalities)",
+    "✅ Collect Leitweg-IDs from all government clients – store in CRM/ERP customer master",
+    "✅ Choose ZUGFeRD profile appropriate for use case (BASIC for simple invoices, EN 16931 for standard B2B, EXTENDED for additional fields)",
+    "✅ Implement XRechnung/ZUGFeRD XML generator in ERP/billing system",
+    "✅ Validate generated files using KoSIT Validator (official German validation tool)",
+    "✅ Test PDF/A-3 embedding for ZUGFeRD – verify XML attachment is readable by recipient systems",
+    "✅ Register on B2G portals: OZG-RE (Bundesebene), Länder-specific portals (e.g., E-Rechnungs-Portal NRW)",
+    "✅ Test end-to-end B2G invoice submission through relevant portal",
+    "✅ Configure ERP to receive and parse incoming ZUGFeRD/XRechnung invoices from suppliers",
+    "✅ Implement GoBD-compliant archiving – original XML retained, processing audit trail",
+    "✅ Ensure 10-year retention for e-invoice XML files in document management system",
+    "✅ Update VAT master data – validate all customer and supplier USt-IdNr numbers via VIES",
+    "✅ Train accounts payable team on ZUGFeRD/XRechnung receipt and processing workflow",
+    "✅ Evaluate PEPPOL access point provider for cross-border EU B2G invoicing",
+    "✅ Monitor German B2B mandate timeline (2027/2028) – plan ERP upgrade or configuration",
+    "✅ Review impact on Reverse Charge invoices and EU cross-border supply rules",
+    "✅ Legal review of implementation by German tax advisor (Steuerberater)"
+  ],
+  "penalties": "B2G non-compliance: invoices submitted in incorrect format may be rejected by government agencies, delaying payment indefinitely. Late payment under German Payment Act (Zahlungsverzugsgesetz): 9 percentage points above base rate interest. For B2B mandate (2027+): penalties under German VAT Act (UStG) for failure to comply with e-invoicing obligations, including potential VAT deduction denial. GoBD non-compliance: additional tax assessments and surcharges during tax audit. Estimated administrative fines: up to €25,000 per violation for repeated GoBD breaches."
+}

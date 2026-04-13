@@ -49,5 +49,13 @@ export async function showStatus(partialId) {
     }
   }
 
+  if (journal.ingested_documents && journal.ingested_documents.length > 0) {
+    console.log('');
+    console.log(chalk.cyan(`  📎 Ingested documents: ${journal.ingested_documents.length}`));
+    for (const doc of journal.ingested_documents) {
+      console.log(chalk.dim(`    • ${doc.fileName} (${doc.stagesTagged.join(', ') || 'untagged'})`));
+    }
+  }
+
   console.log('');
 }

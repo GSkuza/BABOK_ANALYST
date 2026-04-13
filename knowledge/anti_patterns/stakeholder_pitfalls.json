@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Stakeholder Identification Too Late",
+    "symptoms": [
+      "Key stakeholders identified during testing phase after requirements are locked",
+      "Compliance officer discovers project in Stage 4 and adds mandatory GDPR requirements",
+      "Operations team learns about system during UAT and flags fundamental workflow issues",
+      "Legal/DPO not consulted until go-live preparation"
+    ],
+    "correction": "Conduct structured stakeholder identification using organizational charts, SIPOC analysis (Suppliers-Inputs-Process-Outputs-Customers), and snowball technique (ask each stakeholder who else is impacted) in Stage 1. Categorize by influence/interest matrix. Explicitly check: GDPR/compliance, Works Council/HR, IT Security, key suppliers/customers who will use the system."
+  },
+  {
+    "name": "Managing Up but Ignoring End Users",
+    "symptoms": [
+      "Executive sponsors approve requirements that end users find impractical",
+      "System designed for management reporting, not for the people entering data",
+      "UAT 'passed' by managers, but frontline users refuse to use the system",
+      "Low adoption rate post-go-live because system doesn't match actual workflow"
+    ],
+    "correction": "Include end users (not just their managers) in requirements workshops. Apply 'Jobs-To-Be-Done' framework: interview the people who will actually use the system about their daily tasks, pain points, and workarounds. Run participatory design sessions. End users must be included in UAT, not just sign-off by managers."
+  },
+  {
+    "name": "Treating All Stakeholders Identically",
+    "symptoms": [
+      "Same level of engagement with a data entry clerk as the CFO",
+      "Steering committee receives same update format as technical team",
+      "Stakeholder with low interest/high influence not specifically managed",
+      "Resistors not identified or addressed proactively"
+    ],
+    "correction": "Use influence/interest power grid to tailor engagement: (1) High influence/High interest: Manage closely, involve in decisions; (2) High influence/Low interest: Keep satisfied, brief executive summaries; (3) Low influence/High interest: Keep informed, leverage as champions; (4) Low influence/Low interest: Monitor only. Identify resistors early and address concerns one-on-one."
+  },
+  {
+    "name": "Assuming Stakeholder Approval Means Endorsement",
+    "symptoms": [
+      "Stakeholder signed off requirements but later disputes implementation",
+      "'Passive approver' syndrome: stakeholders approve to avoid conflict, not because they agree",
+      "Sign-off obtained by email without discussion or walkthrough",
+      "Requirements reviewed in 100-page document, not in interactive workshop"
+    ],
+    "correction": "Approval must be accompanied by comprehension. Walk stakeholders through key requirements in workshops before seeking sign-off. Use confirming questions: 'So this means that [concrete scenario] will work like this...' Ask stakeholders to identify one requirement that would be problematic before asking for approval. Document any reservations alongside sign-off."
+  },
+  {
+    "name": "Neglecting the Informal Power Structure",
+    "symptoms": [
+      "Formal org chart consulted but informal influencers ignored",
+      "Project stalls due to resistance from someone with no formal role",
+      "Administrative assistant or team lead has more influence than their title suggests",
+      "Key opinion leaders in user community not identified or engaged"
+    ],
+    "correction": "Identify informal influencers through 'Who do team members go to for advice?' interviews. Engage respected peers as change champions. Understand the history: are there previous failed projects that created distrust? Acknowledge the informal network explicitly in stakeholder plan. Executive sponsor can formally appoint respected influencers as change champions."
+  },
+  {
+    "name": "One-Way Communication Instead of Dialogue",
+    "symptoms": [
+      "Project updates are one-directional broadcasts (email newsletters, intranet posts)",
+      "Stakeholder concerns have no feedback mechanism",
+      "Q&A sessions are perfunctory; concerns not genuinely addressed",
+      "Stakeholders feel 'done to' rather than 'done with'"
+    ],
+    "correction": "Create two-way feedback mechanisms: anonymous survey after workshops, dedicated Slack/Teams channel for questions, regular one-on-one touchpoints with key stakeholders. Acknowledge all feedback and close the loop (even if answer is 'we've considered this and here's why we chose this approach'). Show how stakeholder input changed the project design."
+  },
+  {
+    "name": "Ignoring Stakeholder Fatigue",
+    "symptoms": [
+      "Same stakeholders invited to every meeting regardless of relevance",
+      "Stakeholders attend meetings but stop engaging meaningfully",
+      "Long-running project sees declining participation in workshops",
+      "Key stakeholders start delegating project involvement to junior staff"
+    ],
+    "correction": "Be respectful of stakeholder time. Only invite stakeholders to meetings where their input is required. Keep steering committee updates to 30-minute executive summaries. Use asynchronous methods (surveys, shared documents) where real-time meeting is not needed. Explicitly acknowledge time investment and demonstrate how it was used productively."
+  },
+  {
+    "name": "Stakeholder Conflict Avoidance",
+    "symptoms": [
+      "Known conflicts between departments are ignored rather than resolved",
+      "Requirements from conflicting stakeholders are both included, creating contradictions",
+      "BA avoids raising conflicts hoping they will resolve themselves",
+      "Conflicts surface late in project (UAT or post-go-live) causing expensive rework"
+    ],
+    "correction": "Surface and address conflicts early. Use structured conflict resolution: document each position, identify underlying interests (not positions), explore options that satisfy both interests. Escalate to Steering Committee with clear framing: 'Two valid requirements conflict; here are the options and trade-offs.' Decisions must be documented with rationale."
+  }
+]

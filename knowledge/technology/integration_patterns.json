@@ -1,0 +1,180 @@
+{
+  "category": "Integration Patterns for Mid-Market IT Landscape",
+  "description": "Common integration patterns and architectural approaches for connecting ERP, DMS, CRM, and third-party systems in mid-market companies. Includes pattern descriptions, use cases, technology options, complexity ratings, and trade-offs.",
+  "patterns": [
+    {
+      "name": "Point-to-Point Integration",
+      "description": "Direct connection between two systems using API, file transfer, or database link. Each integration is custom-built for the specific pair of systems.",
+      "use_cases": [
+        "Simple, stable integrations between two systems unlikely to change (e.g., ERP to bank)",
+        "Low-volume data exchange where middleware overhead is not justified",
+        "One-time data migration between systems"
+      ],
+      "technology_options": ["REST API calls", "SFTP file exchange", "Database triggers/views", "Webhook callbacks"],
+      "complexity": "Low per integration; High at scale (n*(n-1)/2 connections for n systems)",
+      "pros": [
+        "Simple to implement for single integration",
+        "No middleware cost",
+        "Fast initial delivery"
+      ],
+      "cons": [
+        "Creates 'spaghetti architecture' as system count grows",
+        "Any system change can break multiple integrations",
+        "No centralized monitoring or error handling",
+        "Difficult to maintain as team knowledge becomes siloed"
+      ],
+      "recommended_for": "1-3 system integrations only; avoid as primary strategy for complex landscapes"
+    },
+    {
+      "name": "Hub-and-Spoke (Enterprise Service Bus / iPaaS)",
+      "description": "Centralized integration platform (ESB or iPaaS) acts as hub. All systems connect to the hub using standardized connectors. Message transformation, routing, and orchestration handled centrally.",
+      "use_cases": [
+        "ERP as master data hub with multiple satellite systems (CRM, WMS, e-commerce)",
+        "B2B EDI/API integration with suppliers and customers",
+        "Multi-system workflows spanning ERP, DMS, and approval systems"
+      ],
+      "technology_options": [
+        "Microsoft Azure Integration Services (Azure Logic Apps + Service Bus + API Management)",
+        "MuleSoft Anypoint Platform (Salesforce-owned)",
+        "Boomi (Dell Technologies) AtomSphere",
+        "SAP Integration Suite (formerly SAP CPI)",
+        "Zapier / Make (Integromat) for simple mid-market scenarios",
+        "n8n (open-source, self-hosted option)"
+      ],
+      "complexity": "Medium-High to implement; Low to maintain at scale",
+      "pros": [
+        "Centralized monitoring and error alerting",
+        "Reusable connectors reduce future integration effort by 60-70%",
+        "Single place to change when a system API changes",
+        "Supports complex routing and transformation logic",
+        "Enables event-driven architecture"
+      ],
+      "cons": [
+        "Middleware cost: €1,500-€5,000/month for mid-market iPaaS",
+        "Requires dedicated integration developer/administrator",
+        "Initial setup takes 4-12 weeks before first integration goes live",
+        "Can become a bottleneck if not properly sized"
+      ],
+      "recommended_for": "Companies with 4+ systems requiring integration; standard choice for mid-market digital transformation"
+    },
+    {
+      "name": "ERP as System of Record (Master Data Management)",
+      "description": "ERP is designated as the master source of truth for key business data (customers, suppliers, products, chart of accounts). All other systems receive data from ERP; changes originate in ERP only.",
+      "use_cases": [
+        "Customer master data managed in ERP, synchronized to CRM and DMS",
+        "Supplier master data managed in ERP, synchronized to procurement portal and DMS",
+        "Chart of accounts in ERP used as reference in BI and reporting tools"
+      ],
+      "technology_options": [
+        "ERP native export/API (SAP Business One Service Layer, BC REST API)",
+        "iPaaS with scheduled sync jobs",
+        "Master Data Management (MDM) platform for complex scenarios"
+      ],
+      "complexity": "Medium; increases with data quality issues in legacy systems",
+      "pros": [
+        "Single source of truth eliminates data inconsistencies",
+        "Simplifies compliance (GDPR data subject requests easier when data is centralized)",
+        "Reduces reconciliation effort at month-end"
+      ],
+      "cons": [
+        "Data quality in ERP must be excellent before propagating to other systems",
+        "Requires change management: staff must update ERP first, not CRM or spreadsheets",
+        "Conflict resolution needed when multiple systems need write access to same data"
+      ],
+      "recommended_for": "All mid-market companies; should be established as governance policy at project start"
+    },
+    {
+      "name": "Event-Driven Integration (Webhooks and Message Queues)",
+      "description": "Systems publish events when business objects change. Subscribing systems react to events in near real-time. Uses message broker or webhook pattern for asynchronous, loosely-coupled integration.",
+      "use_cases": [
+        "Invoice posted in ERP → trigger DMS archiving workflow automatically",
+        "Order received in e-commerce → trigger ERP order creation",
+        "Document approved in DMS → trigger payment release in ERP",
+        "Shipment confirmed in WMS → trigger customer invoice creation in ERP"
+      ],
+      "technology_options": [
+        "Azure Service Bus / Event Grid (Microsoft)",
+        "AWS EventBridge / SQS / SNS",
+        "Apache Kafka (for high-volume, enterprise scenarios)",
+        "RabbitMQ (open-source, self-hosted)",
+        "Webhook-based (simpler, synchronous-like alternative)"
+      ],
+      "complexity": "Medium-High; requires understanding of event sourcing and eventual consistency",
+      "pros": [
+        "Near real-time data synchronization (seconds vs. hourly batch jobs)",
+        "Resilient: message queues buffer events during system downtime",
+        "Decoupled: publishing system doesn't need to know about subscribers",
+        "Scales well for high event volumes"
+      ],
+      "cons": [
+        "Eventual consistency: systems may briefly show different data states",
+        "Debugging event-driven flows is harder than synchronous calls",
+        "Requires message schema versioning strategy",
+        "Not all mid-market ERP systems support outbound webhooks natively"
+      ],
+      "recommended_for": "Automated document processing pipelines; time-sensitive workflows (approvals, notifications)"
+    },
+    {
+      "name": "File-Based Batch Integration (SFTP / AS2 / EDI)",
+      "description": "Systems exchange structured data files (CSV, XML, EDIFACT, X12) at scheduled intervals. Traditional approach, still dominant in B2B and legacy system integration.",
+      "use_cases": [
+        "Supplier EDI (EDIFACT ORDERS, DESADV, INVOIC) for high-volume procurement",
+        "Bank statement imports (MT940, CAMT.053) into ERP for bank reconciliation",
+        "Legacy ERP exports to modern cloud analytics platform",
+        "E-invoicing file submission (KSeF FA(2) XML, XRechnung UBL)"
+      ],
+      "technology_options": [
+        "SFTP servers with cron-based processing",
+        "EDI gateway: SPS Commerce, TrueCommerce, Cleo Integration Cloud",
+        "AS2 protocol for secure B2B file exchange (EDI standard)",
+        "Azure Blob Storage / AWS S3 triggers for cloud-native file processing"
+      ],
+      "complexity": "Low-Medium; EDI mapping can be complex for EDIFACT",
+      "pros": [
+        "Battle-tested for B2B integration; all major suppliers support EDI",
+        "Can handle large data volumes efficiently",
+        "Simple error recovery: re-process failed file",
+        "Low cost for simple CSV/XML file exchange"
+      ],
+      "cons": [
+        "Batch latency: data is hours old at best",
+        "File format mapping requires specialized EDI expertise",
+        "SFTP security management (key rotation, access control) adds operational overhead",
+        "Not suitable for real-time workflows"
+      ],
+      "recommended_for": "B2B EDI with suppliers/customers; bank reconciliation; legacy system bridges"
+    },
+    {
+      "name": "API Gateway Pattern",
+      "description": "Centralized API gateway manages, secures, and monitors all API traffic between internal systems and external parties. Provides authentication, rate limiting, request transformation, and API lifecycle management.",
+      "use_cases": [
+        "Exposing ERP data to customer portal via secured REST API",
+        "Managing KSeF / XRechnung API calls through a resilient gateway with retry logic",
+        "Supplier portal accessing inventory availability via rate-limited API",
+        "Mobile app accessing business data with OAuth 2.0 security"
+      ],
+      "technology_options": [
+        "Azure API Management (Microsoft)",
+        "AWS API Gateway",
+        "Kong Gateway (open-source, self-hosted)",
+        "MuleSoft API Manager",
+        "Apigee (Google Cloud)"
+      ],
+      "complexity": "Medium; significantly reduces complexity for external-facing APIs",
+      "pros": [
+        "Centralized security enforcement (OAuth 2.0, API keys, mutual TLS)",
+        "Rate limiting protects backend systems from overload",
+        "API versioning without breaking existing consumers",
+        "Centralized monitoring, logging, and analytics for all API calls",
+        "Enables API monetization if needed"
+      ],
+      "cons": [
+        "Additional infrastructure component to maintain",
+        "Adds latency (typically 5-15ms)",
+        "Requires API design expertise",
+        "Overkill for purely internal integrations"
+      ],
+      "recommended_for": "Any organization exposing APIs to external parties (customers, suppliers, government systems)"
+    }
+  ]
+}

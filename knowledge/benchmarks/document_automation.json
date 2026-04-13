@@ -1,0 +1,114 @@
+{
+  "category": "Document Automation and Intelligent Document Processing (IDP)",
+  "description": "Benchmark data for document automation projects including Accounts Payable automation, intelligent document processing (IDP), and digital mailroom implementations in mid-market companies. Sources include analyst firms (Ardent Partners, Levvel Research, Gartner), vendor benchmarks, and industry surveys.",
+  "data_points": [
+    {
+      "metric": "Average cost to process one supplier invoice manually",
+      "value": "€12.50 – €18.00 per invoice (European mid-market companies)",
+      "source": "Ardent Partners AP Metrics and Management Study 2024; Levvel Research AP Report 2023",
+      "year": 2024
+    },
+    {
+      "metric": "Average cost to process one supplier invoice with full automation",
+      "value": "€2.00 – €4.50 per invoice (>75% automation rate)",
+      "source": "Ardent Partners Best-in-Class AP Benchmarking Report 2024",
+      "year": 2024
+    },
+    {
+      "metric": "Average time to process one supplier invoice (manual)",
+      "value": "10.1 days from receipt to payment approval",
+      "source": "Levvel Research Payables Insight Report 2023; IOFM AP Benchmark Survey",
+      "year": 2023
+    },
+    {
+      "metric": "Average time to process one supplier invoice (automated)",
+      "value": "3.2 days from receipt to payment approval",
+      "source": "Ardent Partners AP Metrics Study 2024",
+      "year": 2024
+    },
+    {
+      "metric": "Invoice automation rate – Best-in-Class AP departments",
+      "value": "84% of invoices processed straight-through without manual intervention",
+      "source": "Ardent Partners Best-in-Class AP Benchmarking 2024 (top 20% of performers)",
+      "year": 2024
+    },
+    {
+      "metric": "Invoice automation rate – Average AP department",
+      "value": "42% of invoices processed automatically",
+      "source": "Ardent Partners AP Metrics Study 2024",
+      "year": 2024
+    },
+    {
+      "metric": "Three-way match automation rate – Best-in-Class",
+      "value": "91% of invoices matched automatically to PO and goods receipt",
+      "source": "IOFM Institute of Finance and Management AP Benchmark Survey 2023",
+      "year": 2023
+    },
+    {
+      "metric": "Early payment discount capture rate – automated vs. manual",
+      "value": "Automated: 74% capture; Manual: 18% capture. Annual value: 0.8–2.4% of spend",
+      "source": "Ardent Partners State of ePayables 2024; Deloitte Global CPO Survey",
+      "year": 2024
+    },
+    {
+      "metric": "OCR/IDP accuracy for structured invoices (template-based)",
+      "value": "97–99% field-level accuracy after validation rules applied",
+      "source": "Gartner Market Guide for Intelligent Document Processing 2024",
+      "year": 2024
+    },
+    {
+      "metric": "OCR/IDP accuracy for unstructured invoices (AI-based extraction)",
+      "value": "88–95% field-level accuracy before human validation; 99%+ after human review",
+      "source": "Gartner Magic Quadrant for IDP 2024; ABBYY FlexiCapture benchmarks",
+      "year": 2024
+    },
+    {
+      "metric": "Payback period for AP automation investment",
+      "value": "12–18 months typical; Best-in-Class: 9–12 months",
+      "source": "Ardent Partners ROI Analysis; Levvel Research 2023",
+      "year": 2023
+    },
+    {
+      "metric": "FTE productivity improvement with AP automation",
+      "value": "AP staff process 3x more invoices per FTE; or 50–65% FTE cost reduction",
+      "source": "McKinsey Digital Automation in Finance 2023; Basware customer case studies",
+      "year": 2023
+    },
+    {
+      "metric": "Error rate reduction with document automation",
+      "value": "Manual error rate: 5–12%; Automated: 0.5–2%. 85% reduction achieved",
+      "source": "Gartner Finance Automation Research 2024; Kofax IDP Benchmark Report",
+      "year": 2024
+    },
+    {
+      "metric": "Digital mailroom implementation cost (mid-market)",
+      "value": "€80,000 – €250,000 implementation; €30,000 – €80,000 annual SaaS license",
+      "source": "Industry analyst estimates; DocuWare, M-Files, OpenText partner pricing data",
+      "year": 2024
+    },
+    {
+      "metric": "Document retrieval time improvement (physical vs. digital archive)",
+      "value": "Physical archive: 5–30 minutes per document; Digital: 10–30 seconds. 95% time saving",
+      "source": "AIIM Industry Watch Report on Content Management 2023",
+      "year": 2023
+    },
+    {
+      "metric": "Paper and printing cost per employee per year (pre-automation)",
+      "value": "€800 – €1,800 per office worker (paper, ink, printers, maintenance, storage)",
+      "source": "Quocirca Print Industry Landscape Report 2024; Gartner Print Cost Analysis",
+      "year": 2024
+    },
+    {
+      "metric": "Physical document storage cost per filing cabinet per year",
+      "value": "€1,000 – €2,500 per cabinet including space, handling, and retrieval labor",
+      "source": "AIIM Cost of Managing Paper Documents Research 2023",
+      "year": 2023
+    },
+    {
+      "metric": "Time spent by finance staff searching for documents (pre-automation)",
+      "value": "Finance employees spend average 30% of time searching for documents and data",
+      "source": "McKinsey The Social Economy Report (productivity research); IDC Document Challenges Study",
+      "year": 2023
+    }
+  ]
+}

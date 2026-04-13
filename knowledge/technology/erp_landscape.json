@@ -1,0 +1,126 @@
+{
+  "category": "ERP System Landscape for Mid-Market Companies",
+  "description": "Overview of leading ERP systems suitable for mid-market companies (€10-100M revenue, 50-500 employees) in manufacturing, distribution, and services industries in EU/international markets. Evaluation criteria: total cost of ownership, implementation complexity, industry fit, cloud maturity, and EU compliance (GDPR, VAT, e-invoicing).",
+  "solutions": [
+    {
+      "name": "SAP Business One",
+      "vendor": "SAP SE (German multinational)",
+      "target_market": "Small to mid-market companies (10-250 users); manufacturing, distribution, retail",
+      "deployment": "Cloud (SAP Business One Cloud, hosted by partners) or on-premise",
+      "strengths": [
+        "SAP brand credibility – easier board approval; future path to SAP S/4HANA",
+        "Strong manufacturing module (MRP, production orders, BOMs, routings)",
+        "Excellent financial management with multi-currency and multi-entity",
+        "Wide partner ecosystem (3,000+ resellers globally)",
+        "Industry-specific add-ons available from partner ecosystem",
+        "Strong localization for EU markets (GDPR, KSeF, XRechnung, VAT reporting)",
+        "Crystal Reports and SAP Analytics Cloud integration"
+      ],
+      "weaknesses": [
+        "Dated UI (SAP Fiori not yet fully available for Business One)",
+        "Limited workflow automation vs. cloud-native competitors",
+        "Service management module weaker than manufacturing",
+        "Implementation can be complex and expensive (€80,000-€300,000+)",
+        "License costs: €1,800-€3,200 per named user for Professional license"
+      ],
+      "typical_implementation_cost": "€80,000 – €350,000 (full manufacturing deployment, 30-100 users)",
+      "annual_license_cost": "€15,000 – €80,000 (varies by user count and module selection)",
+      "best_for": ["Discrete manufacturing", "Distribution/wholesale", "Import/export", "Companies planning future migration to SAP S/4HANA"]
+    },
+    {
+      "name": "Microsoft Dynamics 365 Business Central",
+      "vendor": "Microsoft Corporation",
+      "target_market": "Small to mid-market (5-300 users); broad industry coverage",
+      "deployment": "Cloud SaaS (Microsoft Azure) primary; on-premise available",
+      "strengths": [
+        "Deep Microsoft 365 integration (Teams, Outlook, Excel, SharePoint, Power BI)",
+        "Modern cloud-native architecture with regular automatic updates",
+        "Copilot AI features integrated (AI-assisted coding, document processing, cash forecasting)",
+        "Strong partner ecosystem (Dynamics 365 AppSource with 2,000+ extensions)",
+        "Excellent for professional services (project accounting, time billing)",
+        "Per-user SaaS pricing more predictable: Essentials €65/user/month; Premium €92/user/month",
+        "Power Platform (Power Apps, Power Automate, Power BI) integration"
+      ],
+      "weaknesses": [
+        "Manufacturing modules less mature than SAP Business One for complex discrete manufacturing",
+        "Frequent updates can cause disruption to customizations (app-based extension model mitigates this)",
+        "Advanced warehouse management requires add-on (standard WMS is basic)",
+        "Microsoft-centric – less suitable for organizations standardized on non-Microsoft stack",
+        "Some EU-specific features (e.g., KSeF, XRechnung) require third-party extensions"
+      ],
+      "typical_implementation_cost": "€60,000 – €250,000 (depending on scope and customization)",
+      "annual_license_cost": "€15,000 – €60,000 (SaaS, 20-100 users at various tiers)",
+      "best_for": ["Professional services", "Distribution", "Retail", "Companies in Microsoft 365 ecosystem", "Service-centric businesses"]
+    },
+    {
+      "name": "Epicor Kinetic (formerly Epicor ERP)",
+      "vendor": "Epicor Software Corporation (US)",
+      "target_market": "Mid-market to mid-large manufacturing companies (100-1,000 users)",
+      "deployment": "Cloud SaaS (Epicor Cloud) or on-premise",
+      "strengths": [
+        "Industry-leading manufacturing functionality (job costing, MES integration, MRP, APS)",
+        "Strong for mixed-mode manufacturing (make-to-order, engineer-to-order, configure-to-order)",
+        "Advanced quality management and supplier quality modules",
+        "Strong financial controls with multi-entity, intercompany consolidation",
+        "Industry-specific for automotive, aerospace, electronics, industrial machinery"
+      ],
+      "weaknesses": [
+        "Highest complexity and cost in the mid-market segment",
+        "Implementation: 12-24 months and €300,000-€800,000",
+        "Less suitable for distribution or services companies",
+        "UI modernization ongoing; some modules still feel legacy",
+        "Partner network less dense in EU vs. North American market"
+      ],
+      "typical_implementation_cost": "€300,000 – €800,000 (complex manufacturing deployments)",
+      "annual_license_cost": "€50,000 – €200,000 (subscription pricing varies)",
+      "best_for": ["Complex discrete manufacturing", "Engineer-to-order", "Automotive/aerospace tier suppliers", "Companies with advanced production scheduling needs"]
+    },
+    {
+      "name": "Oracle NetSuite",
+      "vendor": "Oracle Corporation",
+      "target_market": "Growing mid-market to mid-large companies (20-500+ users); strong in tech, services, e-commerce",
+      "deployment": "Cloud SaaS only (Oracle Cloud Infrastructure)",
+      "strengths": [
+        "Unified cloud platform: ERP + CRM + e-commerce (SuiteCommerce) + PSA in one system",
+        "Strong multi-subsidiary and multi-currency for international companies",
+        "Real-time dashboards and reporting with SuiteAnalytics",
+        "Fast implementation for services companies (8-12 months typical)",
+        "Strong for subscription billing and revenue recognition (ASC 606 / IFRS 15)",
+        "Pre-built connectors to Salesforce, Shopify, Amazon, and 400+ applications"
+      ],
+      "weaknesses": [
+        "Manufacturing module (NetSuite Manufacturing) is less advanced than Epicor or SAP",
+        "Pricing complexity: base platform + modules + users; total cost often underestimated",
+        "US-centric origin; some EU localization (VAT, e-invoicing) requires third-party SuiteApps",
+        "Customer support quality inconsistent at mid-market tier",
+        "Customizations (SuiteScript) can create upgrade obstacles"
+      ],
+      "typical_implementation_cost": "€80,000 – €300,000 (depending on module scope)",
+      "annual_license_cost": "€40,000 – €120,000 (platform fee + user licenses + modules)",
+      "best_for": ["SaaS/technology companies", "Professional services with complex billing", "Omnichannel retail", "Multi-entity international companies", "High-growth startups scaling to enterprise"]
+    },
+    {
+      "name": "Infor CloudSuite Industrial (SyteLine) / CloudSuite Distribution",
+      "vendor": "Infor (Koch Industries subsidiary)",
+      "target_market": "Mid-market to enterprise manufacturing and distribution (100-2,000 users)",
+      "deployment": "Cloud SaaS (AWS) primary",
+      "strengths": [
+        "Industry-specific: dedicated CloudSuites for industrial manufacturing, distribution, fashion, healthcare",
+        "Embedded Coleman AI/ML for demand forecasting, automated procurement suggestions",
+        "Strong multi-site manufacturing and intercompany capabilities",
+        "Birst embedded BI for operational analytics",
+        "Good localization for European markets"
+      ],
+      "weaknesses": [
+        "Complex implementation: 12-24 months typical",
+        "Higher cost – better suited for larger mid-market (€50M+ revenue)",
+        "Smaller partner ecosystem vs. SAP and Microsoft",
+        "Recent Infor/Koch ownership transition caused some market uncertainty",
+        "UI modernization (Landmark/Mongoose) still in progress"
+      ],
+      "typical_implementation_cost": "€200,000 – €600,000",
+      "annual_license_cost": "€60,000 – €200,000",
+      "best_for": ["Industrial manufacturing (heavy equipment, machinery)", "Complex distribution with WMS", "Multi-site manufacturing operations", "Companies requiring advanced APS/scheduling"]
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "category": "Business Process Optimization and Automation",
+  "description": "Benchmark data for process improvement initiatives including Lean, Six Sigma, RPA (Robotic Process Automation), and BPM (Business Process Management) projects. Includes efficiency gains, cost reductions, and quality improvements achievable in mid-market companies.",
+  "data_points": [
+    {
+      "metric": "Average ROI from RPA implementation in finance and accounting",
+      "value": "250 – 400% ROI over 3 years; payback period 6 – 14 months",
+      "source": "Deloitte Global RPA Survey 2024; Automation Anywhere ROI Research",
+      "year": 2024
+    },
+    {
+      "metric": "RPA bot capacity vs. human FTE equivalence",
+      "value": "1 unattended RPA bot ≈ 2–5 FTE equivalents for structured, rule-based tasks",
+      "source": "UiPath Platform ROI Benchmark Study 2024; Blue Prism customer data",
+      "year": 2024
+    },
+    {
+      "metric": "Accounts Payable process improvement with BPM/workflow automation",
+      "value": "60 – 75% reduction in processing time; 40 – 60% cost reduction per invoice",
+      "source": "Gartner Finance Automation Research 2024; SAP Concur AP Automation Benchmark",
+      "year": 2024
+    },
+    {
+      "metric": "Lean implementation waste reduction (manufacturing processes)",
+      "value": "20 – 40% reduction in process lead time; 15 – 30% reduction in defect rate",
+      "source": "Industry Week Manufacturing Benchmarking Report 2024; AME Lean Benchmark Survey",
+      "year": 2024
+    },
+    {
+      "metric": "Six Sigma project average savings per project (mid-market)",
+      "value": "€85,000 – €220,000 per successful Six Sigma Black Belt project",
+      "source": "ASQ (American Society for Quality) Six Sigma Benchmark Study 2023",
+      "year": 2023
+    },
+    {
+      "metric": "Digital transformation project success rate",
+      "value": "Only 30% of digital transformation projects achieve stated goals; 70% fail or underperform",
+      "source": "McKinsey Digital Transformations: Improving the Odds of Success 2023",
+      "year": 2023
+    },
+    {
+      "metric": "Business process management (BPM) platform ROI",
+      "value": "Average 4:1 ROI from BPM platform implementation; process cycle time reduction of 35-60%",
+      "source": "Forrester Total Economic Impact studies on BPM platforms (Appian, Pega, Camunda) 2024",
+      "year": 2024
+    },
+    {
+      "metric": "Approval workflow automation improvement",
+      "value": "Purchase approval cycle reduced from 4.2 days (email) to 0.8 days (automated workflow); 81% improvement",
+      "source": "ServiceNow Workflow Automation Benchmark 2023; Nintex Process Excellence Survey",
+      "year": 2023
+    },
+    {
+      "metric": "Financial month-end closing time reduction via process automation",
+      "value": "Automated close: 2-4 days; Manual close: 6-10 days. 55-70% reduction achieved",
+      "source": "BlackLine Modern Accounting Study 2024; Gartner CFO Survey 2024",
+      "year": 2024
+    },
+    {
+      "metric": "HR process automation: onboarding time reduction",
+      "value": "Manual onboarding: 15-20 hours per new hire; Automated: 3-5 hours. 75% reduction",
+      "source": "SHRM Talent Acquisition Benchmarking 2024; Workday HR Automation Research",
+      "year": 2024
+    },
+    {
+      "metric": "Customer service process automation (email/ticket routing)",
+      "value": "Automated routing achieves 40-60% first-contact resolution improvement; average handle time -35%",
+      "source": "Zendesk Customer Experience Trends 2024; Freshdesk Automation Benchmark",
+      "year": 2024
+    },
+    {
+      "metric": "Total addressable automation potential in a typical mid-market company",
+      "value": "45-65% of finance tasks; 30-50% of HR tasks; 25-40% of procurement tasks can be automated",
+      "source": "McKinsey A Future That Works: Automation, Employment, and Productivity 2023; Deloitte Automation Index",
+      "year": 2023
+    },
+    {
+      "metric": "Process mining value realization (identifying improvement opportunities)",
+      "value": "Process mining identifies 15-25% cost reduction opportunities within 4-8 weeks of analysis",
+      "source": "Celonis Process Intelligence Report 2024; Minit (Microsoft) Process Mining Benchmark",
+      "year": 2024
+    },
+    {
+      "metric": "Change management investment vs. project success correlation",
+      "value": "Projects with excellent change management are 6x more likely to meet objectives (Prosci 2023)",
+      "source": "Prosci Benchmarking Report 2023 (surveyed 3,400+ projects globally)",
+      "year": 2023
+    },
+    {
+      "metric": "Compliance cost reduction via process automation",
+      "value": "Automated compliance monitoring reduces regulatory reporting effort by 50-70% and audit preparation by 60-80%",
+      "source": "Deloitte GRC Technology Benchmark 2024; Thomson Reuters Compliance Study",
+      "year": 2024
+    }
+  ]
+}

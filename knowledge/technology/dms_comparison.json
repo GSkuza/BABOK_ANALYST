@@ -1,0 +1,149 @@
+{
+  "category": "Document Management Systems (DMS) Comparison",
+  "description": "Comparison of leading Document Management and Enterprise Content Management (ECM) systems suitable for mid-market companies (50-500 employees). Evaluated on features, integration capabilities, pricing, EU data residency, and GDPR compliance. Data current as of 2024.",
+  "solutions": [
+    {
+      "name": "Microsoft SharePoint Online (Microsoft 365)",
+      "vendor": "Microsoft Corporation",
+      "deployment": "Cloud SaaS (Microsoft Azure); also available on-premise (SharePoint Server)",
+      "target_market": "All sizes; dominant in mid-market due to Microsoft 365 bundling",
+      "features": [
+        "Document libraries with version control and check-in/check-out",
+        "Metadata tagging and content types",
+        "Automated workflows via Power Automate",
+        "Teams integration for collaborative document editing",
+        "eDiscovery and compliance center (Microsoft Purview)",
+        "OCR and search via Microsoft Search (AI-powered)",
+        "Records management with retention labels",
+        "External sharing with guest access controls",
+        "Document co-authoring in real time",
+        "Mobile access via SharePoint app"
+      ],
+      "pricing_model": "Included in Microsoft 365 Business Standard (€12.50/user/month) or Business Premium (€22.00/user/month); standalone SharePoint Plan 2 at €5.30/user/month",
+      "pros": [
+        "Widely adopted – most staff already familiar; minimal training cost",
+        "Deep integration with Teams, Outlook, Power Automate, Dynamics 365",
+        "Strong compliance features (retention policies, sensitivity labels, DLP)",
+        "EU data residency available (select 'European Union' data boundary)",
+        "Included in existing Microsoft 365 subscription – no additional license cost",
+        "Powerful search with AI-driven content discovery"
+      ],
+      "cons": [
+        "Governance can become complex – uncontrolled proliferation of sites/libraries without clear governance model",
+        "Not purpose-built for AP automation or invoice processing – requires additional tools (e.g., Kofax, ABBYY)",
+        "Version history limited to 500 versions per document (configurable)",
+        "Migration from on-premise SharePoint is complex and costly",
+        "Advanced DMS features require premium licensing (Microsoft 365 E3/E5)"
+      ],
+      "gdpr_compliance": "GDPR-compliant; Microsoft is a data processor; DPA available; EU data residency supported",
+      "integrations": ["Microsoft Dynamics 365", "SAP (via Power Platform connectors)", "DocuSign", "Adobe Sign", "Salesforce"]
+    },
+    {
+      "name": "M-Files",
+      "vendor": "M-Files Corporation (Finnish company, global operations)",
+      "deployment": "Cloud SaaS, on-premise, or hybrid",
+      "target_market": "Mid-market and enterprise; strong in manufacturing, professional services, finance",
+      "features": [
+        "Metadata-driven document organization (no folder hierarchy required)",
+        "Automatic version control with complete audit trail",
+        "AI-powered document classification and metadata extraction (M-Files Aino)",
+        "Workflow engine for approval processes (visual workflow designer)",
+        "ERP integration (SAP, Dynamics, NetSuite)",
+        "OCR and full-text search",
+        "QMS functionality (controlled documents, SOPs, training records)",
+        "Customer portal for external document sharing",
+        "Mobile app with offline capability",
+        "API and web services for custom integrations"
+      ],
+      "pricing_model": "SaaS: €35 – €65 per user/month depending on module selection; Professional tier ~€45/user/month; minimum commitment typically 10 users",
+      "pros": [
+        "Metadata-based organization is significantly more flexible than folder-based systems",
+        "Excellent for regulated environments – built-in QMS/ISO 9001 compliance features",
+        "Strong ERP integration capabilities, particularly SAP Business One and Dynamics",
+        "Finnish company – strong GDPR and EU data sovereignty focus",
+        "Good fit for manufacturing with controlled document management",
+        "AI classification reduces manual tagging effort by 60-80%"
+      ],
+      "cons": [
+        "Higher cost than SharePoint for equivalent user count",
+        "Learning curve for metadata-driven approach (different from Windows folder mentality)",
+        "Smaller ecosystem of third-party add-ons vs. SharePoint",
+        "Advanced features require higher tier licensing",
+        "Some EU customers report US data center by default – must explicitly select EU hosting"
+      ],
+      "gdpr_compliance": "GDPR-compliant; EU data centers available (Germany, Ireland); Data Processing Agreement available",
+      "integrations": ["SAP Business One", "Microsoft Dynamics 365", "Salesforce", "NetSuite", "Procore", "AutoCAD/Revit"]
+    },
+    {
+      "name": "DocuWare",
+      "vendor": "DocuWare GmbH (German company, acquired by Ricoh 2019)",
+      "deployment": "Cloud SaaS (AWS EU-West) or on-premise",
+      "target_market": "Mid-market; particularly strong in German-speaking markets and manufacturing",
+      "features": [
+        "Document capture (scan, email, web upload) with intelligent indexing",
+        "Digital inbox and document routing workflows",
+        "AP automation with PO matching and approval workflows",
+        "Form processing and digital forms",
+        "E-signature integration (DocuSign, Adobe Sign)",
+        "Archive with compliant long-term storage (GoBD, GDPR-compliant)",
+        "SAP, Dynamics, and Sage integrations via standard connectors",
+        "Mobile app for approval and document access",
+        "OCR with machine learning extraction",
+        "Role-based access control with department-level security"
+      ],
+      "pricing_model": "SaaS: approximately €350 – €600/month for 5 users (DocuWare Cloud starter); scales per user; on-premise licensing available",
+      "pros": [
+        "German company – native GoBD compliance for German regulatory requirements (10-year archiving)",
+        "Strong out-of-the-box AP automation with supplier invoice processing",
+        "Good Ricoh scanner integration for high-volume physical document digitization",
+        "Purpose-built for mid-market – easier to implement than enterprise ECM platforms",
+        "Strong compliance archiving for German/EU regulatory requirements",
+        "SAP and Dynamics connectors available as standard"
+      ],
+      "cons": [
+        "Less modern UI compared to newer cloud-native competitors",
+        "Limited AI capabilities vs. newer IDP platforms",
+        "Pricing can be less transparent; partner-sold with significant variation",
+        "Smaller global partner network outside DACH region",
+        "Workflow designer is functional but less intuitive than modern alternatives"
+      ],
+      "gdpr_compliance": "GDPR-compliant; GoBD-certified for German operations; EU data centers; DPA available",
+      "integrations": ["SAP Business One", "SAP R/3 and S/4HANA", "Microsoft Dynamics", "Sage", "Datev (German accounting)", "ABBYY FlexiCapture"]
+    },
+    {
+      "name": "OpenText Documentum / Content Suite",
+      "vendor": "OpenText Corporation (Canadian company)",
+      "deployment": "Cloud SaaS (OpenText Cloud), on-premise, or hybrid",
+      "target_market": "Large enterprise and regulated industries; mid-market via OpenText Business Network Cloud",
+      "features": [
+        "Enterprise content management with comprehensive records management",
+        "Advanced workflow and business process management",
+        "Information governance and legal hold",
+        "Integration with SAP ArchiveLink for SAP content management",
+        "Intelligent capture with ABBYY (OpenText-owned since 2023)",
+        "AI/ML document classification and extraction",
+        "Connectors to 2,000+ applications via OpenText Trading Grid",
+        "Full audit trail and tamper-evident storage",
+        "Healthcare and life sciences compliance features (FDA 21 CFR Part 11)",
+        "Advanced security with IRM (Information Rights Management)"
+      ],
+      "pricing_model": "Enterprise pricing; typically €80,000 – €500,000+ annual license/subscription for mid-large deployments; complex per-module pricing",
+      "pros": [
+        "Best-in-class for complex enterprise and regulated environments",
+        "Deepest SAP integration (ArchiveLink, Extended ECM for SAP)",
+        "Comprehensive compliance and records management",
+        "ABBYY acquisition provides market-leading IDP capabilities",
+        "Strong in life sciences, legal, financial services verticals"
+      ],
+      "cons": [
+        "Significantly overspec and over-budget for most mid-market companies",
+        "Complex implementation: 9-24 months for enterprise deployment",
+        "High TCO – typically not justified below €200M revenue",
+        "User interface criticized as dated in core Documentum product",
+        "Complex licensing model makes budgeting difficult"
+      ],
+      "gdpr_compliance": "GDPR-compliant; EU data centers available; comprehensive compliance features",
+      "integrations": ["SAP (deepest integration via ArchiveLink)", "Microsoft 365", "Salesforce", "Oracle ERP", "700+ pre-built connectors"]
+    }
+  ]
+}

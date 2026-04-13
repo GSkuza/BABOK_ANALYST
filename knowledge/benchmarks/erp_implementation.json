@@ -1,0 +1,96 @@
+{
+  "category": "ERP System Implementation",
+  "description": "Benchmark data for ERP implementation projects in mid-market companies (€10-100M revenue, 50-500 employees). Covers implementation costs, timelines, success rates, and ROI metrics. Sources include Panorama Consulting, Gartner, Nucleus Research, and primary research firms.",
+  "data_points": [
+    {
+      "metric": "Average ERP implementation cost as percentage of annual revenue (mid-market)",
+      "value": "2.5% – 7% of annual revenue for full ERP implementation (software + implementation + training)",
+      "source": "Panorama Consulting 2024 ERP Report; Gartner ERP Market Forecast",
+      "year": 2024
+    },
+    {
+      "metric": "Average ERP implementation duration (mid-market, 50-200 employees)",
+      "value": "9 – 18 months for full implementation; 6 – 12 months for phased scope",
+      "source": "Panorama Consulting ERP Report 2024; Nucleus Research ROI Guide to ERP",
+      "year": 2024
+    },
+    {
+      "metric": "ERP project budget overrun rate",
+      "value": "57% of ERP projects exceed budget; average overrun of 24% above original budget",
+      "source": "Panorama Consulting ERP Report 2024 (surveyed 250+ companies globally)",
+      "year": 2024
+    },
+    {
+      "metric": "ERP project schedule overrun rate",
+      "value": "64% of ERP projects exceed planned timeline; average delay of 5.3 months",
+      "source": "Panorama Consulting ERP Report 2024",
+      "year": 2024
+    },
+    {
+      "metric": "Average ERP ROI realization timeline",
+      "value": "2.8 years to full ROI realization; Best-in-Class: 1.5 – 2 years",
+      "source": "Nucleus Research Technology Value Matrix 2024; Panorama Consulting",
+      "year": 2024
+    },
+    {
+      "metric": "SAP Business One total cost of ownership (mid-market, 50 users, 3 years)",
+      "value": "€180,000 – €350,000 TCO (licenses, implementation, maintenance, support)",
+      "source": "SAP partner pricing; Gartner Peer Insights TCO analysis 2024",
+      "year": 2024
+    },
+    {
+      "metric": "Microsoft Dynamics 365 Business Central total cost of ownership (50 users, 3 years)",
+      "value": "€150,000 – €280,000 TCO (SaaS licensing at €70-100/user/month + implementation)",
+      "source": "Microsoft pricing; Gartner Peer Insights; independent partner estimates 2024",
+      "year": 2024
+    },
+    {
+      "metric": "ERP implementation success rate (meeting all original objectives)",
+      "value": "Only 33% of ERP projects fully meet original objectives on time and on budget",
+      "source": "Panorama Consulting ERP Report 2024; Standish Group CHAOS Report 2023",
+      "year": 2024
+    },
+    {
+      "metric": "Top cause of ERP project failure",
+      "value": "#1: Underestimated complexity (29%); #2: Change resistance (23%); #3: Poor requirements (19%)",
+      "source": "Panorama Consulting 2024; Gartner ERP Implementation Research",
+      "year": 2024
+    },
+    {
+      "metric": "Average implementation partner cost as % of total project cost",
+      "value": "40 – 55% of total project cost is implementation services (consulting, training, customization)",
+      "source": "Panorama Consulting ERP Vendor Report 2024",
+      "year": 2024
+    },
+    {
+      "metric": "ERP-driven productivity improvement (finance function)",
+      "value": "25 – 35% reduction in finance department labor costs; 40 – 60% faster financial closing",
+      "source": "Nucleus Research ERP Payback and ROI 2024",
+      "year": 2024
+    },
+    {
+      "metric": "Cloud ERP vs. on-premise: adoption trend (mid-market)",
+      "value": "72% of new mid-market ERP deployments are cloud/SaaS (up from 45% in 2020)",
+      "source": "Gartner Magic Quadrant for Cloud ERP for Product-Centric Enterprises 2024",
+      "year": 2024
+    },
+    {
+      "metric": "ERP user adoption rate – first 6 months post go-live",
+      "value": "Average 58% active user adoption at 6 months; Best-in-Class: 85%+",
+      "source": "Prosci Change Management Benchmarking Research 2023; WalkMe Digital Adoption Report",
+      "year": 2023
+    },
+    {
+      "metric": "Cost of ERP data migration (mid-market)",
+      "value": "€25,000 – €80,000 for data cleansing, migration, and validation; 15% of total project budget",
+      "source": "Stibo Systems Data Migration Benchmark; Gartner Data Quality Market Research",
+      "year": 2024
+    },
+    {
+      "metric": "Post-ERP go-live support cost (Year 1)",
+      "value": "€40,000 – €120,000 for hypercare support including bug fixes, training, and stabilization",
+      "source": "Panorama Consulting ERP Implementation Report 2024",
+      "year": 2024
+    }
+  ]
+}

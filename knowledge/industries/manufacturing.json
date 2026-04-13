@@ -1,0 +1,132 @@
+{
+  "industry": "Manufacturing",
+  "description": "Companies engaged in the production of goods through physical, chemical, or mechanical transformation of materials. Includes discrete manufacturing (automotive, electronics, machinery) and process manufacturing (chemicals, food, pharmaceuticals). Mid-market manufacturers typically operate 1-3 plants with 50-500 employees and revenues of €10-100M.",
+  "processes": [
+    {
+      "name": "Procure-to-Pay (P2P)",
+      "description": "End-to-end process from identifying procurement need through purchase requisition, purchase order issuance, goods receipt, three-way matching (PO/GR/invoice), and supplier payment. Typically involves Finance, Procurement, and Warehouse departments."
+    },
+    {
+      "name": "Order-to-Cash (O2C)",
+      "description": "Full cycle from customer order receipt through production planning, manufacturing execution, quality control, shipping, invoicing, and cash collection. Involves Sales, Production, Logistics, and Finance."
+    },
+    {
+      "name": "Plan-to-Produce (P2P)",
+      "description": "Production planning based on demand forecasts and actual orders, including MRP (Material Requirements Planning) runs, work order creation, shop floor scheduling, BOM explosion, and capacity planning."
+    },
+    {
+      "name": "Record-to-Report (R2R)",
+      "description": "Financial closing process including cost center accounting, cost of goods sold calculation, inventory valuation, overhead allocation, variance analysis, and period-end reporting to management and regulators."
+    },
+    {
+      "name": "Hire-to-Retire (H2R)",
+      "description": "HR lifecycle management from workforce planning, recruitment, onboarding, payroll processing, performance management, training, and eventual separation. Critical for labor-intensive manufacturing environments."
+    },
+    {
+      "name": "Maintain-to-Operate (MtO)",
+      "description": "Maintenance management encompassing preventive maintenance scheduling, corrective work order management, spare parts inventory, MTBF/MTTR tracking, and equipment lifecycle management (CMMS integration)."
+    },
+    {
+      "name": "Design-to-Release (D2R)",
+      "description": "Product development from concept through engineering design, prototype, testing, regulatory approval, BOM creation, routing definition, and release to production. Involves Engineering, Quality, Regulatory Affairs."
+    },
+    {
+      "name": "Quality Management",
+      "description": "Integrated quality processes including incoming inspection (IQC), in-process quality control (IPQC), final inspection, non-conformance management (NCR), CAPA (Corrective and Preventive Actions), and customer complaint handling."
+    }
+  ],
+  "kpis": [
+    {
+      "name": "Overall Equipment Effectiveness (OEE)",
+      "baseline": "60-65",
+      "target": "85",
+      "unit": "% (Availability × Performance × Quality)"
+    },
+    {
+      "name": "Invoice Processing Time",
+      "baseline": "5-8",
+      "target": "1-2",
+      "unit": "days per invoice (manual vs. automated)"
+    },
+    {
+      "name": "Purchase Order Cycle Time",
+      "baseline": "3-5",
+      "target": "0.5-1",
+      "unit": "days from requisition to approved PO"
+    },
+    {
+      "name": "Inventory Turnover Ratio",
+      "baseline": "4-6",
+      "target": "8-12",
+      "unit": "times per year"
+    },
+    {
+      "name": "On-Time Delivery (OTD)",
+      "baseline": "75-82",
+      "target": "95+",
+      "unit": "% of orders delivered on promised date"
+    },
+    {
+      "name": "Document Processing Error Rate",
+      "baseline": "8-12",
+      "target": "<2",
+      "unit": "% of documents requiring manual correction"
+    },
+    {
+      "name": "Three-Way Match Rate (Automatic)",
+      "baseline": "60-70",
+      "target": "90+",
+      "unit": "% of supplier invoices auto-matched without manual intervention"
+    },
+    {
+      "name": "Cost per Invoice Processed",
+      "baseline": "12-20",
+      "target": "2-4",
+      "unit": "EUR per invoice (manual vs. automated)"
+    },
+    {
+      "name": "Days Sales Outstanding (DSO)",
+      "baseline": "45-60",
+      "target": "30-35",
+      "unit": "days"
+    },
+    {
+      "name": "First Pass Yield (FPY)",
+      "baseline": "88-92",
+      "target": "99+",
+      "unit": "% of units passing quality inspection without rework"
+    }
+  ],
+  "pain_points": [
+    "Manual data entry from paper invoices and delivery notes leads to high error rates (5-15%) and slow processing times, creating bottlenecks in Accounts Payable",
+    "Lack of real-time visibility into purchase order status and goods receipt causes payment delays and strained supplier relationships",
+    "Disconnected systems between ERP, quality management, and document storage result in duplicate data entry and compliance risks",
+    "Physical document archives occupy expensive warehouse space and make audit preparation extremely time-consuming (days instead of hours)",
+    "Manual approval workflows for purchase requisitions and invoices cause delays, especially when approvers are travelling or unavailable",
+    "Inability to perform automated three-way matching (PO/GR/Invoice) forces manual reconciliation consuming 30-40% of AP team time",
+    "Non-compliance with e-invoicing mandates (e.g., KSeF in Poland, ZUGFeRD/XRechnung in Germany) creates legal and financial risk",
+    "Poor document version control in engineering and quality departments leads to use of outdated specifications on the shop floor",
+    "Difficulty tracing document history for ISO 9001 audits results in audit findings and potential certification risks",
+    "Fragmented communication between production, procurement, and finance delays month-end closing by 3-5 days"
+  ],
+  "typical_systems": [
+    "ERP: SAP S/4HANA, SAP Business One, Microsoft Dynamics 365 Business Central, Epicor, Infor LN/CloudSuite",
+    "MES (Manufacturing Execution System): Siemens SIMATIC IT, Rockwell FactoryTalk, Epicor Advanced MES",
+    "Quality Management System (QMS): ETQ Reliance, MasterControl, SAP QM module",
+    "CMMS (Maintenance): IBM Maximo, SAP PM, Infor EAM, eMaint",
+    "Document Management / DMS: SharePoint, M-Files, DocuWare, Nuxeo, OpenText",
+    "WMS (Warehouse Management): SAP EWM, Manhattan Associates, Körber WMS",
+    "PLM (Product Lifecycle Management): Siemens Teamcenter, PTC Windchill, Dassault Systèmes ENOVIA",
+    "Business Intelligence: SAP Analytics Cloud, Microsoft Power BI, Qlik"
+  ],
+  "regulatory_considerations": [
+    "GDPR (EU) – Personal data in HR documents, customer contracts, and supplier records; requires lawful basis, data minimization, and retention schedules",
+    "ISO 9001:2015 – Quality management system documentation, controlled documents, records retention, CAPA processes",
+    "ISO 14001:2015 – Environmental management documentation for manufacturers with significant environmental aspects",
+    "E-invoicing mandates – KSeF (Poland), ZUGFeRD/XRechnung (Germany), FatturaPA (Italy), SII (Spain) for B2B and B2G transactions",
+    "Product safety regulations – CE marking documentation, RoHS/REACH compliance records, technical files",
+    "Customs and export control – EUR.1 certificates, dual-use export documentation, customs tariff records",
+    "Financial reporting – IFRS/local GAAP cost accounting, inventory valuation documentation, transfer pricing",
+    "Labor law – Working time records, health & safety documentation, collective agreements (EU Posted Workers Directive)"
+  ]
+}
