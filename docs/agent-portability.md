@@ -25,7 +25,8 @@ Keep adapters thin. Point each host at existing `skills/`, `hooks/`, and
 
 | Variable | Purpose |
 |----------|---------|
-| `${CLAUDE_PLUGIN_ROOT}` | Bundled plugin files (MCP server, stage prompts) |
+| `${CLAUDE_PLUGIN_ROOT}` | Bundled plugin files (Claude Code MCP) |
+| `cwd: "."` in `.mcp.json` | Codex resolves MCP paths relative to plugin root (no `${CLAUDE_PLUGIN_ROOT}`) |
 | `${CLAUDE_PROJECT_DIR}` | User workspace — projects stored in `projects/` subdirectory |
 | `${CLAUDE_PLUGIN_DATA}` | Persistent plugin state across updates |
 

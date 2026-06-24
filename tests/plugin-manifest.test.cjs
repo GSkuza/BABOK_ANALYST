@@ -58,13 +58,13 @@ test('Codex and Copilot manifests share version with Claude', () => {
   assert.equal(copilot, claude);
 });
 
-test('MCP config uses portable plugin-root variables', () => {
+test('MCP config uses Codex-compatible launcher with plugin-relative cwd', () => {
   const mcp = readJSON('.mcp.json');
   const babok = mcp.mcpServers.babok;
-  assert.ok(babok.args[0].includes('${CLAUDE_PLUGIN_ROOT}'));
-  assert.equal(babok.env.BABOK_PLUGIN_ROOT, '${CLAUDE_PLUGIN_ROOT}');
-  assert.equal(babok.env.BABOK_PROJECTS_DIR, '${CLAUDE_PROJECT_DIR}/projects');
-  assert.equal(babok.env.BABOK_AGENT_DIR, '${CLAUDE_PLUGIN_ROOT}/BABOK_AGENT/stages');
+  assert.equal(babok.command, 'node');
+  assert.deepEqual(babok.args, ['hooks/babok-mcp-launcher.cjs']);
+  assert.equal(babok.cwd, '.');
+  assert.ok(fs.existsSync(path.join(root, 'hooks', 'babok-mcp-launcher.cjs')));
 });
 
 test('Claude slash commands are .md files in commands/', () => {

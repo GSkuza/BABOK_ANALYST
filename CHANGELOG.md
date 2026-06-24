@@ -5,6 +5,13 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.4] - 2026-06-24
+
+### Fixed
+- **Codex MCP handshake:** Replaced `${CLAUDE_PLUGIN_ROOT}` paths in `.mcp.json` with `cwd: "."` and `hooks/babok-mcp-launcher.cjs` — Codex does not interpolate Claude plugin variables.
+- **MCP dependencies:** Launcher runs `npm install` in `babok-mcp/` on first start when `node_modules` is missing.
+- **Projects path:** Launcher and `babok-mcp` resolve workspace `projects/` via `CODEX_WORKSPACE_ROOT` or upward directory search.
+
 ## [2.2.3] - 2026-06-24
 
 ### Changed

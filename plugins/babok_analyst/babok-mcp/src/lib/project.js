@@ -49,6 +49,14 @@ export const STAGE_PROMPT_FILE_NAMES = {
  * @returns {string|null}
  */
 function getPluginRoot() {
+  const moduleRoot = path.resolve(__dirname, '..', '..', '..');
+  if (
+    fs.existsSync(path.join(moduleRoot, '.codex-plugin', 'plugin.json'))
+    || fs.existsSync(path.join(moduleRoot, '.claude-plugin', 'plugin.json'))
+  ) {
+    return moduleRoot;
+  }
+
   const candidates = [
     process.env.BABOK_PLUGIN_ROOT,
     process.env.CLAUDE_PLUGIN_ROOT,
@@ -57,8 +65,10 @@ function getPluginRoot() {
     process.env.COPILOT_PLUGIN_ROOT,
   ];
   for (const candidate of candidates) {
-    if (candidate && fs.existsSync(candidate)) {
-      return path.resolve(candidate);
+    if (!candidate || candidate === '.') continue;
+    const resolved = path.resolve(candidate);
+    if (fs.existsSync(resolved)) {
+      return resolved;
     }
   }
   return null;
@@ -74,14 +84,21 @@ function getPluginRoot() {
  *   5. ../projects relative to this package (dev checkout)
  */
 export function getProjectsDir() {
-  if (process.env.BABOK_PROJECTS_DIR) {
+  if (process.env.BABOK_PROJECTS_DIR && process.env.BABOK_PROJECTS_DIR !== '.') {
     return path.resolve(process.env.BABOK_PROJECTS_DIR);
   }
   if (process.env.CLAUDE_PROJECT_DIR) {
     return path.join(path.resolve(process.env.CLAUDE_PROJECT_DIR), 'projects');
   }
+  if (process.env.CODEX_WORKSPACE_ROOT) {
+    const fromCodex = findProjectsDirUpward(process.env.CODEX_WORKSPACE_ROOT);
+    if (fromCodex) return fromCodex;
+  }
   const cwdProjects = path.join(process.cwd(), 'projects');
   if (fs.existsSync(cwdProjects)) return cwdProjects;
+
+  const fromCwd = findProjectsDirUpward(process.cwd());
+  if (fromCwd) return fromCwd;
 
   const pluginRoot = getPluginRoot();
   if (pluginRoot) {
@@ -93,6 +110,30 @@ export function getProjectsDir() {
   if (fs.existsSync(relProjects)) return relProjects;
 
   return cwdProjects; // fallback, will be created on first new_project
+}
+
+/**
+ * Walk upward from a directory looking for a projects/ folder.
+ * @param {string} startDir
+ * @param {number} [maxDepth]
+ * @returns {string|null}
+ */
+function findProjectsDirUpward(startDir, maxDepth = 8) {
+  let dir = path.resolve(startDir);
+  for (let depth = 0; depth < maxDepth; depth += 1) {
+    for (const rel of ['projects', path.join('BABOK_ANALYST', 'projects')]) {
+      const candidate = path.join(dir, rel);
+      if (!fs.existsSync(candidate)) continue;
+      const hasBabok = fs.readdirSync(candidate).some(
+        (name) => name.startsWith('BABOK-') && fs.statSync(path.join(candidate, name)).isDirectory(),
+      );
+      if (hasBabok) return candidate;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return null;
 }
 
 /**

@@ -5,7 +5,7 @@
 
 An AI agent for professional business analysis compliant with **BABOK v3** (International Institute of Business Analysis) standard. Guides the analyst step-by-step through 8 stages - from project initialization to business case with ROI calculation.
 
-**Current version:** 2.2.3 | **Plugin install:** Claude Code, Codex, Copilot CLI
+**Current version:** 2.2.4 | **Plugin install:** Claude Code, Codex, Copilot CLI
 
 ## What is BABOK Analyst?
 
@@ -268,8 +268,9 @@ See [`docs/agent-portability.md`](docs/agent-portability.md) for the full adapte
 | `marketplace "babok_analyst" not found` | Run `/plugin marketplace add GSkuza/BABOK_ANALYST` **before** install |
 | `agents: Invalid input` | Update to **v2.2.0+** (`/plugin marketplace update babok_analyst`) — fixed manifest |
 | MCP tools missing | `/reload-plugins`, ensure Node.js ≥18; hook runs `npm install` in `babok-mcp/` |
+| Codex: MCP `babok` handshake failed | Update to **v2.2.4+** — uses `hooks/babok-mcp-launcher.cjs` with `cwd: "."` (Codex does not expand `${CLAUDE_PLUGIN_ROOT}`) |
 | Stale plugin cache | `/plugin marketplace update babok_analyst` then reinstall |
-| Codex: empty plugin list / sandbox write error | Run `codex plugin marketplace add` in a **normal terminal** (v2.2.3+); update marketplace if on older tag |
+| Codex: empty plugin list / sandbox write error | Run `codex plugin marketplace add` in a **normal terminal** (v2.2.4+); update marketplace if on older tag |
 
 **Local checkout (no GitHub fetch):**
 
@@ -1076,6 +1077,6 @@ Contributions are welcome! Please feel free to submit:
 
 ---
 
-**Version:** 2.2.3  
+**Version:** 2.2.4  
 **Release Date:** June 24, 2026  
 **Last Updated:** 2026-06-24
