@@ -1,6 +1,11 @@
 # BABOK Analyst - AI-Powered Business Analysis Agent
 
+[![Release](https://img.shields.io/github/v/release/GSkuza/BABOK_ANALYST)](https://github.com/GSkuza/BABOK_ANALYST/releases)
+[![Lint Stage Prompts](https://github.com/GSkuza/BABOK_ANALYST/actions/workflows/lint-prompts.yml/badge.svg)](https://github.com/GSkuza/BABOK_ANALYST/actions/workflows/lint-prompts.yml)
+
 An AI agent for professional business analysis compliant with **BABOK v3** (International Institute of Business Analysis) standard. Guides the analyst step-by-step through 8 stages - from project initialization to business case with ROI calculation.
+
+**Current version:** 2.2.1 | **Plugin install:** Claude Code, Codex, Copilot CLI
 
 ## What is BABOK Analyst?
 
@@ -125,8 +130,8 @@ BABOK_ANALYST/
 |-- .mcp.json                             # Portable MCP wiring (${CLAUDE_PLUGIN_ROOT})
 |-- hooks/                                # Lifecycle hooks (Claude/Codex/Copilot)
 |-- skills/                               # Bundled agent skills
-|-- commands/                             # Slash commands (/babok-new, etc.)
-|-- agents/                               # Subagent definitions (orchestrator, stages)
+|-- commands/                             # Slash commands: *.md (Claude), *.toml (Copilot/Codex)
+|-- agents/                               # Subagent definitions (orchestrator + stages 0–8)
 |-- AGENTS.md                             # Always-on rules for generic agents
 |-- scripts/                              # check-versions.cjs, uninstall.cjs
 |
@@ -148,8 +153,6 @@ BABOK_ANALYST/
 ```
 
 ## Stages
-
-[![Lint Stage Prompts](https://github.com/GSkuza/BABOK_ANALYST/actions/workflows/lint-prompts.yml/badge.svg)](https://github.com/GSkuza/BABOK_ANALYST/actions/workflows/lint-prompts.yml)
 
 | Stage | Name | What You Get |
 |------|-------|----------------|
@@ -195,53 +198,76 @@ Each stage file contains: step-by-step process, questions for human, deliverable
 
 ## How to Get Started
 
-### Plugin Marketplace Install (recommended) — NEW in v2.1.0
+### Plugin Marketplace Install (recommended) — v2.2+
 
-One-command install across Claude Code, Codex, and Copilot CLI:
+Install the full BABOK Analyst stack (skills, agents, hooks, MCP, slash commands) in Claude Code, Codex, or Copilot CLI.
 
-**Claude Code:**
+**Claude Code (3 steps):**
+
 ```
 /plugin marketplace add GSkuza/BABOK_ANALYST
 /plugin install babok_analyst@babok_analyst
 /reload-plugins
 ```
 
-**Codex:**
-```
-codex plugin marketplace add GSkuza/BABOK_ANALYST
-```
-Then open `/plugins`, select the babok_analyst marketplace, install, and authorize hooks in `/hooks`.
+Then open `/hooks` and authorize lifecycle hooks. Start a **new session**.
 
-**GitHub Copilot CLI:**
-```
-copilot plugin marketplace add GSkuza/BABOK_ANALYST
-copilot plugin install babok_analyst@babok_analyst
-```
-
-The plugin bundles skills, agents, slash commands (`/babok-new`, `/babok-status`, `/babok-help`),
-lifecycle hooks, and portable MCP wiring via `.mcp.json`. Projects are stored in
-`projects/<project_id>/` under your workspace.
-
-**Uninstall external state:** `node scripts/uninstall.cjs`
-
-See [`docs/agent-portability.md`](docs/agent-portability.md) for the full adapter matrix.
-
-**Troubleshooting: `marketplace "babok_analyst" not found`**
-
-You must add the marketplace **before** install. Run step 1, verify in `/plugin` → **Marketplaces** that `babok_analyst` appears, then run install.
+**Update to latest release:**
 
 ```
-/plugin marketplace add GSkuza/BABOK_ANALYST
 /plugin marketplace update babok_analyst
 /plugin install babok_analyst@babok_analyst
 /reload-plugins
 ```
 
-Local checkout (no GitHub fetch):
+**Codex:**
 
 ```
-/plugin marketplace add C:/path/to/BABOK_ANALYST
+codex plugin marketplace add GSkuza/BABOK_ANALYST
+```
+
+Then open `/plugins`, select the `babok_analyst` marketplace, install, and authorize hooks in `/hooks`.
+
+**GitHub Copilot CLI:**
+
+```
+copilot plugin marketplace add GSkuza/BABOK_ANALYST
+copilot plugin install babok_analyst@babok_analyst
+```
+
+#### What the plugin includes
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Marketplace manifest | `.claude-plugin/` | Claude Code plugin registry |
+| MCP wiring | `.mcp.json` | 16 tools + 9 stage resources (`${CLAUDE_PLUGIN_ROOT}`) |
+| Lifecycle hooks | `hooks/` | Session activation + `babok-mcp` dependency install |
+| Skills | `skills/babok-analyst/` | Auto-activated BABOK operating rules |
+| Agents | `agents/` | Orchestrator + per-stage subagents (12) |
+| Commands | `commands/babok-*.md` | `/babok-new`, `/babok-status`, `/babok-help` |
+| Always-on rules | `AGENTS.md` | Generic agents / Gemini CLI fallback |
+
+Projects are stored in **`projects/<project_id>/`** under your workspace (not `BABOK_Analysis/`).
+
+**Uninstall external state:** `node scripts/uninstall.cjs`
+
+See [`docs/agent-portability.md`](docs/agent-portability.md) for the full adapter matrix.
+
+#### Troubleshooting
+
+| Error | Fix |
+|-------|-----|
+| `marketplace "babok_analyst" not found` | Run `/plugin marketplace add GSkuza/BABOK_ANALYST` **before** install |
+| `agents: Invalid input` | Update to **v2.2.0+** (`/plugin marketplace update babok_analyst`) — fixed manifest |
+| MCP tools missing | `/reload-plugins`, ensure Node.js ≥18; hook runs `npm install` in `babok-mcp/` |
+| Stale plugin cache | `/plugin marketplace update babok_analyst` then reinstall |
+
+**Local checkout (no GitHub fetch):**
+
+```
+/plugin marketplace add C:/AI_WORKSPACE/CURSOR_PROJECTS/CURSOR_PROJECTS_BIZ/BABOK_ANALYST/BABOK_ANALYST
 /plugin install babok_analyst@babok_analyst
+/reload-plugins
 ```
 
 ---
@@ -1041,6 +1067,6 @@ Contributions are welcome! Please feel free to submit:
 
 ---
 
-**Version:** 2.1.0
-**Release Date:** April 13, 2026
-**Last Updated:** 2026-04-13
+**Version:** 2.2.1  
+**Release Date:** June 24, 2026  
+**Last Updated:** 2026-06-24
