@@ -5,7 +5,7 @@
 
 An AI agent for professional business analysis compliant with **BABOK v3** (International Institute of Business Analysis) standard. Guides the analyst step-by-step through 8 stages - from project initialization to business case with ROI calculation.
 
-**Current version:** 2.2.4 | **Plugin install:** Claude Code, Codex, Copilot CLI
+**Current version:** 2.2.5 | **Plugin install:** Claude Code, Codex, Copilot CLI
 
 ## What is BABOK Analyst?
 
@@ -252,7 +252,7 @@ copilot plugin install babok_analyst@babok_analyst
 | Lifecycle hooks | `hooks/` | Session activation + `babok-mcp` dependency install |
 | Skills | `skills/babok-analyst/` | Auto-activated BABOK operating rules |
 | Agents | `agents/` | Orchestrator + per-stage subagents (12) |
-| Commands | `commands/babok-*.md` | `/babok-new`, `/babok-status`, `/babok-help` |
+| Commands | `commands/babok-*.md` | `/babok-new`, `/babok-new PL`, `/babok-new ENG`, `/babok-new-pl`, `/babok-new-eng`, `/babok-status`, `/babok-help` |
 | Always-on rules | `AGENTS.md` | Generic agents / Gemini CLI fallback |
 
 Projects are stored in **`projects/<project_id>/`** under your workspace (not `BABOK_Analysis/`).
@@ -1077,6 +1077,6 @@ Contributions are welcome! Please feel free to submit:
 
 ---
 
-**Version:** 2.2.4  
+**Version:** 2.2.5  
 **Release Date:** June 24, 2026  
 **Last Updated:** 2026-06-24

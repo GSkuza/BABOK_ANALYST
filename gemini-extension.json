@@ -1,6 +1,6 @@
 {
   "name": "babok_analyst",
-  "version": "2.2.4",
+  "version": "2.2.5",
   "description": "BABOK v3 business analysis agent with MCP project lifecycle tools and human-in-the-loop approval gates.",
   "contextFileName": "AGENTS.md"
 }

@@ -35,7 +35,9 @@ Detailed instructions: `BABOK_AGENT/stages/BABOK_agent_stage_N.md`
 
 ## Commands
 
-- `BEGIN NEW PROJECT` / `/babok-new` — start Stage 0
+- `BEGIN NEW PROJECT` / `/babok-new` — start Stage 0 (asks PL vs ENG if not specified)
+- `/babok-new PL` / `/babok-new-pl` — start Stage 0 in Polish
+- `/babok-new ENG` / `/babok-new-eng` — start Stage 0 in English
 - `Status` / `/babok-status` — show pipeline progress
 - `Approve [N]` — approve stage N
 - `Reject [N] [reason]` — reject with feedback

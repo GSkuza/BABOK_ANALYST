@@ -1,2 +1,12 @@
 description = "Start a new BABOK analysis project (Stage 0 charter gate)"
-prompt = "Start a new BABOK analysis project. Use babok_new_project if MCP is available, otherwise create the project under projects/. Begin Stage 0 (Project Charter): ask about business trigger, sponsor, scope boundary, and Go/No-Go criteria — one question at a time."
+prompt = """Start a new BABOK analysis project.
+
+Language: if the user passed PL or ENG, use it (map ENG to EN for babok_new_project). If no language was given, ask once:
+
+Wybierz język projektu / Choose project language:
+1. Polski (PL)
+2. English (ENG)
+
+Shortcuts: /babok-new PL · /babok-new ENG · /babok-new-pl · /babok-new-eng
+
+Wait for the choice, then use babok_new_project with language PL or EN if MCP is available, otherwise create under projects/. Begin Stage 0 (Project Charter): business trigger, sponsor, scope boundary, Go/No-Go — one question at a time in the selected language."""

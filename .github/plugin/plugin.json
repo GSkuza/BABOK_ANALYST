@@ -1,7 +1,7 @@
 {
   "name": "babok_analyst",
   "description": "BABOK v3 business analysis agent with 16 MCP tools, 9 stage resources, and human-in-the-loop approval gates.",
-  "version": "2.2.4",
+  "version": "2.2.5",
   "author": {
     "name": "Grzegorz Skuza",
     "url": "https://github.com/GSkuza"

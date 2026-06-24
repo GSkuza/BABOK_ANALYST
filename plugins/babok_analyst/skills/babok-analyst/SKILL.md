@@ -76,7 +76,9 @@ Stage instruction resources: `babok://stages/0` through `babok://stages/8`.
 
 ## Slash commands
 
-- `/babok-new` — start a new BABOK project (Stage 0)
+- `/babok-new` — start a new BABOK project (Stage 0); asks for language if not given
+- `/babok-new PL` or `/babok-new-pl` — start in Polish
+- `/babok-new ENG` or `/babok-new-eng` — start in English
 - `/babok-status` — show current project progress
 - `/babok-help` — quick reference
 

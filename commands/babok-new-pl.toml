@@ -1,0 +1,2 @@
+description = "Start a new BABOK analysis project in Polish (Stage 0)"
+prompt = "Start a new BABOK analysis project in Polish (PL). Use babok_new_project with language PL if MCP is available, otherwise create under projects/ with language PL. Begin Stage 0 (Project Charter) in Polish: business trigger, sponsor, scope boundary, Go/No-Go — one question at a time."

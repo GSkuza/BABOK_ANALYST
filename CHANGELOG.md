@@ -5,6 +5,12 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.5] - 2026-06-24
+
+### Added
+- **Slash commands — project language:** `/babok-new` asks for PL vs ENG when no argument is given; `/babok-new PL`, `/babok-new ENG`, `/babok-new-pl`, and `/babok-new-eng` start Stage 0 in the chosen language.
+- **Docs:** Updated `SKILL.md`, `AGENTS.md`, `babok-help`, and README command table.
+
 ## [2.2.4] - 2026-06-24
 
 ### Fixed

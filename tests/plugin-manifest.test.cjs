@@ -68,7 +68,13 @@ test('MCP config uses Codex-compatible launcher with plugin-relative cwd', () =>
 });
 
 test('Claude slash commands are .md files in commands/', () => {
-  for (const file of ['babok-new.md', 'babok-status.md', 'babok-help.md']) {
+  for (const file of [
+    'babok-new.md',
+    'babok-new-pl.md',
+    'babok-new-eng.md',
+    'babok-status.md',
+    'babok-help.md',
+  ]) {
     assert.ok(
       fs.existsSync(path.join(root, 'commands', file)),
       `missing Claude command: commands/${file}`,
@@ -78,7 +84,13 @@ test('Claude slash commands are .md files in commands/', () => {
 
 test('command files exist for Copilot plugin surface', () => {
   const manifest = readJSON('.github/plugin/plugin.json');
-  for (const file of ['babok-new.toml', 'babok-status.toml', 'babok-help.toml']) {
+  for (const file of [
+    'babok-new.toml',
+    'babok-new-pl.toml',
+    'babok-new-eng.toml',
+    'babok-status.toml',
+    'babok-help.toml',
+  ]) {
     assert.ok(
       fs.existsSync(path.join(root, manifest.commands, file)),
       `missing command: ${manifest.commands}${file}`,
