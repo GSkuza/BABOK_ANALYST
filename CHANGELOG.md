@@ -5,6 +5,16 @@ All notable changes to BABOK Analyst project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-06-24
+
+### Fixed
+- **Claude Code plugin install:** Removed invalid `agents`/`commands`/`skills`/`mcpServers` string paths from `.claude-plugin/plugin.json` — Claude Code validates these as arrays only; components now auto-discover from standard directories (matches official Anthropic plugins).
+- **Claude slash commands:** Added `commands/babok-new.md`, `babok-status.md`, `babok-help.md` (Claude requires `.md`; `.toml` kept for Copilot/Codex).
+
+### Changed
+- **Install docs:** Marketplace slug corrected to `GSkuza/BABOK_ANALYST` with troubleshooting for `marketplace not found` error.
+- **Version bump:** All packages and plugin manifests synchronized to `2.2.0`.
+
 ## [2.1.1] - 2026-04-13
 
 ### Added

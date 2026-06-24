@@ -1,3 +1,35 @@
+# BABOK Analyst v2.2.0 - Release Notes
+
+**Release Date:** June 24, 2026
+**Status:** Patch Release
+**License:** MIT
+
+---
+
+## What's Fixed in v2.2.0
+
+### Claude Code plugin install now works
+
+Previous releases failed with `agents: Invalid input` during install. The manifest is now minimal and schema-valid (auto-discovery for agents, commands, skills, MCP — same pattern as official Anthropic plugins).
+
+### Install
+
+```
+/plugin marketplace add GSkuza/BABOK_ANALYST
+/plugin marketplace update babok_analyst
+/plugin install babok_analyst@babok_analyst
+/reload-plugins
+```
+
+### Included since v2.1.0
+
+- Plugin marketplace distribution (Claude / Codex / Copilot CLI)
+- Portable `.mcp.json` — 16 MCP tools + 9 stage resources
+- Lifecycle hooks, bundled skills, agents, slash commands
+- Per-stage LLM routing (stages 3, 4, 6, 8 deep analysis)
+
+---
+
 # BABOK Analyst v2.1.0 - Release Notes
 
 **Release Date:** June 24, 2026
