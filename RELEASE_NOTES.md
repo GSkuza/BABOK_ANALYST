@@ -1,8 +1,30 @@
 # BABOK Analyst v2.1.0 - Release Notes
 
-**Release Date:** March 30, 2026
+**Release Date:** June 24, 2026
 **Status:** Minor Release
 **License:** MIT
+
+---
+
+## Plugin Marketplace Install (NEW)
+
+One-command install across Claude Code, Codex, and Copilot CLI:
+
+```
+/plugin marketplace add GSkuza/babok_analyst
+/plugin install babok_analyst@babok_analyst
+```
+
+```
+codex plugin marketplace add GSkuza/babok_analyst
+```
+
+```
+copilot plugin marketplace add GSkuza/babok_analyst
+copilot plugin install babok_analyst@babok_analyst
+```
+
+Bundled: marketplace manifests, portable `.mcp.json` (16 MCP tools), lifecycle hooks, skills, agents, slash commands, uninstall path. See `docs/agent-portability.md`.
 
 ---
 
@@ -13,7 +35,7 @@
 New dedicated `docs/` directory with four reference documents:
 
 - **`L2_L3_ARCHITECTURE.md`** — design blueprint for the L2 (MCP) and L3 (multi-agent) layers, including sequence diagrams and deployment topologies.
-- **`MCP_TOOLS_SPECIFICATION.md`** — complete specification for all 10 MCP tools: input schemas, output formats, error codes, and usage examples.
+- **`MCP_TOOLS_SPECIFICATION.md`** — complete specification for all 16 MCP tools: input schemas, output formats, error codes, and usage examples.
 - **`MIGRATION_GUIDE_L1_to_L2.md`** — step-by-step guide for teams moving from the standalone CLI (L1) to the MCP server (L2), including config diff and rollback instructions.
 - **`workflows.md`** — annotated workflow diagrams covering the full project lifecycle from initialization to final export.
 
