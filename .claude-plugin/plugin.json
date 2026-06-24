@@ -6,13 +6,5 @@
     "name": "Grzegorz Skuza",
     "url": "https://github.com/GSkuza"
   },
-  "homepage": "https://github.com/GSkuza/BABOK_ANALYST",
-  "repository": "https://github.com/GSkuza/BABOK_ANALYST",
-  "license": "MIT",
-  "keywords": ["babok", "business-analysis", "requirements", "mcp", "productivity"],
-  "commands": "./commands/",
-  "agents": "./agents/",
-  "skills": "./skills/",
-  "hooks": "./hooks/claude-codex-hooks.json",
-  "mcpServers": "./.mcp.json"
+  "hooks": "./hooks/claude-codex-hooks.json"
 }
