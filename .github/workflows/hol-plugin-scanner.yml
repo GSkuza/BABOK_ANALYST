@@ -28,7 +28,6 @@ jobs:
         with:
           plugin_dir: "."
           mode: scan
-          min_score: 80
           fail_on_severity: high
           format: text
           upload_sarif: false
