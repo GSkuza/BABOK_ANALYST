@@ -1,7 +1,7 @@
 name: HOL Plugin Scanner
 
 # Quality and security gate for awesome-codex-plugins listing.
-# Required: score >= 80/130, no critical/high findings, workflow on main.
+# Required: score >= 80/100, no critical/high findings, workflow on main.
 
 on:
   push:
@@ -33,3 +33,5 @@ jobs:
           format: text
           upload_sarif: false
           write_step_summary: true
+          install_cisco: true
+          cisco_skill_scan: on

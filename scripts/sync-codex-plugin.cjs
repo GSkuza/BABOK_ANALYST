@@ -18,7 +18,7 @@ const dest = path.join(root, 'plugins', 'babok_analyst');
 const COPY_DIRS = ['skills', 'hooks', 'commands', 'agents', 'babok-mcp', 'BABOK_AGENT', 'assets'];
 
 /** @type {string[]} */
-const COPY_FILES = ['.mcp.json', '.codexignore', 'SECURITY.md'];
+const COPY_FILES = ['.mcp.json', '.codexignore', 'SECURITY.md', 'LICENSE', 'README.md'];
 
 /**
  * Remove a path recursively when it exists.
