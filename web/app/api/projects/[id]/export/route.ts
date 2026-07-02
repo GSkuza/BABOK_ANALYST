@@ -1,24 +1,48 @@
 import { NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 
 const REPO_ROOT = path.join(process.cwd(), '..');
 const PROJECTS_DIR = path.join(REPO_ROOT, 'projects');
+const execFileAsync = promisify(execFile);
+
+function psQuote(value: string) {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+async function createZipArchive(projectDir: string, zipPath: string) {
+  if (process.platform === 'win32') {
+    const archiveSource = path.join(projectDir, '*');
+    const command = `$source = ${psQuote(archiveSource)}; $destination = ${psQuote(zipPath)}; Compress-Archive -Path $source -DestinationPath $destination -Force`;
+    await execFileAsync(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        command,
+      ],
+      { windowsHide: true }
+    );
+    return;
+  }
+
+  await execFileAsync('zip', ['-r', zipPath, '.'], { cwd: projectDir });
+}
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const projectDir = path.join(PROJECTS_DIR, id);
   if (!fs.existsSync(projectDir)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+  const zipPath = path.join(os.tmpdir(), `${id}-${Date.now()}.zip`);
+
   try {
-    const execFileAsync = promisify(execFile);
-    const zipName = `${id}.zip`;
-    const zipPath = path.join(projectDir, zipName);
-    await execFileAsync('zip', ['-r', zipName, '.', '--exclude', zipName], { cwd: projectDir });
+    await createZipArchive(projectDir, zipPath);
     const data = fs.readFileSync(zipPath);
-    fs.unlinkSync(zipPath);
     return new NextResponse(data, {
       headers: {
         'Content-Type': 'application/zip',
@@ -27,5 +51,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     });
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
+  } finally {
+    if (fs.existsSync(zipPath)) {
+      fs.unlinkSync(zipPath);
+    }
   }
 }
