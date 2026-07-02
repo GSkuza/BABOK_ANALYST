@@ -1100,6 +1100,6 @@ Contributions are welcome! Please feel free to submit:
 
 ---
 
-**Version:** 2.2.6  
-**Release Date:** June 24, 2026  
-**Last Updated:** 2026-06-24
+**Version:** 2.2.8  
+**Release Date:** July 2, 2026  
+**Last Updated:** 2026-07-02
