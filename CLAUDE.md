@@ -109,6 +109,8 @@ Each stage maps to a prompt file in `BABOK_AGENT/stages/BABOK_agent_stage_N.md` 
 
 Two reasoning techniques from `cli/src/reasoning/` are layered on top: `debate.js` (Analyst → Critic → Synthesiser pass, stages 3/4/6/8 only) and `verify.js` (Chain-of-Verification: generate check questions, answer CONFIRMED/UNCERTAIN/REFUTED, correct if needed — writes `STAGE_NN_verification.json`). `process-mapper.js` generates Mermaid diagrams for `--diagram`.
 
+`message-bus.js` (append-only `agent_messages.jsonl` event log + `EventEmitter` pub/sub), `stage-executor.js`, and `stage-worker.js` (optional `worker_threads` isolation) are early scaffolding toward message-passing between independent stage-processes and per-task-type LLM provider routing — not yet wired into `babok run`. See `docs/AGENT_MESSAGING_AND_PROVIDER_ROUTING_PLAN.md` for the design.
+
 Full design/roadmap (partly aspirational): `docs/L2_L3_ARCHITECTURE.md`.
 
 ### Templates & knowledge base
