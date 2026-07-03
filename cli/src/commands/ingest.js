@@ -1,13 +1,18 @@
 import fs from 'fs';
 import path from 'path';
+import readline from 'readline';
 import { fileURLToPath } from 'url';
 import chalk from 'chalk';
 import { resolveProjectId, getProjectDir } from '../project.js';
 import { readJournal, writeJournal } from '../journal.js';
 import { parseDocument } from '../lib/document-parser.js';
 import {
+  PROVIDERS,
   getApiKey,
   initializeProvider,
+  listStoredProviders,
+  promptForProvider,
+  promptForKeyOnly,
   startChatSession,
   sendMessageStream,
 } from '../llm.js';
@@ -50,8 +55,39 @@ export async function ingestCommand(filePath, options) {
   try {
     const taggerSystemPrompt = fs.readFileSync(TAGGER_PROMPT_PATH, 'utf-8');
 
-    const apiKey = getApiKey();
-    await initializeProvider(undefined, apiKey, undefined);
+    let provider = options.provider || null;
+    let apiKey = null;
+    let modelName = options.model || null;
+
+    if (provider && PROVIDERS[provider]) {
+      apiKey = getApiKey(provider);
+      if (!apiKey) {
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        try {
+          const result = await promptForKeyOnly(provider, rl);
+          apiKey = result.apiKey;
+        } finally {
+          rl.close();
+        }
+      }
+    } else {
+      const storedProviders = listStoredProviders();
+      if (storedProviders.length === 1) {
+        provider = storedProviders[0];
+        apiKey = getApiKey(provider);
+      } else {
+        const selection = await promptForProvider();
+        provider = selection.provider;
+        apiKey = selection.apiKey;
+        if (!modelName) modelName = selection.model;
+      }
+    }
+
+    if (!modelName) {
+      modelName = PROVIDERS[provider]?.defaultModel;
+    }
+
+    await initializeProvider(provider, apiKey, modelName);
 
     const sectionSummary = parsed.sections.map((s, i) => ({
       index: i,

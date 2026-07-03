@@ -13,7 +13,11 @@ const VERSION_FILES = [
   '.github/plugin/plugin.json',
   'gemini-extension.json',
   'package.json',
+  'cli/package.json',
+  'web/package.json',
   'babok-mcp/package.json',
+  'plugins/babok_analyst/babok-mcp/package.json',
+  'plugins/babok_analyst/.codex-plugin/plugin.json',
 ];
 
 function readVersion(relPath) {

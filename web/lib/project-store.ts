@@ -27,16 +27,27 @@ export const STAGE_LABELS: Record<number, string> = {
 
 const REPO_ROOT = path.join(process.cwd(), '..');
 const PROJECTS_DIR = path.join(REPO_ROOT, 'projects');
+export const PROJECT_ID_RE = /^BABOK-\d{8}-[A-HJ-NP-Z2-9]{4}$/;
+
+export function isValidProjectId(id: string): boolean {
+  return PROJECT_ID_RE.test(id);
+}
 
 function readJsonFile<T>(filePath: string): T {
   return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as T;
 }
 
 function getJournalPath(id: string) {
+  if (!isValidProjectId(id)) {
+    return null;
+  }
   return path.join(PROJECTS_DIR, id, `PROJECT_JOURNAL_${id}.json`);
 }
 
 function getProjectDir(id: string) {
+  if (!isValidProjectId(id)) {
+    return null;
+  }
   return path.join(PROJECTS_DIR, id);
 }
 
@@ -57,7 +68,7 @@ export function listProjects(): Project[] {
     .filter((name) => name.startsWith('BABOK-') && fs.statSync(path.join(PROJECTS_DIR, name)).isDirectory())
     .map((id) => {
       const journalPath = getJournalPath(id);
-      if (!fs.existsSync(journalPath)) {
+      if (!journalPath || !fs.existsSync(journalPath)) {
         return null;
       }
 
@@ -75,7 +86,7 @@ export function listProjects(): Project[] {
 
 export function getProject(id: string): Project | null {
   const journalPath = getJournalPath(id);
-  if (!fs.existsSync(journalPath)) {
+  if (!journalPath || !fs.existsSync(journalPath)) {
     return null;
   }
 
@@ -92,7 +103,7 @@ export function getStage(id: string, stageNum: number): StageDetail | null {
   const projectDir = getProjectDir(id);
   const journalPath = getJournalPath(id);
 
-  if (!fs.existsSync(journalPath)) {
+  if (!projectDir || !journalPath || !fs.existsSync(journalPath)) {
     return null;
   }
 

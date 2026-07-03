@@ -4,6 +4,7 @@ import fs from 'fs';
 import os from 'os';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { isValidProjectId } from '@/lib/project-store';
 
 const REPO_ROOT = path.join(process.cwd(), '..');
 const PROJECTS_DIR = path.join(REPO_ROOT, 'projects');
@@ -35,6 +36,9 @@ async function createZipArchive(projectDir: string, zipPath: string) {
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (!isValidProjectId(id)) {
+    return NextResponse.json({ error: 'Invalid project id' }, { status: 400 });
+  }
   const projectDir = path.join(PROJECTS_DIR, id);
   if (!fs.existsSync(projectDir)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

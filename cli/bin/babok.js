@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { Command } from 'commander';
 import { newProject } from '../src/commands/new.js';
 import { listProjects } from '../src/commands/list.js';
@@ -22,12 +25,15 @@ import { scoreCommand } from '../src/commands/score.js';
 import { validateCommand } from '../src/commands/validate.js';
 import { ingestCommand } from '../src/commands/ingest.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const { version: cliVersion } = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8'));
+
 const program = new Command();
 
 program
   .name('babok')
   .description('BABOK Agent CLI - Project lifecycle management')
-  .version('2.1.1');
+  .version(cliVersion);
 
 program
   .command('new')
@@ -265,6 +271,8 @@ program
   .alias('INGEST')
   .description('Ingest a document (PDF/DOCX/XLSX/CSV/TXT/MD) into project context')
   .option('-p, --project <id>', 'Project ID (partial match supported)')
+  .option('--provider <name>', 'AI provider: gemini, openai, anthropic, huggingface, vertex')
+  .option('-m, --model <name>', 'Model name (provider-specific)')
   .action(ingestCommand);
 
 program
