@@ -37,7 +37,7 @@
     "docx": "^9.7.1",
     "mammoth": "^1.8.0",
     "marked": "^15.0.0",
-    "nanoid": "^5.0.9",
+    "nanoid": "^5.1.16",
     "openai": "^4.82.0",
     "pdf-parse": "^1.1.1",
     "puppeteer": "^24.0.0",
