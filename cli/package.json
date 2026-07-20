@@ -36,7 +36,7 @@
     "commander": "^12.1.0",
     "docx": "^9.7.1",
     "mammoth": "^1.8.0",
-    "marked": "^15.0.0",
+    "marked": "^18.0.6",
     "nanoid": "^5.1.16",
     "openai": "^6.46.0",
     "pdf-parse": "^1.1.1",
