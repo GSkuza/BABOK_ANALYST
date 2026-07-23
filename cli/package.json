@@ -28,7 +28,7 @@
   "author": "Grzegorz Skuza",
   "license": "MIT",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.111.0",
+    "@anthropic-ai/sdk": "^0.113.0",
     "@google-cloud/vertexai": "^1.10.0",
     "@google/generative-ai": "^0.21.0",
     "@huggingface/inference": "^4.13.23",
