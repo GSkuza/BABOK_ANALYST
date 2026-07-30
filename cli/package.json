@@ -40,7 +40,7 @@
     "nanoid": "^6.0.0",
     "openai": "^6.48.0",
     "pdf-parse": "^1.1.1",
-    "puppeteer": "^24.0.0",
+    "puppeteer": "^25.4.0",
     "exceljs": "^4.4.0"
   },
   "engines": {
