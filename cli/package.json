@@ -38,7 +38,7 @@
     "mammoth": "^1.8.0",
     "marked": "^18.0.6",
     "nanoid": "^6.0.0",
-    "openai": "^6.48.0",
+    "openai": "^7.3.0",
     "pdf-parse": "^1.1.1",
     "puppeteer": "^25.4.0",
     "exceljs": "^4.4.0"
