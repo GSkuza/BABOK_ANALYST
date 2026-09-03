@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { getProjectDir, getJournalPath, STAGES } from './project.js';
+import { getProjectDir, getJournalPath } from './project.js';
+import { DEFAULT_PROFILE_ID, getStageFileNames, loadProfile, profileIdFromJournal } from './profiles.js';
 import {
   assertCanSaveDeliverable,
   generateReviewId,
@@ -9,17 +10,8 @@ import {
   validateTwoKeyApproval,
 } from './two-key-gate.js';
 
-export const STAGE_FILE_NAMES = {
-  0: 'STAGE_00_Project_Charter.md',
-  1: 'STAGE_01_Project_Initialization.md',
-  2: 'STAGE_02_Current_State_Analysis.md',
-  3: 'STAGE_03_Problem_Domain_Analysis.md',
-  4: 'STAGE_04_Solution_Requirements.md',
-  5: 'STAGE_05_Future_State_Design.md',
-  6: 'STAGE_06_Gap_Analysis_Roadmap.md',
-  7: 'STAGE_07_Risk_Assessment.md',
-  8: 'STAGE_08_Business_Case_ROI.md',
-};
+// Default-profile file names; kept for backward compatibility with existing imports.
+export const STAGE_FILE_NAMES = getStageFileNames(loadProfile(DEFAULT_PROFILE_ID));
 
 const STAGE_ENTRY_DEFAULTS = {
   completed_at: null,
@@ -32,17 +24,19 @@ const STAGE_ENTRY_DEFAULTS = {
   revision_open: false,
 };
 
-export function createJournal(projectId, projectName, language = 'EN') {
+export function createJournal(projectId, projectName, language = 'EN', profileId = DEFAULT_PROFILE_ID) {
+  const profile = loadProfile(profileId);
   const now = new Date().toISOString();
   const journal = {
     project_id: projectId,
     project_name: projectName,
+    profile: profile.id,
     language,
     created_at: now,
     last_updated: now,
     current_stage: 0,
     current_status: 'in_progress',
-    stages: STAGES.map((s, i) => ({
+    stages: profile.stages.map((s, i) => ({
       stage: s.stage,
       name: s.name,
       status: i === 0 ? 'in_progress' : 'not_started',
@@ -67,7 +61,13 @@ export function readJournal(projectId) {
   }
   const journal = JSON.parse(fs.readFileSync(journalPath, 'utf-8'));
   normalizeJournalTwoKey(journal);
+  journal.profile = profileIdFromJournal(journal);
   return journal;
+}
+
+/** Profile object for an existing project (from its journal). */
+export function getProjectProfile(projectId) {
+  return loadProfile(readJournal(projectId).profile);
 }
 
 export function writeJournal(projectId, journal) {
@@ -214,7 +214,9 @@ export function updateStageStatus(projectId, stageNumber, status, notes) {
  * @returns {{ filePath: string, sha256: string|null }}
  */
 export function getStageDeliverableHash(projectId, stageNumber) {
-  const filename = STAGE_FILE_NAMES[stageNumber];
+  const journal = readJournal(projectId);
+  const filename = getStageFileNames(loadProfile(journal.profile))[stageNumber];
+  if (!filename) throw new Error(`Stage ${stageNumber} not found`);
   const filePath = path.join(getProjectDir(projectId), filename);
   return { filePath, sha256: hashFileUtf8(filePath) };
 }

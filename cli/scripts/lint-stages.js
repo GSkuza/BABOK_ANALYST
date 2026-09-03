@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * BABOK Stage File Linter
- * Validates all stage prompt files in BABOK_AGENT/stages/
+ * Validates the stage prompt files of every pipeline profile (profiles/<id>/profile.json).
  *
  * Usage:   node cli/scripts/lint-stages.js
  * Exit 0:  all checks pass
@@ -18,9 +18,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 //  Configuration
 // ──────────────────────────────────────────────
 
-const STAGES_DIR = path.resolve(__dirname, '..', '..', 'BABOK_AGENT', 'stages');
+const ROOT = path.resolve(__dirname, '..', '..');
+const PROFILES_DIR = path.join(ROOT, 'profiles');
 
-const REQUIRED_STAGES = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+/** @returns {Array<{ id: string, stagesDir: string, stages: Array<{ stage: number, prompt_file: string }> }>} */
+function loadProfiles() {
+  return fs.readdirSync(PROFILES_DIR, { withFileTypes: true })
+    .filter(e => e.isDirectory() && fs.existsSync(path.join(PROFILES_DIR, e.name, 'profile.json')))
+    .map(e => {
+      const p = JSON.parse(fs.readFileSync(path.join(PROFILES_DIR, e.name, 'profile.json'), 'utf-8'));
+      return { id: p.id, stagesDir: path.join(ROOT, p.paths.stages_dir), stages: p.stages };
+    });
+}
 
 /** Sections every stage file must contain (case-insensitive heading match) */
 const REQUIRED_SECTIONS = [
@@ -45,10 +54,6 @@ const CHARS_PER_TOKEN = 4;
 //  Helpers
 // ──────────────────────────────────────────────
 
-function stageFilePath(n) {
-  return path.join(STAGES_DIR, `BABOK_agent_stage_${n}.md`);
-}
-
 const PASS = '\x1b[32m✓\x1b[0m';
 const FAIL = '\x1b[31m✗\x1b[0m';
 const WARN = '\x1b[33m⚠\x1b[0m';
@@ -61,8 +66,7 @@ function warn(msg) { console.warn(`  ${WARN} ${msg}`); }
 //  Lint checks
 // ──────────────────────────────────────────────
 
-function lintFile(stageNum) {
-  const filePath = stageFilePath(stageNum);
+function lintFile(filePath) {
   const errors = [];
   const warnings = [];
 
@@ -120,27 +124,35 @@ let totalErrors = 0;
 let totalWarnings = 0;
 
 console.log('\n\x1b[1mBABOK Stage File Linter\x1b[0m');
-console.log(`Checking ${STAGES_DIR}\n`);
 
-// Check stages dir exists
-if (!fs.existsSync(STAGES_DIR)) {
-  console.error(`\x1b[31mFATAL: stages directory not found: ${STAGES_DIR}\x1b[0m`);
+if (!fs.existsSync(PROFILES_DIR)) {
+  console.error(`\x1b[31mFATAL: profiles directory not found: ${PROFILES_DIR}\x1b[0m`);
   process.exit(1);
 }
 
-for (const n of REQUIRED_STAGES) {
-  const label = `Stage ${n} (BABOK_agent_stage_${n}.md)`;
-  console.log(`\x1b[1m${label}\x1b[0m`);
+for (const profile of loadProfiles()) {
+  console.log(`\x1b[1mProfile "${profile.id}"\x1b[0m — ${profile.stagesDir}\n`);
 
-  const { errors, warnings } = lintFile(n);
-
-  if (errors.length === 0 && warnings.length === 0) {
-    ok('All checks passed');
-  } else {
-    for (const e of errors) { fail(e); totalErrors++; }
-    for (const w of warnings) { warn(w); totalWarnings++; }
+  if (!fs.existsSync(profile.stagesDir)) {
+    fail(`stages directory not found: ${profile.stagesDir}`);
+    totalErrors++;
+    continue;
   }
-  console.log('');
+
+  for (const s of profile.stages) {
+    const label = `Stage ${s.stage} (${s.prompt_file})`;
+    console.log(`\x1b[1m${label}\x1b[0m`);
+
+    const { errors, warnings } = lintFile(path.join(profile.stagesDir, s.prompt_file));
+
+    if (errors.length === 0 && warnings.length === 0) {
+      ok('All checks passed');
+    } else {
+      for (const e of errors) { fail(e); totalErrors++; }
+      for (const w of warnings) { warn(w); totalWarnings++; }
+    }
+    console.log('');
+  }
 }
 
 // Summary

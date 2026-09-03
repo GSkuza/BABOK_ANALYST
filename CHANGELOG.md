@@ -10,6 +10,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **BABOK_Agent_LLM_Prompt.md (v2.3.0):** Synchronized with stage-first `templates/` architecture — deliverable skeletons, `babok_get_stage_template`, Two-Key Journal workflow, industry packs, project context schema, and chat-only H2 fallback from quality rubric.
 
+## [2.3.0] - 2026-09-03
+
+### Added
+- **Pipeline profiles:** `profiles/<id>/profile.json` (schema `profiles/profile.schema.json`) declares stage shape, project-ID prefix, prompt/template/rubric paths, validation-rule bindings and the autonomous pipeline. `profiles/babok/` describes the existing 9-stage pipeline without moving any file.
+- **Consulting profile** (`profiles/consulting/`, prefix `BC-`, stages 0–6): Engagement Charter → Stakeholder & Governance → Current State Diagnostic & Root Cause → Strategic Options → Target Operating Model & Roadmap → Risk & Change Readiness → Business Case & Value Realization. Own stage prompts, templates + modules (Options Evaluation Matrix, Operating Model Canvas, Fishbone, Change Readiness, Benefits Tracker, RACI/Governance), rubric, quality-audit prompt, stage configs, example context. No software requirements / system design by mandate.
+- **CLI:** `babok new --profile <id>`, `babok run --profile <id>`; `babok list` shows profile and profile-aware stage totals; `babok status` shows stage names.
+- **MCP:** `babok_new_project` accepts `profile`; every tool resolves stage names, files, prompts, rubric and templates from the project's profile; resources `babok://profiles/<id>/stages/<n>` for non-default profiles; `babok_get_stage_template` accepts `profile` when no project is given.
+- **Validation:** rules accept stage bindings (`check(artifacts, bindings)`); `RULE_REGISTRY` + `rulesForProfile()`; new rule `RECOMMENDATION-TRACEABILITY` (OPT-NN from the options stage must appear in the target-operating-model stage).
+- **Knowledge:** `knowledge/frameworks/` (7S, Kotter, ADKAR, DMAIC, Balanced Scorecard, Value Chain) and `knowledge/change_management/` (readiness benchmarks, resistance patterns) with schemas; `getRelevantKnowledge(ctx, profile)` loads profile-declared extra categories.
+- **Plugin:** `/babok-new-consulting` command; profile section in `skills/babok-analyst/SKILL.md`.
+- **Web:** profile selector on `/projects/new`; project store honours `BABOK_PROJECTS_DIR`, recognises every profile prefix and shows journal stage names.
+- **Tests:** `profiles.test.js` (profile integrity incl. template↔rubric alignment), `lib-parity.test.js` (cli ↔ babok-mcp shared libs must be byte-identical), `engine.test.js` (pipeline order per profile), `knowledge-loader.test.js`; hooks test covers `BC-` projects.
+
+### Changed
+- `journal.profile` is written on creation and normalised to `babok` for legacy journals.
+- Scorer reads the rubric from the profile; `consistency.js` selects built-in checks via rubric key `builtin_consistency` instead of `switch(stageNumber)`.
+- Orchestrator engine executes `profile.orchestrator.pipeline` (sequential/parallel groups) instead of a hard-coded sequence; `stopAfterStage` now skips every stage above the limit, including parallel scans.
+- `two-key-gate.js` is identical in `cli/` and `babok-mcp/` (host-neutral lock message).
+- Project-ID matching is prefix-based across CLI, MCP, hooks and web (`<PREFIX>-…`), covering title-slug IDs from `babok run`.
+- `cli/scripts/lint-stages.js` lints every profile's prompt files; `sync-codex-plugin` also copies `profiles/` and `templates/`.
+
+### Fixed
+- `babok validate` was never registered as a command (missing `.command('validate <id>')`).
+- `babok new --non-interactive` (used by the web API) is now accepted.
+
 ## [2.2.8] - 2026-06-25
 
 ### Added

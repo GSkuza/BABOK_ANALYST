@@ -1,0 +1,27 @@
+{
+  "framework": "Kotter 8-Step Change Model",
+  "origin": "John P. Kotter, Harvard Business School, 1996",
+  "description": "Sequential leadership model for driving large-scale organisational change. Emphasises urgency, coalition and short-term wins before institutionalising new ways of working.",
+  "best_for": [
+    "Designing the change-management plan of a transformation roadmap",
+    "Structuring sponsor and steering-committee engagement",
+    "Sequencing quick wins versus structural change"
+  ],
+  "steps": [
+    { "order": 1, "name": "Create a sense of urgency", "description": "Make the business case for change visible and undeniable to the leadership team.", "outputs": ["Urgency narrative", "Cost-of-inaction estimate"] },
+    { "order": 2, "name": "Build a guiding coalition", "description": "Assemble a cross-functional group with the power, expertise and credibility to lead.", "outputs": ["Coalition roster", "Steering-committee charter"] },
+    { "order": 3, "name": "Form a strategic vision and initiatives", "description": "Clarify how the future differs from the past and which initiatives get there.", "outputs": ["Vision statement", "Initiative list"] },
+    { "order": 4, "name": "Enlist a volunteer army", "description": "Communicate the vision so that large numbers of people want to act on it.", "outputs": ["Communication plan", "Change-agent network"] },
+    { "order": 5, "name": "Enable action by removing barriers", "description": "Remove structural, process and incentive obstacles that block change.", "outputs": ["Barrier log", "Policy / structure changes"] },
+    { "order": 6, "name": "Generate short-term wins", "description": "Plan and deliver visible improvements within 6–12 months.", "outputs": ["Quick-win backlog", "Win communications"] },
+    { "order": 7, "name": "Sustain acceleration", "description": "Use credibility from early wins to tackle bigger, harder changes.", "outputs": ["Wave 2 roadmap"] },
+    { "order": 8, "name": "Institute change", "description": "Anchor new behaviours in culture, governance and performance management.", "outputs": ["Updated governance", "Revised KPIs and incentives"] }
+  ],
+  "pitfalls": [
+    "Declaring victory after the first quick win",
+    "Treating communication as a single announcement instead of a sustained campaign",
+    "A coalition made of the sponsor's direct reports only"
+  ],
+  "applies_to_stages": [4, 5],
+  "sources": ["Kotter, J.P. — 'Leading Change' (1996, 2012 ed.)"]
+}

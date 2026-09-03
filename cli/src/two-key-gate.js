@@ -1,6 +1,8 @@
 /**
  * Two-Key Journal gate — content-anchored human attestation for stage approval.
- * Mirror of babok-mcp/src/lib/two-key-gate.js for CLI package.
+ *
+ * A stage may transition to `approved` only when `agent_submission` and
+ * `human_attestation` exist and share the same `content_sha256`.
  */
 
 import crypto from 'crypto';
@@ -51,7 +53,7 @@ export function assertCanSaveDeliverable(stage) {
   ensureStageTwoKeyFields(stage);
   if (stage.status === 'approved' && !stage.revision_open) {
     throw new Error(
-      `Stage ${stage.stage} is approved and locked. Call babok open-revision before saving.`,
+      `Stage ${stage.stage} is approved and locked. Open a revision first (babok open-revision / babok_open_revision) before saving.`,
     );
   }
 }

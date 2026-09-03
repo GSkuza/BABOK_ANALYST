@@ -2,23 +2,15 @@ import { nanoid, customAlphabet } from 'nanoid';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { DEFAULT_PROFILE_ID, buildProjectIdRegex, getStages, loadProfile } from './profiles.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const generateSuffix = customAlphabet(ALPHABET, 4);
 
-const STAGES = [
-  { stage: 0, name: 'Project Charter' },
-  { stage: 1, name: 'Project Initialization & Stakeholder Mapping' },
-  { stage: 2, name: 'Current State Analysis (AS-IS)' },
-  { stage: 3, name: 'Problem Domain Analysis' },
-  { stage: 4, name: 'Solution Requirements Definition' },
-  { stage: 5, name: 'Future State Design (TO-BE)' },
-  { stage: 6, name: 'Gap Analysis & Implementation Roadmap' },
-  { stage: 7, name: 'Risk Assessment & Mitigation Strategy' },
-  { stage: 8, name: 'Business Case & ROI Model' },
-];
+// Default-profile stage list; kept for backward compatibility with existing imports.
+const STAGES = getStages(loadProfile(DEFAULT_PROFILE_ID));
 
 export { STAGES };
 
@@ -43,20 +35,25 @@ export function getJournalPath(projectId) {
   return path.join(getProjectDir(projectId), `PROJECT_JOURNAL_${projectId}.json`);
 }
 
-export function generateProjectId() {
+/**
+ * @param {string|object} [profile] profile id or loaded profile object
+ */
+export function generateProjectId(profile = DEFAULT_PROFILE_ID) {
+  const p = typeof profile === 'string' ? loadProfile(profile) : profile;
   const now = new Date();
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
   const suffix = generateSuffix();
-  return `BABOK-${y}${m}${d}-${suffix}`;
+  return `${p.id_prefix}-${y}${m}${d}-${suffix}`;
 }
 
 export function listProjectIds() {
   const dir = getProjectsDir();
   if (!fs.existsSync(dir)) return [];
+  const idRe = buildProjectIdRegex();
   return fs.readdirSync(dir).filter(name =>
-    name.startsWith('BABOK-') && fs.statSync(path.join(dir, name)).isDirectory()
+    idRe.test(name) && fs.statSync(path.join(dir, name)).isDirectory()
   );
 }
 

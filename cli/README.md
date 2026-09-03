@@ -68,6 +68,9 @@ babok new --name "My Project" --language EN
 
 # Create Polish project explicitly
 babok new --name "Mój Projekt" --language PL
+
+# Create a consulting engagement (profile "consulting", ID prefix BC-, stages 0–6, no IT delivery)
+babok new --name "Order-to-Cash Optimisation" --profile consulting
 ```
 
 Once set, the project language is stored in the journal and **the AI agent will respond in that language** throughout all stages.

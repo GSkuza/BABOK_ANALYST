@@ -102,6 +102,48 @@ const { sha256Content } = await import('../lib/two-key-gate.js');
   console.log(`✅ Test 10 passed: getDeliverable reads saved file`);
 }
 
+// ── Profile-aware project creation ───────────────────────────────────────
+{
+  const { listProfileIds, loadProfile, profileIdFromProjectId, isProjectId } = await import('../lib/profiles.js');
+  const ids = listProfileIds();
+  assert.ok(ids.includes('babok'), 'default profile is registered');
+
+  for (const profileId of ids) {
+    const profile = loadProfile(profileId);
+    const id = generateProjectId(profile);
+    assert.match(id, new RegExp(`^${profile.id_prefix}-\\d{8}-[A-Z0-9]{4}$`), `ID uses ${profileId} prefix`);
+    assert.ok(isProjectId(id));
+    assert.equal(profileIdFromProjectId(id), profileId);
+
+    const journal = createJournal(id, `Profile ${profileId}`, 'EN', profileId);
+    assert.equal(journal.profile, profileId);
+    assert.equal(journal.stages.length, profile.stages.length);
+    assert.equal(journal.stages.at(-1).name, profile.stages.at(-1).name);
+    assert.ok(listProjectIds().includes(id), `${profileId} project is listed`);
+    assert.equal(readJournal(id).profile, profileId);
+
+    // Deliverable lookup uses the profile's file names
+    const lastN = profile.stages.length - 1;
+    const filePath = path.join(getProjectDir(id), profile.stages[lastN].deliverable_file);
+    fs.writeFileSync(filePath, '# last stage', 'utf-8');
+    assert.equal(getDeliverable(id, lastN, profile), '# last stage');
+    assert.equal(getDeliverable(id, lastN + 1, profile), null, 'out-of-range stage → null');
+  }
+  console.log(`✅ Test 10b passed: profile-aware IDs/journals for [${ids.join(', ')}]`);
+}
+
+// ── Test 10c: journals without a profile field default to babok ──────────
+{
+  const id = generateProjectId();
+  createJournal(id, 'Legacy', 'EN');
+  const jPath = path.join(getProjectDir(id), `PROJECT_JOURNAL_${id}.json`);
+  const raw = JSON.parse(fs.readFileSync(jPath, 'utf-8'));
+  delete raw.profile;
+  fs.writeFileSync(jPath, JSON.stringify(raw), 'utf-8');
+  assert.equal(readJournal(id).profile, 'babok');
+  console.log('✅ Test 10c passed: legacy journal normalises to profile "babok"');
+}
+
 // ── L2 Tool helpers ───────────────────────────────────────────────────────
 // Test STAGE_KEY_TO_N mapping logic (mirrors server.js)
 {

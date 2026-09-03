@@ -23,7 +23,7 @@ Wait for the user's choice, then continue.
 
 **Create project**
 
-- Use `babok_new_project` with the chosen `language` (`PL` or `EN`) when MCP is available.
+- Use `babok_new_project` with the chosen `language` (`PL` or `EN`) when MCP is available. The default pipeline profile is `babok` (BABOK v3, stages 0–8). For a non-IT advisory engagement use `/babok-new-consulting` instead (profile `consulting`, stages 0–6).
 - Otherwise create the project under `projects/` and set journal `language` to `PL` or `EN`.
 
 **Stage 0**

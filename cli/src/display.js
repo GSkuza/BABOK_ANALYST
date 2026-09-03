@@ -38,12 +38,14 @@ export function keyValue(key, value) {
   console.log(`  ${chalk.gray(key.padEnd(16))} ${value}`);
 }
 
-export function printProjectCreated(projectId, projectName, projectDir, language = 'EN') {
+export function printProjectCreated(projectId, projectName, projectDir, language = 'EN', profile = null) {
   const texts = {
     EN: {
       created: 'NEW PROJECT CREATED',
       projectId: 'Project ID:',
       projectName: 'Project Name:',
+      profile: 'Profile:',
+      stages: 'Stages:',
       createdAt: 'Created:',
       directory: 'Directory:',
       journal: 'Journal:',
@@ -57,6 +59,8 @@ export function printProjectCreated(projectId, projectName, projectDir, language
       created: 'UTWORZONO NOWY PROJEKT',
       projectId: 'ID Projektu:',
       projectName: 'Nazwa Projektu:',
+      profile: 'Profil:',
+      stages: 'Etapy:',
       createdAt: 'Utworzono:',
       directory: 'Katalog:',
       journal: 'Dziennik:',
@@ -75,6 +79,10 @@ export function printProjectCreated(projectId, projectName, projectDir, language
   console.log(chalk.dim(line()));
   keyValue(t.projectId, chalk.bold.white(projectId));
   keyValue(t.projectName, projectName);
+  if (profile) {
+    keyValue(t.profile, `${profile.id} — ${profile.name}`);
+    keyValue(t.stages, `0–${profile.stages.length - 1}`);
+  }
   keyValue(t.language, language === 'PL' ? 'Polski' : 'English');
   keyValue(t.createdAt, new Date().toISOString());
   keyValue(t.directory, projectDir);
@@ -106,7 +114,7 @@ export function printStageList(stages) {
       chalk.dim;
 
     console.log(
-      `  ${chalk.dim(`Stage ${s.stage}:`)} ${icon} ${statusColor(label)}${date}`
+      `  ${chalk.dim(`Stage ${s.stage}:`)} ${icon} ${statusColor(label)}${date}${s.name ? chalk.dim(` — ${s.name}`) : ''}`
     );
     if (s.notes) {
       console.log(`           ${chalk.dim(s.notes)}`);
@@ -122,26 +130,29 @@ export function printProjectTable(projects) {
 
   const idW = 22;
   const nameW = 30;
+  const profileW = 12;
   const stageW = 10;
   const statusW = 14;
 
   console.log(
     chalk.bold(
-      `  ${'ID'.padEnd(idW)} ${'Name'.padEnd(nameW)} ${'Stage'.padEnd(stageW)} ${'Status'.padEnd(statusW)} Last Updated`
+      `  ${'ID'.padEnd(idW)} ${'Name'.padEnd(nameW)} ${'Profile'.padEnd(profileW)} ${'Stage'.padEnd(stageW)} ${'Status'.padEnd(statusW)} Last Updated`
     )
   );
-  console.log(chalk.dim(`  ${line('-', idW + nameW + stageW + statusW + 14)}`));
+  console.log(chalk.dim(`  ${line('-', idW + nameW + profileW + stageW + statusW + 15)}`));
 
   for (const p of projects) {
     const name = p.project_name.length > nameW - 2
       ? p.project_name.slice(0, nameW - 5) + '...'
       : p.project_name;
-    const stage = `${p.current_stage}/8`;
+    const maxStage = Array.isArray(p.stages) && p.stages.length ? p.stages.length - 1 : 8;
+    const stage = `${p.current_stage}/${maxStage}`;
+    const profile = (p.profile || 'babok').slice(0, profileW - 1);
     const status = stageLabel(p.current_status);
     const updated = p.last_updated.slice(0, 10);
 
     console.log(
-      `  ${chalk.cyan(p.project_id.padEnd(idW))} ${name.padEnd(nameW)} ${stage.padEnd(stageW)} ${status.padEnd(statusW)} ${chalk.dim(updated)}`
+      `  ${chalk.cyan(p.project_id.padEnd(idW))} ${name.padEnd(nameW)} ${chalk.dim(profile.padEnd(profileW))} ${stage.padEnd(stageW)} ${status.padEnd(statusW)} ${chalk.dim(updated)}`
     );
   }
 }

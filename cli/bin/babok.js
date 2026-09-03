@@ -38,9 +38,11 @@ program
 program
   .command('new')
   .alias('NEW')
-  .description('Create a new BABOK analysis project')
+  .description('Create a new analysis project')
   .option('-n, --name <name>', 'Project name')
   .option('-l, --language <lang>', 'Project language (EN/PL)', getCurrentLanguage())
+  .option('-p, --profile <id>', 'Pipeline profile (see profiles/)', 'babok')
+  .option('--non-interactive', 'Fail instead of prompting when --name is missing')
   .action(newProject);
 
 program
@@ -189,9 +191,10 @@ program
   .option('-o, --output <dir>', 'Output directory (default: BABOK_Analysis)')
   .option('--provider <name>', 'AI provider: gemini, openai, anthropic, huggingface, vertex')
   .option('-m, --model <name>', 'Model name (provider-specific)')
-  .option('--deep-model <name>', 'Model for deep-analysis stages (3,4,6,8); defaults to --model')
+  .option('--deep-model <name>', 'Model for deep-analysis stages (per profile); defaults to --model')
   .option('-l, --lang <lang>', 'Language: EN or PL (overrides context file)')
   .option('-s, --stages <list>', 'Comma-separated stages to run, e.g. "1,2,3" (default: all)')
+  .option('--profile <id>', 'Pipeline profile (see profiles/); prompts interactively if omitted')
   .option('--auto', 'Skip interactive review — run all stages fully automatically')
   .option('--debate', 'Enable Analyst→Critic→Synthesiser debate for deep-analysis stages (3,4,6,8)')
   .option('--verify', 'Enable Chain-of-Verification (CoVe) fact-check pass on all stages')
@@ -276,6 +279,7 @@ program
   .action(ingestCommand);
 
 program
+  .command('validate <id>')
   .alias('VALIDATE')
   .description('Run cross-stage consistency validation')
   .action(validateCommand);

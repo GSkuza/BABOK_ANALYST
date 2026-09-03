@@ -81,6 +81,7 @@ test('Claude slash commands are .md files in commands/', () => {
     'babok-new.md',
     'babok-new-pl.md',
     'babok-new-eng.md',
+    'babok-new-consulting.md',
     'babok-status.md',
     'babok-help.md',
   ]) {
@@ -97,6 +98,7 @@ test('command files exist for Copilot plugin surface', () => {
     'babok-new.toml',
     'babok-new-pl.toml',
     'babok-new-eng.toml',
+    'babok-new-consulting.toml',
     'babok-status.toml',
     'babok-help.toml',
   ]) {

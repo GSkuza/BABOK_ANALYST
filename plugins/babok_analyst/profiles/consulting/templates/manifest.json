@@ -1,0 +1,54 @@
+{
+  "version": "1.0",
+  "description": "Consulting-profile deliverable template manifest — maps stages 0–6 to primary skeletons and optional modules. Shared modules are referenced from the repository-level templates/modules/ directory.",
+  "rubric_source": "profiles/consulting/agents/quality_scoring_rubric.json",
+  "stages": {
+    "0": {
+      "primary": "stages/STAGE_00_Engagement_Charter.md",
+      "deliverable_file": "STAGE_00_Engagement_Charter.md",
+      "modules": []
+    },
+    "1": {
+      "primary": "stages/STAGE_01_Stakeholder_Governance.md",
+      "deliverable_file": "STAGE_01_Stakeholder_Governance.md",
+      "modules": ["modules/RACI_Governance_Template.md", "../../../templates/modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "2": {
+      "primary": "stages/STAGE_02_Current_State_Diagnostic.md",
+      "deliverable_file": "STAGE_02_Current_State_Diagnostic.md",
+      "modules": ["modules/Operating_Model_Canvas.md", "modules/Root_Cause_Fishbone_Template.md", "../../../templates/modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "3": {
+      "primary": "stages/STAGE_03_Strategic_Options.md",
+      "deliverable_file": "STAGE_03_Strategic_Options.md",
+      "modules": ["modules/Options_Evaluation_Matrix.md", "../../../templates/modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "4": {
+      "primary": "stages/STAGE_04_Target_Operating_Model.md",
+      "deliverable_file": "STAGE_04_Target_Operating_Model.md",
+      "modules": ["modules/Operating_Model_Canvas.md", "modules/Change_Readiness_Assessment.md", "../../../templates/modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "5": {
+      "primary": "stages/STAGE_05_Risk_Change_Readiness.md",
+      "deliverable_file": "STAGE_05_Risk_Change_Readiness.md",
+      "modules": ["modules/Change_Readiness_Assessment.md", "../../../templates/modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "6": {
+      "primary": "stages/STAGE_06_Business_Case_Value.md",
+      "deliverable_file": "STAGE_06_Business_Case_Value.md",
+      "modules": ["modules/Benefits_Realization_Tracker.md", "../../../templates/modules/Short_Rationale_Evidence_Block.md"]
+    }
+  },
+  "industry_supplements": {
+    "manufacturing": {
+      "2": ["../../../templates/industry/manufacturing/OEE_KPI_Supplement.md"]
+    },
+    "distribution": {
+      "2": ["../../../templates/industry/distribution/WMS_Inventory_KPI_Supplement.md"]
+    }
+  },
+  "industry_triggers": {
+    "manufacturing": ["Manufacturing", "manufacturing", "produkcja"],
+    "distribution": ["Distribution", "distribution", "Logistics", "logistics", "dystrybucja"]
+  }
+}

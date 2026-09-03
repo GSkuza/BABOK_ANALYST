@@ -41,13 +41,18 @@ function extractRoadmapSection(content) {
   return match ? match[0] : content;
 }
 
+/** Role → default BABOK stage number; a profile may rebind these. */
+export const DEFAULT_BINDINGS = { charter: 1, roadmap: 6 };
+
 /**
  * @param {{ [key: string]: string|null }} artifacts
+ * @param {{ charter?: number, roadmap?: number }} [bindings]
  * @returns {import('../cross-stage-validator.js').Finding[]}
  */
-export function check(artifacts) {
-  const stage1 = artifacts.stage1;
-  const stage6 = artifacts.stage6;
+export function check(artifacts, bindings = DEFAULT_BINDINGS) {
+  const b = { ...DEFAULT_BINDINGS, ...bindings };
+  const stage1 = artifacts[`stage${b.charter}`];
+  const stage6 = artifacts[`stage${b.roadmap}`];
 
   if (!stage1 || !stage6) return [];
 
@@ -72,9 +77,9 @@ export function check(artifacts) {
       {
         ruleId: 'ROADMAP-DATE',
         severity: 'warning',
-        message: `Stage 6 roadmap completion (${stage6Completion.toISOString().slice(0, 10)}) is more than 3 months after the Stage 1 target (${stage1Target.toISOString().slice(0, 10)})`,
-        stagesInvolved: [1, 6],
-        remediation: 'Align the Stage 6 roadmap end date with the Stage 1 target go-live date, or update Stage 1 constraints to reflect the revised timeline',
+        message: `Stage ${b.roadmap} roadmap completion (${stage6Completion.toISOString().slice(0, 10)}) is more than 3 months after the Stage ${b.charter} target (${stage1Target.toISOString().slice(0, 10)})`,
+        stagesInvolved: [b.charter, b.roadmap],
+        remediation: `Align the Stage ${b.roadmap} roadmap end date with the Stage ${b.charter} target go-live date, or update Stage ${b.charter} constraints to reflect the revised timeline`,
       },
     ];
   }

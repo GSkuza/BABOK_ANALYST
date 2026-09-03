@@ -1,0 +1,39 @@
+{
+  "framework": "Balanced Scorecard",
+  "origin": "Kaplan & Norton, Harvard Business Review, 1992",
+  "description": "Performance-management framework that translates strategy into objectives and measures across four perspectives, linked by cause-and-effect into a strategy map.",
+  "best_for": [
+    "Defining engagement success criteria and target KPIs",
+    "Building the benefits-realisation tracker of a business case",
+    "Aligning C-level objectives with operational measures"
+  ],
+  "dimensions": [
+    {
+      "name": "Financial",
+      "description": "How the organisation looks to shareholders / funders.",
+      "diagnostic_questions": ["Which financial outcome does the engagement move, and by how much?", "Is the benefit cost reduction, revenue growth or capital efficiency?"]
+    },
+    {
+      "name": "Customer",
+      "description": "How customers experience the organisation.",
+      "diagnostic_questions": ["Which customer outcome (time, quality, satisfaction) is the lead indicator?", "How is it measured today?"]
+    },
+    {
+      "name": "Internal Process",
+      "description": "The processes the organisation must excel at.",
+      "diagnostic_questions": ["Which process KPI drives the customer outcome?", "What is its current baseline and variance?"]
+    },
+    {
+      "name": "Learning & Growth",
+      "description": "Capabilities, culture and infrastructure needed to sustain improvement.",
+      "diagnostic_questions": ["Which capability gap blocks the process improvement?", "How is capability development measured?"]
+    }
+  ],
+  "pitfalls": [
+    "Twenty KPIs per perspective — a scorecard nobody reads",
+    "No causal links between perspectives, so the map is a list, not a strategy",
+    "Only lagging (financial) indicators, no lead indicators"
+  ],
+  "applies_to_stages": [1, 6],
+  "sources": ["Kaplan, R.S., Norton, D.P. — 'The Balanced Scorecard: Measures that Drive Performance', HBR (1992)"]
+}

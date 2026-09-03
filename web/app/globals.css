@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.ts";
 
 @layer base {
   html {
@@ -39,7 +38,8 @@
     background-image: linear-gradient(135deg, #0055cc 0%, #0070f3 52%, #8b5cf6 100%);
   }
 
-  .card-base {
+  .card-base,
+  .metric-card {
     @apply rounded-3xl border border-slate-200 bg-white shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900;
   }
 
@@ -56,7 +56,7 @@
   }
 
   .metric-card {
-    @apply card-base p-5;
+    @apply p-5;
   }
 
   .status-badge {

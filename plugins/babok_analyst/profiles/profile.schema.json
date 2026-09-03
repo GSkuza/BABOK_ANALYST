@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GSkuza/BABOK_ANALYST/profiles/profile.schema.json",
+  "title": "BABOK Analyst pipeline profile",
+  "description": "Declares the stage shape, storage prefix, prompt/template/rubric locations, validation rule bindings and autonomous pipeline for one analysis profile. All paths are relative to the repository root.",
+  "type": "object",
+  "required": ["id", "name", "id_prefix", "stages", "paths", "scoring", "validation", "orchestrator"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "id_prefix": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]{1,7}$",
+      "description": "Project ID prefix; IDs take the form <id_prefix>-YYYYMMDD-XXXX. Must be unique across profiles."
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["stage", "name", "deliverable_file", "prompt_file"],
+        "additionalProperties": false,
+        "properties": {
+          "stage": { "type": "integer", "minimum": 0 },
+          "name": { "type": "string", "minLength": 1 },
+          "deliverable_file": { "type": "string", "pattern": "^STAGE_\\d{2}_.+\\.md$" },
+          "prompt_file": { "type": "string", "pattern": "\\.md$" }
+        }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "required": ["stages_dir", "system_prompt", "templates_dir", "rubric", "agents_dir"],
+      "additionalProperties": false,
+      "properties": {
+        "stages_dir": { "type": "string" },
+        "system_prompt": { "type": "string" },
+        "templates_dir": { "type": "string" },
+        "rubric": { "type": "string" },
+        "agents_dir": { "type": "string" }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "required": ["scorable_stages"],
+      "additionalProperties": false,
+      "properties": {
+        "scorable_stages": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "required": ["rules"],
+      "additionalProperties": false,
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]+$" },
+              "bindings": {
+                "type": "object",
+                "description": "Maps the rule's role names (e.g. risk, charter) to stage numbers in this profile.",
+                "additionalProperties": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "orchestrator": {
+      "type": "object",
+      "required": ["pipeline", "deep_analysis_stages"],
+      "additionalProperties": false,
+      "properties": {
+        "pipeline": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["type", "stages"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "enum": ["sequential", "parallel"] },
+              "stages": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "pattern": "^stage\\d+(_[a-z0-9_]+)?$" }
+              }
+            }
+          }
+        },
+        "deep_analysis_stages": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "knowledge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "extra_categories": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

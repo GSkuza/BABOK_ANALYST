@@ -18,10 +18,13 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { name = 'New Project', language = 'EN' } = await req.json();
+    const { name = 'New Project', language = 'EN', profile = 'babok' } = await req.json();
+    if (!/^[a-z][a-z0-9_-]*$/.test(String(profile))) {
+      return NextResponse.json({ error: 'Invalid profile id' }, { status: 400 });
+    }
     const execFileAsync = promisify(execFile);
     const cliPath = path.join(REPO_ROOT, 'cli', 'bin', 'babok.js');
-    await execFileAsync('node', [cliPath, 'new', '--name', name, '--language', language, '--non-interactive'], { cwd: REPO_ROOT }).catch(() => null);
+    await execFileAsync('node', [cliPath, 'new', '--name', name, '--language', language, '--profile', profile, '--non-interactive'], { cwd: REPO_ROOT }).catch(() => null);
     const projects = listProjects();
     const newest = projects[0];
     return NextResponse.json(newest ?? { error: 'Could not create project' }, { status: newest ? 201 : 500 });

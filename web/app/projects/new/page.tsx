@@ -8,6 +8,7 @@ export default function NewProject() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [lang, setLang] = useState('EN');
+  const [profile, setProfile] = useState('babok');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -27,7 +28,7 @@ export default function NewProject() {
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), language: lang }),
+        body: JSON.stringify({ name: name.trim(), language: lang, profile }),
       });
 
       if (!res.ok) {
@@ -100,6 +101,23 @@ export default function NewProject() {
                 required
                 className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors disabled:opacity-50"
               />
+            </div>
+
+            {/* Profile Field */}
+            <div className="space-y-2">
+              <label htmlFor="profile" className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Pipeline profile
+              </label>
+              <select
+                id="profile"
+                value={profile}
+                onChange={e => setProfile(e.target.value)}
+                disabled={submitting}
+                className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors disabled:opacity-50"
+              >
+                <option value="babok">BABOK v3 — IT business analysis (stages 0–8)</option>
+                <option value="consulting">Consulting engagement — no IT delivery (stages 0–6)</option>
+              </select>
             </div>
 
             {/* Language Field */}

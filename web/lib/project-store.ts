@@ -13,6 +13,7 @@ export interface StageDetail extends StageInfo {
   notes?: string;
 }
 
+// Legacy BABOK labels, used only when a journal stage has no name of its own.
 export const STAGE_LABELS: Record<number, string> = {
   0: 'Project Charter',
   1: 'Project Initialization',
@@ -26,8 +27,30 @@ export const STAGE_LABELS: Record<number, string> = {
 };
 
 const REPO_ROOT = path.join(process.cwd(), '..');
-const PROJECTS_DIR = path.join(REPO_ROOT, 'projects');
-export const PROJECT_ID_RE = /^BABOK-\d{8}-[A-HJ-NP-Z2-9]{4}$/;
+const PROJECTS_DIR = process.env.BABOK_PROJECTS_DIR
+  ? path.resolve(process.env.BABOK_PROJECTS_DIR)
+  : path.join(REPO_ROOT, 'projects');
+const PROFILES_DIR = path.join(REPO_ROOT, 'profiles');
+
+/** Project-ID prefixes declared by profiles/<id>/profile.json (BABOK always included). */
+function readProjectIdPrefixes(): string[] {
+  const prefixes = new Set(['BABOK']);
+  try {
+    for (const entry of fs.readdirSync(PROFILES_DIR, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const profilePath = path.join(PROFILES_DIR, entry.name, 'profile.json');
+      if (!fs.existsSync(profilePath)) continue;
+      const prefix = readJsonFile<{ id_prefix?: string }>(profilePath).id_prefix;
+      if (prefix && /^[A-Z][A-Z0-9]{1,7}$/.test(prefix)) prefixes.add(prefix);
+    }
+  } catch {
+    // profiles dir optional
+  }
+  return [...prefixes];
+}
+
+// Prefix-based like the CLI/MCP: `babok run` IDs carry a title slug between prefix and date.
+export const PROJECT_ID_RE = new RegExp(`^(${readProjectIdPrefixes().join('|')})-[A-Z0-9_-]+$`);
 
 export function isValidProjectId(id: string): boolean {
   return PROJECT_ID_RE.test(id);
@@ -53,6 +76,7 @@ function getProjectDir(id: string) {
 
 interface JournalShape {
   project_name: string;
+  profile?: string;
   created_at: string;
   last_updated?: string;
   stages?: StageDetail[];
@@ -65,7 +89,7 @@ export function listProjects(): Project[] {
 
   return fs
     .readdirSync(PROJECTS_DIR)
-    .filter((name) => name.startsWith('BABOK-') && fs.statSync(path.join(PROJECTS_DIR, name)).isDirectory())
+    .filter((name) => PROJECT_ID_RE.test(name) && fs.statSync(path.join(PROJECTS_DIR, name)).isDirectory())
     .map((id) => {
       const journalPath = getJournalPath(id);
       if (!journalPath || !fs.existsSync(journalPath)) {
@@ -76,6 +100,7 @@ export function listProjects(): Project[] {
       return {
         id,
         name: journal.project_name,
+        profile: journal.profile ?? 'babok',
         stages: journal.stages ?? [],
         createdAt: journal.created_at,
       } satisfies Project;
@@ -94,6 +119,7 @@ export function getProject(id: string): Project | null {
   return {
     id,
     name: journal.project_name,
+    profile: journal.profile ?? 'babok',
     stages: journal.stages ?? [],
     createdAt: journal.created_at,
   };
@@ -133,7 +159,7 @@ export function getStage(id: string, stageNum: number): StageDetail | null {
 
   return {
     ...stage,
-    name: STAGE_LABELS[stage.stage] ?? stage.name,
+    name: stage.name ?? STAGE_LABELS[stage.stage] ?? `Stage ${stage.stage}`,
     deliverable,
     score,
   };

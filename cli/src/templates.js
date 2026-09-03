@@ -6,14 +6,18 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { resolveProfilePath } from './profiles.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * Resolve the templates/ directory (workspace root or package-relative).
+ * Resolve the templates/ directory. With a profile, uses profile.paths.templates_dir;
+ * otherwise falls back to the workspace root or package-relative default templates.
+ * @param {object|null} [profile]
  * @returns {string}
  */
-export function resolveTemplatesDir() {
+export function resolveTemplatesDir(profile = null) {
+  if (profile) return resolveProfilePath(profile, 'templates_dir');
   const candidates = [
     path.join(process.cwd(), 'templates'),
     path.join(__dirname, '..', '..', 'templates'),
@@ -41,14 +45,17 @@ export function loadManifest(templatesDir = resolveTemplatesDir()) {
 
 /**
  * Load quality scoring rubric for required_sections lookup.
+ * @param {object|null} [profile]
  * @returns {object|null}
  */
-export function loadRubric() {
-  const candidates = [
-    path.join(process.cwd(), 'BABOK_AGENT', 'agents', 'quality_scoring_rubric.json'),
-    path.join(resolveTemplatesDir(), '..', 'BABOK_AGENT', 'agents', 'quality_scoring_rubric.json'),
-    path.join(__dirname, '..', '..', 'BABOK_AGENT', 'agents', 'quality_scoring_rubric.json'),
-  ];
+export function loadRubric(profile = null) {
+  const candidates = profile
+    ? [resolveProfilePath(profile, 'rubric')]
+    : [
+      path.join(process.cwd(), 'BABOK_AGENT', 'agents', 'quality_scoring_rubric.json'),
+      path.join(resolveTemplatesDir(), '..', 'BABOK_AGENT', 'agents', 'quality_scoring_rubric.json'),
+      path.join(__dirname, '..', '..', 'BABOK_AGENT', 'agents', 'quality_scoring_rubric.json'),
+    ];
   for (const p of candidates) {
     if (fs.existsSync(p)) {
       return JSON.parse(fs.readFileSync(p, 'utf-8'));
@@ -101,13 +108,13 @@ export function readTemplateFile(templatesDir, relativePath) {
 
 /**
  * Load primary + module templates for a stage as LLM injection text.
- * @param {number} stageNum - Stage 0–8
- * @param {{ includeModules?: boolean, projectContext?: object|null }} [options]
+ * @param {number} stageNum - Stage number within the profile
+ * @param {{ includeModules?: boolean, projectContext?: object|null, profile?: object|null }} [options]
  * @returns {{ text: string, requiredSections: string[], files: string[], primary: string|null }}
  */
 export function loadTemplatesForStage(stageNum, options = {}) {
-  const { includeModules = true, projectContext = null } = options;
-  const templatesDir = resolveTemplatesDir();
+  const { includeModules = true, projectContext = null, profile = null } = options;
+  const templatesDir = resolveTemplatesDir(profile);
   const manifest = loadManifest(templatesDir);
   const stageKey = String(stageNum);
   const stageConfig = manifest.stages?.[stageKey];
@@ -142,7 +149,7 @@ export function loadTemplatesForStage(stageNum, options = {}) {
     }
   }
 
-  const rubric = loadRubric();
+  const rubric = loadRubric(profile);
   const rubricKey = stageNum === 0 ? null : `stage${stageNum}`;
   const requiredSections = rubricKey && rubric?.stages?.[rubricKey]
     ? rubric.stages[rubricKey].required_sections || []
@@ -159,11 +166,11 @@ export function loadTemplatesForStage(stageNum, options = {}) {
 /**
  * Structured template payload for MCP/API consumers.
  * @param {number} stageNum
- * @param {{ includeModules?: boolean, projectContext?: object|null }} [options]
+ * @param {{ includeModules?: boolean, projectContext?: object|null, profile?: object|null }} [options]
  */
 export function getStageTemplatePayload(stageNum, options = {}) {
-  const { includeModules = true, projectContext = null } = options;
-  const templatesDir = resolveTemplatesDir();
+  const { includeModules = true, projectContext = null, profile = null } = options;
+  const templatesDir = resolveTemplatesDir(profile);
   const manifest = loadManifest(templatesDir);
   const stageKey = String(stageNum);
   const stageConfig = manifest.stages?.[stageKey];
@@ -175,6 +182,7 @@ export function getStageTemplatePayload(stageNum, options = {}) {
   const { text, requiredSections, files } = loadTemplatesForStage(stageNum, {
     includeModules,
     projectContext,
+    profile,
   });
 
   const primaryContent = readTemplateFile(templatesDir, stageConfig.primary);

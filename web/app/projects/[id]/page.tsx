@@ -122,7 +122,7 @@ export default async function ProjectDetail({
                     </span>
                   </div>
                   <h3 className="text-xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                    {STAGE_LABELS[stage.stage] ?? stage.name}
+                    {stage.name ?? STAGE_LABELS[stage.stage]}
                   </h3>
                 </div>
 

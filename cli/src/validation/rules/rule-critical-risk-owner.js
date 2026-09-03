@@ -17,12 +17,17 @@ function extractRiskRegisterSection(content) {
   return match ? match[0] : null;
 }
 
+/** Role → default BABOK stage number; a profile may rebind these. */
+export const DEFAULT_BINDINGS = { risk: 7 };
+
 /**
  * @param {{ [key: string]: string|null }} artifacts
+ * @param {{ risk?: number }} [bindings]
  * @returns {import('../cross-stage-validator.js').Finding[]}
  */
-export function check(artifacts) {
-  const stage7 = artifacts.stage7;
+export function check(artifacts, bindings = DEFAULT_BINDINGS) {
+  const b = { ...DEFAULT_BINDINGS, ...bindings };
+  const stage7 = artifacts[`stage${b.risk}`];
   if (!stage7) return [];
 
   const riskSection = extractRiskRegisterSection(stage7);
@@ -31,8 +36,8 @@ export function check(artifacts) {
       {
         ruleId: 'CRITICAL-RISK-OWNER',
         severity: 'warning',
-        message: 'Stage 7 has no Risk Register section',
-        stagesInvolved: [7],
+        message: `Stage ${b.risk} has no Risk Register section`,
+        stagesInvolved: [b.risk],
         remediation: 'Add a "Risk Register" section with rows for each identified risk',
       },
     ];
@@ -55,8 +60,8 @@ export function check(artifacts) {
     findings.push({
       ruleId: 'CRITICAL-RISK-OWNER',
       severity: 'error',
-      message: `${missingOwner.length} Critical/High risk(s) in Stage 7 are missing an assigned owner`,
-      stagesInvolved: [7],
+      message: `${missingOwner.length} Critical/High risk(s) in Stage ${b.risk} are missing an assigned owner`,
+      stagesInvolved: [b.risk],
       remediation: 'Assign a named owner to every Critical or High risk in the Risk Register',
     });
   }
@@ -65,8 +70,8 @@ export function check(artifacts) {
     findings.push({
       ruleId: 'CRITICAL-RISK-OWNER',
       severity: 'warning',
-      message: `${missingDate.length} Critical/High risk(s) in Stage 7 are missing a target mitigation date`,
-      stagesInvolved: [7],
+      message: `${missingDate.length} Critical/High risk(s) in Stage ${b.risk} are missing a target mitigation date`,
+      stagesInvolved: [b.risk],
       remediation: 'Add a specific mitigation target date to every Critical or High risk row',
     });
   }

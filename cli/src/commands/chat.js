@@ -1,7 +1,8 @@
 import chalk from 'chalk';
 import readline from 'readline';
-import { resolveProjectId, getProjectDir, STAGES } from '../project.js';
+import { resolveProjectId, getProjectDir } from '../project.js';
 import { readJournal, writeJournal } from '../journal.js';
+import { getMaxStage, loadProfile } from '../profiles.js';
 import { header, keyValue, line } from '../display.js';
 import { 
   PROVIDERS,
@@ -47,13 +48,15 @@ export async function chatCommand(partialId, options) {
   }
 
   // Determine stage
+  const profile = loadProfile(journal.profile);
+  const maxStage = getMaxStage(profile);
   let stageNumber = options.stage ? parseInt(options.stage) : journal.current_stage;
-  if (isNaN(stageNumber) || stageNumber < 1 || stageNumber > 8) {
-    console.error(chalk.red('Error: Stage must be a number between 1 and 8'));
+  if (isNaN(stageNumber) || stageNumber < 1 || stageNumber > maxStage) {
+    console.error(chalk.red(`Error: Stage must be a number between 1 and ${maxStage}`));
     process.exit(1);
   }
 
-  const stageName = STAGES.find(s => s.stage === stageNumber)?.name || `Stage ${stageNumber}`;
+  const stageName = journal.stages.find(s => s.stage === stageNumber)?.name || `Stage ${stageNumber}`;
 
   // ── Provider & API Key selection ──
   let provider = options.provider || null;
@@ -263,10 +266,11 @@ export async function chatCommand(partialId, options) {
  * Build context prompt with project info
  */
 function buildContextPrompt(journal, stageNumber) {
-  const mainPrompt = loadMainSystemPrompt();
-  const stagePrompt = loadStagePrompt(stageNumber);
+  const profile = loadProfile(journal.profile);
+  const mainPrompt = loadMainSystemPrompt(profile);
+  const stagePrompt = loadStagePrompt(stageNumber, profile);
   
-  const stageName = STAGES.find(s => s.stage === stageNumber)?.name || `Stage ${stageNumber}`;
+  const stageName = journal.stages.find(s => s.stage === stageNumber)?.name || `Stage ${stageNumber}`;
   const stageInfo = journal.stages.find(s => s.stage === stageNumber);
   
   let contextBlock = `

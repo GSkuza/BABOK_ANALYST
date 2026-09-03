@@ -8,22 +8,37 @@
 
 import { readFileSync, mkdirSync, writeFileSync, readdirSync } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { getProjectDir } from '../project.js';
+import { getProjectProfile } from '../journal.js';
+import { DEFAULT_PROFILE_ID, loadProfile, resolveProfilePath } from '../profiles.js';
 import { checkCompleteness } from './checks/completeness.js';
 import { checkSmart } from './checks/smart.js';
 import { checkConsistency } from './checks/consistency.js';
 
-// Resolve rubric relative to this file: cli/src/quality/scorer.js
-// Going up 3 levels reaches the repo root (BABOK_ANALYST/).
-const RUBRIC_URL = new URL('../../../BABOK_AGENT/agents/quality_scoring_rubric.json', import.meta.url);
-
-let _rubricCache = null;
-function loadRubric() {
-  if (!_rubricCache) {
-    _rubricCache = JSON.parse(readFileSync(fileURLToPath(RUBRIC_URL), 'utf-8'));
+const _rubricCache = new Map();
+function loadRubric(profile) {
+  const rubricPath = resolveProfilePath(profile, 'rubric');
+  if (!_rubricCache.has(rubricPath)) {
+    _rubricCache.set(rubricPath, JSON.parse(readFileSync(rubricPath, 'utf-8')));
   }
-  return _rubricCache;
+  return _rubricCache.get(rubricPath);
+}
+
+/**
+ * Profile for scoring: explicit option → project journal → default.
+ * Falls back to the default so fixtures without a journal (tests) still score.
+ * @param {string} projectId
+ * @param {{ profile?: string|object }} options
+ */
+function resolveProfile(projectId, options) {
+  if (options.profile) {
+    return typeof options.profile === 'string' ? loadProfile(options.profile) : options.profile;
+  }
+  try {
+    return getProjectProfile(projectId);
+  } catch {
+    return loadProfile(DEFAULT_PROFILE_ID);
+  }
 }
 
 /**
@@ -46,16 +61,17 @@ function findDeliverable(projectDir, stageNumber) {
  * Score a single stage deliverable against the rubric.
  *
  * @param {string} projectId
- * @param {number} stageNumber - 1-8
- * @param {{ projectDir?: string, scoresDir?: string }} [options]
+ * @param {number} stageNumber - a scorable stage of the project's profile
+ * @param {{ projectDir?: string, scoresDir?: string, profile?: string|object }} [options]
  * @returns {Promise<ScoreReport>}
  */
 export async function scoreStage(projectId, stageNumber, options = {}) {
-  const rubric = loadRubric();
+  const profile = resolveProfile(projectId, options);
+  const rubric = loadRubric(profile);
   const stageKey = `stage${stageNumber}`;
   const stageRubric = rubric.stages[stageKey];
   if (!stageRubric) {
-    throw new Error(`No rubric entry found for stage ${stageNumber}`);
+    throw new Error(`No rubric entry found for stage ${stageNumber} (profile ${profile.id})`);
   }
 
   const projectDir = options.projectDir || getProjectDir(projectId);
@@ -71,7 +87,7 @@ export async function scoreStage(projectId, stageNumber, options = {}) {
   // --- Run checks ---
   const completenessResult = checkCompleteness(content, stageRubric.required_sections || []);
   const smartResult = checkSmart(content, stageRubric.quality_criteria || []);
-  const consistencyResult = checkConsistency(content, stageRubric.consistency_checks || [], stageNumber);
+  const consistencyResult = checkConsistency(content, stageRubric.consistency_checks || [], stageRubric.builtin_consistency);
 
   // Weights from rubric (fall back to global defaults)
   const weights = stageRubric.weights || rubric.scoring || {};
@@ -120,21 +136,22 @@ export async function scoreStage(projectId, stageNumber, options = {}) {
 }
 
 /**
- * Score all 8 stages that have a deliverable present.
+ * Score every scorable stage of the project's profile that has a deliverable present.
  *
  * @param {string} projectId
- * @param {{ projectDir?: string, scoresDir?: string }} [options]
+ * @param {{ projectDir?: string, scoresDir?: string, profile?: string|object }} [options]
  * @returns {Promise<ScoreReport[]>}
  */
 export async function scoreAll(projectId, options = {}) {
   const projectDir = options.projectDir || getProjectDir(projectId);
+  const profile = resolveProfile(projectId, options);
   const results = [];
 
-  for (let stage = 1; stage <= 8; stage++) {
+  for (const stage of profile.scoring.scorable_stages) {
     const deliverablePath = findDeliverable(projectDir, stage);
     if (!deliverablePath) continue; // skip stages with no deliverable
     try {
-      const report = await scoreStage(projectId, stage, options);
+      const report = await scoreStage(projectId, stage, { ...options, profile });
       results.push(report);
     } catch (err) {
       // Surface as a failed "error" report rather than crashing

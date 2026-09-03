@@ -3,8 +3,9 @@ import path from 'path';
 import readline from 'readline';
 import chalk from 'chalk';
 import { fileURLToPath } from 'url';
-import { generateProjectId, STAGES } from '../project.js';
+import { generateProjectId } from '../project.js';
 import { getProjectDir } from '../project.js';
+import { DEFAULT_PROFILE_ID, getStageFileNames, listProfileIds, loadProfile } from '../profiles.js';
 import { acquireLock, releaseLock, formatLockInfo } from '../lock.js';
 import {
   getApiKey,
@@ -28,22 +29,75 @@ import { createTaskRouter } from '../router.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// ──────────────────────────────────────────────
-//  Stage → output file name mapping
-// ──────────────────────────────────────────────
+// Stage → output file name mapping and stage names come from the active profile
+// (profiles/<id>/profile.json). Templates loaded via <templates_dir>/manifest.json.
 
-const STAGE_FILE_NAMES = {
-  1: 'STAGE_01_Project_Initialization.md',
-  2: 'STAGE_02_Current_State_Analysis.md',
-  3: 'STAGE_03_Problem_Domain_Analysis.md',
-  4: 'STAGE_04_Solution_Requirements.md',
-  5: 'STAGE_05_Future_State_Design.md',
-  6: 'STAGE_06_Gap_Analysis_Roadmap.md',
-  7: 'STAGE_07_Risk_Assessment.md',
-  8: 'STAGE_08_Business_Case_ROI.md',
-};
+/** Resolve a profile id, exiting with the available list on error. */
+function loadProfileOrExit(profileId) {
+  try {
+    return loadProfile(profileId);
+  } catch {
+    console.error(chalk.red(`Error: Unknown profile "${profileId}". Available: ${listProfileIds().join(', ')}`));
+    process.exit(1);
+  }
+}
 
-// Templates loaded via templates/manifest.json (see cli/src/templates.js)
+/**
+ * Ask which pipeline profile to use (numbered menu, same style as the provider picker).
+ * Skipped entirely when only one profile is installed.
+ * @param {string} defaultId
+ * @returns {Promise<string>}
+ */
+async function promptForProfile(defaultId) {
+  const ids = listProfileIds();
+  if (ids.length <= 1) return ids[0] ?? defaultId;
+
+  console.log('');
+  console.log(chalk.bold.yellow('  Profil analizy / Pipeline profile'));
+  console.log(chalk.dim('  ──────────────────────────────────────────────'));
+  console.log('');
+  const defaultIndex = Math.max(1, ids.indexOf(defaultId) + 1);
+  ids.forEach((id, i) => {
+    const p = loadProfile(id);
+    const marker = id === defaultId ? chalk.dim('  <domyslny>') : '';
+    console.log(`    ${i + 1}. ${chalk.bold(id)} — ${p.name}${marker}`);
+  });
+  console.log('');
+
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const answer = await new Promise(resolve =>
+    rl.question(chalk.cyan(`  Numer profilu [${defaultIndex}]: `), a => { rl.close(); resolve(a.trim()); })
+  );
+
+  const idx = answer === '' ? defaultIndex - 1 : parseInt(answer, 10) - 1;
+  return ids[idx] ?? defaultId;
+}
+
+/**
+ * Resolve the profile for this run: explicit --profile always wins; otherwise --auto
+ * reuses the context's stored profile (or the default) silently, and interactive runs
+ * prompt with the same numbered-menu UX as provider selection. The choice is written
+ * back into `context.profile` so subsequent bare `babok run` calls remember it.
+ * @param {object} options
+ * @param {object} context
+ * @returns {Promise<object>} loaded profile
+ */
+async function resolveRunProfile(options, context) {
+  if (options.profile) {
+    const profile = loadProfileOrExit(options.profile);
+    context.profile = profile.id;
+    return profile;
+  }
+
+  const storedId = context.profile && listProfileIds().includes(context.profile)
+    ? context.profile
+    : DEFAULT_PROFILE_ID;
+
+  const chosenId = options.auto ? storedId : await promptForProfile(storedId);
+  const profile = loadProfileOrExit(chosenId);
+  context.profile = profile.id;
+  return profile;
+}
 
 // ──────────────────────────────────────────────
 //  Helpers
@@ -64,11 +118,12 @@ function slugify(name) {
     .substring(0, 25);
 }
 
-/** Generate project ID with title slug: BABOK-TITLE-YYYYMMDD-XXXX */
-function generateProjectIdWithTitle(projectName) {
-  const base = generateProjectId(); // "BABOK-YYYYMMDD-XXXX"
+/** Generate project ID with title slug: <PREFIX>-TITLE-YYYYMMDD-XXXX */
+function generateProjectIdWithTitle(projectName, profile) {
+  const base = generateProjectId(profile); // "<PREFIX>-YYYYMMDD-XXXX"
   const slug = slugify(projectName);
-  return slug ? base.replace(/^BABOK-/, `BABOK-${slug}-`) : base;
+  const prefix = `${profile.id_prefix}-`;
+  return slug ? base.replace(prefix, `${prefix}${slug}-`) : base;
 }
 
 /** readline wrapper — ask one question, resolve on Enter */
@@ -144,22 +199,23 @@ async function fillContextInteractively(contextPath, context) {
   return context;
 }
 
-function loadStageTemplateText(stageNum, projectContext = null) {
-  return loadTemplatesForStage(stageNum, { includeModules: true, projectContext }).text;
+function loadStageTemplateText(stageNum, projectContext = null, profile = null) {
+  return loadTemplatesForStage(stageNum, { includeModules: true, projectContext, profile }).text;
 }
 
-function createRunJournal(projectId, projectName, language, projectDir) {
+function createRunJournal(projectId, projectName, language, projectDir, profile) {
   const now = new Date().toISOString();
   const journal = {
     project_id: projectId,
     project_name: projectName,
+    profile: profile.id,
     language,
     created_at: now,
     last_updated: now,
     current_stage: 1,
     current_status: 'in_progress',
     run_mode: 'automated',
-    stages: STAGES.map((s, i) => ({
+    stages: profile.stages.map((s, i) => ({
       stage: s.stage,
       name: s.name,
       status: i === 0 ? 'in_progress' : 'not_started',
@@ -195,7 +251,7 @@ function updateJournalStage(journal, stageNum, projectDir, fileName) {
     nextStage.started_at = now;
     journal.current_stage = stageNum + 1;
   }
-  if (stageNum === 8) {
+  if (!nextStage) {
     journal.current_status = 'completed';
   }
   journal.last_updated = now;
@@ -203,12 +259,12 @@ function updateJournalStage(journal, stageNum, projectDir, fileName) {
   fs.writeFileSync(journalPath, JSON.stringify(journal, null, 2), 'utf-8');
 }
 
-async function buildPreviousOutputsContext(previousOutputs, summarizeContext) {
+async function buildPreviousOutputsContext(previousOutputs, summarizeContext, profile) {
   if (Object.keys(previousOutputs).length === 0) return '';
 
   const parts = [];
   for (const [n, content] of Object.entries(previousOutputs)) {
-    const meta = STAGES.find(s => s.stage === parseInt(n));
+    const meta = profile.stages.find(s => s.stage === parseInt(n));
     let preview = content;
     if (typeof summarizeContext === 'function') {
       try {
@@ -225,12 +281,12 @@ async function buildPreviousOutputsContext(previousOutputs, summarizeContext) {
   return `\n\n=== PREVIOUS STAGE OUTPUTS (use as context) ===\n${parts.join('\n\n')}\n=== END PREVIOUS OUTPUTS ===`;
 }
 
-function buildStageSystemPrompt(mainPrompt, stagePrompt, context, language, prevContext, stageNum) {
+function buildStageSystemPrompt(mainPrompt, stagePrompt, context, language, prevContext, stageNum, profile) {
   const langInstruction = language === 'PL'
     ? 'LANGUAGE REQUIREMENT: You MUST respond ENTIRELY in Polish language.'
     : 'LANGUAGE REQUIREMENT: Respond in English language.';
 
-  const templates = loadStageTemplateText(stageNum, context);
+  const templates = loadStageTemplateText(stageNum, context, profile);
   const contextJson = JSON.stringify(context, null, 2);
 
   return `${mainPrompt}\n\n${stagePrompt}\n\n=== PROJECT CONTEXT ===\n${contextJson}\n=== END PROJECT CONTEXT ===${prevContext}${templates}\n\n=== AUTO-RUN MODE ===
@@ -245,7 +301,7 @@ CRITICAL RULES:
 === END AUTO-RUN MODE ===\n`;
 }
 
-function buildFinalDocument(projectName, projectId, outputs, language) {
+function buildFinalDocument(projectName, projectId, outputs, language, profile) {
   const now = new Date().toISOString().split('T')[0];
 
   const header = language === 'PL'
@@ -256,7 +312,7 @@ function buildFinalDocument(projectName, projectId, outputs, language) {
   const toc = tocLabel + Object.entries(outputs)
     .sort(([a], [b]) => parseInt(a) - parseInt(b))
     .map(([n]) => {
-      const meta = STAGES.find(s => s.stage === parseInt(n));
+      const meta = profile.stages.find(s => s.stage === parseInt(n));
       return `${n}. [${meta?.name}](#stage-${n})`;
     })
     .join('\n') + '\n\n---\n\n';
@@ -294,22 +350,48 @@ function sendWithTimeout(userMessage, onChunk) {
 // ──────────────────────────────────────────────
 
 export async function runAnalysis(options) {
+  // ── 0. Load project context early so the profile prompt can remember the last choice ──
+  const ctxPath = path.resolve(options.context || 'my_project_context.json');
+  let context = {};
+  if (fs.existsSync(ctxPath)) {
+    try {
+      context = JSON.parse(fs.readFileSync(ctxPath, 'utf-8'));
+    } catch (e) {
+      console.error(chalk.red(`\nError: Cannot parse context file: ${e.message}`));
+      process.exit(1);
+    }
+  }
+  // Strip legacy/administrative keys (schema_version 2.0 nested `project.*`, orchestrator
+  // bookkeeping) that no code here reads but that would otherwise be dumped verbatim into
+  // the LLM prompt alongside the flat fields below, confusing the model with stale data
+  // from a previous run.
+  for (const legacyKey of ['project', 'schema_version', 'stages', 'quality_reports', 'agent_messages']) {
+    delete context[legacyKey];
+  }
+
+  const profile = await resolveRunProfile(options, context);
+  fs.mkdirSync(path.dirname(ctxPath), { recursive: true });
+  fs.writeFileSync(ctxPath, JSON.stringify(context, null, 2), 'utf-8');
+  const STAGE_FILE_NAMES = getStageFileNames(profile);
+  const scorableStages = profile.scoring.scorable_stages;
+  const deepStagesLabel = profile.orchestrator.deep_analysis_stages.join(',');
 
   // ── --orchestrate: delegate to the automated multi-stage pipeline engine ──
   if (options.orchestrate) {
     const projectName = options.name || 'Orchestrated Project';
-    const projectId = generateProjectIdWithTitle(projectName);
+    const projectId = generateProjectIdWithTitle(projectName, profile);
     const projectDir = getProjectDir(projectId);
     fs.mkdirSync(projectDir, { recursive: true });
-    writeContext(projectId, { projectName, startedAt: new Date().toISOString() });
+    writeContext(projectId, { projectName, profile: profile.id, startedAt: new Date().toISOString() });
 
     console.log('');
-    console.log(chalk.bold.blue('╔══════════════════════════════════════╗'));
+    console.log(chalk.bold.blue('╔═════════════════════════════════════╗'));
     console.log(chalk.bold.blue('║   BABOK Orchestrator Engine [AUTO]   ║'));
-    console.log(chalk.bold.blue('╚══════════════════════════════════════╝'));
+    console.log(chalk.bold.blue('╚═════════════════════════════════════╝'));
     console.log('');
     console.log(chalk.cyan('  Project : ') + chalk.bold(projectName));
     console.log(chalk.cyan('  ID      : ') + chalk.bold(projectId));
+    console.log(chalk.cyan('  Profile : ') + chalk.bold(profile.id));
     console.log(chalk.cyan('  Output  : ') + chalk.dim(projectDir));
     console.log('');
 
@@ -341,11 +423,11 @@ export async function runAnalysis(options) {
     const llmClient = createLlmClient(orchProvider, orchApiKey, orchModel);
     console.log(chalk.cyan('  Provider  : ') + chalk.bold(`${llmClient.providerName} / ${llmClient.modelName}`));
 
-    // ── Deep analysis client for stages 3, 4, 6, 8 ──
+    // ── Deep analysis client for the profile's deep-analysis stages ──
     let deepAnalysisClient = llmClient;
     if (options.deepModel) {
       deepAnalysisClient = createLlmClient(orchProvider, orchApiKey, options.deepModel);
-      console.log(chalk.cyan('  Deep model: ') + chalk.bold(options.deepModel) + chalk.dim('  (stages 3,4,6,8)'));
+      console.log(chalk.cyan('  Deep model: ') + chalk.bold(options.deepModel) + chalk.dim(`  (stages ${deepStagesLabel})`));
     }
 
     const taskRouter = createTaskRouter({
@@ -360,6 +442,7 @@ export async function runAnalysis(options) {
 
     const result = await runPipeline(projectId, {
       dryRun: false,
+      profile,
       llmClient,
       deepAnalysisClient,
       taskRouter,
@@ -412,22 +495,7 @@ export async function runAnalysis(options) {
     process.exit(1);
   }
 
-  // ── 2. Load project context (defaults to my_project_context.json) ──
-  let context = {};
-  const ctxPath = path.resolve(options.context || 'my_project_context.json');
-
-  if (!fs.existsSync(ctxPath)) {
-    context = {};
-  } else {
-    try {
-      context = JSON.parse(fs.readFileSync(ctxPath, 'utf-8'));
-    } catch (e) {
-      console.error(chalk.red(`\nError: Cannot parse context file: ${e.message}`));
-      process.exit(1);
-    }
-  }
-
-  // ── 2a. If context lacks project_name, collect data interactively ──
+  // ── 2. Context was already loaded in step 0; collect data interactively if empty ──
   const isEmpty = !context.project_name || String(context.project_name).trim() === '';
   if (isEmpty) {
     context = await fillContextInteractively(ctxPath, context);
@@ -451,21 +519,21 @@ export async function runAnalysis(options) {
   });
 
   // Stage filtering
-  let stagesToRun = [1, 2, 3, 4, 5, 6, 7, 8];
+  let stagesToRun = [...scorableStages];
   if (options.stages) {
     stagesToRun = String(options.stages)
       .split(',')
       .map(s => parseInt(s.trim()))
-      .filter(n => n >= 1 && n <= 8)
+      .filter(n => scorableStages.includes(n))
       .sort((a, b) => a - b);
   }
 
   // ── 3. Create project directory & journal ──
-  const projectId = generateProjectIdWithTitle(projectName);
+  const projectId = generateProjectIdWithTitle(projectName, profile);
   const projectDir = path.join(outputDir, projectId);
   fs.mkdirSync(projectDir, { recursive: true });
 
-  const journal = createRunJournal(projectId, projectName, language, projectDir);
+  const journal = createRunJournal(projectId, projectName, language, projectDir, profile);
 
   // ── 4. Print header ──
   console.log('');
@@ -479,6 +547,7 @@ export async function runAnalysis(options) {
   console.log('');
   console.log(chalk.cyan('  Project : ') + chalk.bold(projectName));
   console.log(chalk.cyan('  ID      : ') + chalk.bold(projectId));
+  console.log(chalk.cyan('  Profile : ') + chalk.bold(profile.id));
   console.log(chalk.cyan('  Language: ') + chalk.bold(language));
   console.log(chalk.cyan('  Output  : ') + chalk.dim(projectDir));
   console.log(chalk.cyan('  Provider: ') + chalk.magenta(PROVIDERS[provider]?.name || provider));
@@ -493,7 +562,7 @@ export async function runAnalysis(options) {
   console.log('');
 
   // ── 5. Load main system prompt once ──
-  const mainPrompt = loadMainSystemPrompt();
+  const mainPrompt = loadMainSystemPrompt(profile);
   const previousOutputs = {};
 
   // ── 6. Interactive readline (used when not --auto) ──
@@ -510,9 +579,9 @@ export async function runAnalysis(options) {
 
   // ── 7. Run each stage ──
   for (const stageNum of stagesToRun) {
-    const stageMeta = STAGES.find(s => s.stage === stageNum);
+    const stageMeta = profile.stages.find(s => s.stage === stageNum);
     const fileName = STAGE_FILE_NAMES[stageNum];
-    const stagePromptContent = loadStagePrompt(stageNum);
+    const stagePromptContent = loadStagePrompt(stageNum, profile);
 
     // Acquire stage lock (prevents concurrent edits in shared dirs)
     const lockResult = acquireLock(projectId, stageNum, projectDir);
@@ -553,9 +622,9 @@ export async function runAnalysis(options) {
     };
 
     const runGeneration = async (extra) => {
-      const prevContext = await buildPreviousOutputsContext(previousOutputs, taskRouter.summarizeContext);
+      const prevContext = await buildPreviousOutputsContext(previousOutputs, taskRouter.summarizeContext, profile);
       const systemPrompt = buildStageSystemPrompt(
-        mainPrompt, stagePromptContent, context, language, prevContext, stageNum
+        mainPrompt, stagePromptContent, context, language, prevContext, stageNum, profile
       );
       startChatSession(systemPrompt, []);
       process.stdout.write(chalk.dim('  Generating'));
@@ -693,10 +762,11 @@ export async function runAnalysis(options) {
 
   stageRl?.close();
 
-  // ── 7. Generate FINAL doc (only when all 8 stages ran) ──
-  if (stagesToRun.length === 8) {
+  // ── 7. Generate FINAL doc (only when every deliverable stage ran) ──
+  const ranAll = stagesToRun.length === scorableStages.length;
+  if (ranAll) {
     process.stdout.write(chalk.cyan('\n  Merging FINAL_Complete_Documentation.md...'));
-    const finalContent = buildFinalDocument(projectName, projectId, previousOutputs, language);
+    const finalContent = buildFinalDocument(projectName, projectId, previousOutputs, language, profile);
     fs.writeFileSync(path.join(projectDir, 'FINAL_Complete_Documentation.md'), finalContent, 'utf-8');
     console.log(chalk.green(' ✓'));
   }
@@ -711,7 +781,7 @@ export async function runAnalysis(options) {
   for (const n of stagesToRun) {
     console.log(chalk.dim(`    • ${STAGE_FILE_NAMES[n]}`));
   }
-  if (stagesToRun.length === 8) {
+  if (ranAll) {
     console.log(chalk.dim('    • FINAL_Complete_Documentation.md'));
   }
   console.log(chalk.dim(`    • PROJECT_JOURNAL_${projectId}.json`));

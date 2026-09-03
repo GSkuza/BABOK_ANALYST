@@ -1,0 +1,31 @@
+{
+  "orchestrator": {
+    "name": "Consulting Orchestrator",
+    "version": "1.0",
+    "description": "Central coordinator for the consulting-profile pipeline. The executable pipeline shape lives in profiles/consulting/profile.json → orchestrator.pipeline; this file is informational.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.3
+    },
+    "pipeline": {
+      "mode": "sequential_with_parallel_options",
+      "parallel_groups": [
+        ["stage2", "stage5_initial_risk_scan"]
+      ],
+      "mandatory_sequence": ["stage1", "stage3", "stage4", "stage6"]
+    },
+    "quality_gate": {
+      "enabled": true,
+      "agent": "quality_audit",
+      "min_score": 75,
+      "max_iterations": 3,
+      "escalate_to_human_after": 3
+    },
+    "context": {
+      "store_path": "../../../my_project_context.json",
+      "schema_version": "1.0",
+      "example_file": "../project_context.example.json"
+    }
+  }
+}

@@ -53,7 +53,7 @@ export function assertCanSaveDeliverable(stage) {
   ensureStageTwoKeyFields(stage);
   if (stage.status === 'approved' && !stage.revision_open) {
     throw new Error(
-      `Stage ${stage.stage} is approved and locked. Call babok_open_revision before babok_save_deliverable.`,
+      `Stage ${stage.stage} is approved and locked. Open a revision first (babok open-revision / babok_open_revision) before saving.`,
     );
   }
 }

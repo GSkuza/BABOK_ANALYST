@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 BABOK Analyst is an AI-powered business analysis platform implementing the BABOK v3 framework as a structured 9-stage pipeline (Stage 0 charter gate + Stages 1–8). It ships four interfaces that share the same file-system storage layer: a Node.js CLI, an MCP server, a Next.js web UI, and a Claude Code / Codex / Copilot CLI plugin.
 
-**Version**: 2.2.8 | **Node.js**: 18+ required | **Module system**: ESM (`"type": "module"` in root and package-level `package.json`)
+**Version**: 2.3.0 | **Node.js**: 18+ required | **Module system**: ESM (`"type": "module"` in root and package-level `package.json`)
 
 ---
 
@@ -75,9 +75,19 @@ All state lives under `projects/<project_id>/` (canonical — used by MCP, CLI, 
 - `STAGE_0N_<name>.md` — per-stage deliverable markdown files
 - `.stage_N.lock` — file lock for team collaboration (stale threshold: 2 hours)
 
-**Project ID format**: `BABOK-YYYYMMDD-XXXX` (e.g. `BABOK-20260401-A3F2`). Partial IDs resolve by prefix matching in `cli/src/project.js`.
+**Project ID format**: `<PREFIX>-YYYYMMDD-XXXX` where the prefix comes from the project's profile (`BABOK-` for the default profile, `BC-` for consulting). Partial IDs resolve by prefix matching in `cli/src/project.js`.
 
 **Stage lifecycle**: `not_started → in_progress → completed → approved | rejected`
+
+### Pipeline profiles
+The stage shape is data, not code. `profiles/<id>/profile.json` (schema: `profiles/profile.schema.json`) declares `stages[]` (number, name, deliverable file, prompt file), `id_prefix`, `paths` (stages dir, system prompt, templates dir, rubric, agents dir), `scoring.scorable_stages`, `validation.rules[]` with stage `bindings`, `orchestrator.pipeline` (sequential/parallel groups) and `knowledge.extra_categories`.
+
+| Profile | Prefix | Stages | Content |
+|---------|--------|--------|---------|
+| `babok` (default) | `BABOK-` | 0–8 | Existing `BABOK_AGENT/`, `templates/`, rubric — nothing moved |
+| `consulting` | `BC-` | 0–6 | `profiles/consulting/` — non-IT advisory (charter, stakeholders & governance, diagnostic & root cause, options, target operating model & roadmap, risk & readiness, business case & value realization) |
+
+The profile is chosen only at creation (`babok new --profile`, `babok run --profile`, `babok_new_project { profile }`, `/babok-new-consulting`) and stored as `journal.profile` (legacy journals normalise to `babok`). Every other command, MCP tool and hook derives stage names, file names, prompts, rubric, templates and validation rules from the journal — never from a flag. Loader: `cli/src/profiles.js`, mirrored byte-for-byte in `babok-mcp/src/lib/profiles.js` (enforced by `tests/unit/lib-parity.test.js`, together with `two-key-gate.js`). Adding a profile = adding a directory; `tests/unit/profiles.test.js` checks prompts, templates, rubric, rule ids and stage configs exist and agree.
 
 ### Two-Key Journal (agent/human separation of duties)
 Stage approval is a hard gate enforced outside the LLM's control, not just a prompt instruction:
@@ -102,8 +112,8 @@ Each stage maps to a prompt file in `BABOK_AGENT/stages/BABOK_agent_stage_N.md` 
 | 8 | Business Case & ROI |
 
 ### Autonomous pipeline (`babok run`)
-`cli/src/commands/run.js` drives the full Stage 1→8 pipeline without per-stage manual chat, built on `cli/src/orchestrator/`:
-- `engine.js` — sequences stages per `agent_config.json`'s `orchestrator.pipeline`, running Stage 2 and Stage 7's initial risk scan in parallel via `parallel-runner.js`
+`cli/src/commands/run.js` drives the full pipeline without per-stage manual chat, built on `cli/src/orchestrator/`:
+- `engine.js` — executes `profile.orchestrator.pipeline` (for `babok`: Stage 1 → parallel[Stage 2, Stage 7 initial risk scan] → 3,4,5,6,8) via `parallel-runner.js`; `stopAfterStage` skips every stage numbered above the limit
 - `quality-loop.js` — after each stage, scores the deliverable and re-prompts up to 3 iterations before escalating to the human (mirrors the Two-Key gate — never auto-approves)
 - `context-manager.js` — reads/writes the shared `my_project_context.json` state across stages
 
@@ -115,20 +125,21 @@ Full design/roadmap (partly aspirational): `docs/L2_L3_ARCHITECTURE.md`.
 
 ### Templates & knowledge base
 - `templates/` — stage-first deliverable skeletons (`templates/stages/STAGE_0N_*.md`) plus reusable `modules/` (RTM, DPIA, User Story) and `industry/` supplements, wired via `manifest.json` and injected by `cli/src/templates.js` (CLI) or the `babok_get_stage_template` MCP tool (agents must call this before `babok_save_deliverable` to preserve required H2 headings).
-- `knowledge/` — static industry/regulation/benchmark/anti-pattern JSON reference data (manufacturing, distribution, services; GDPR, ISO 27001, KSeF, XRechnung), loaded via `cli/src/lib/knowledge-loader.js` and injected into prompts.
+- `knowledge/` — static industry/regulation/benchmark/anti-pattern JSON reference data (manufacturing, distribution, services; GDPR, ISO 27001, KSeF, XRechnung) plus `frameworks/` (7S, Kotter, ADKAR, DMAIC, Balanced Scorecard, Value Chain) and `change_management/` used by the consulting profile, loaded via `cli/src/lib/knowledge-loader.js` (`getRelevantKnowledge(ctx, profile)` reads profile-declared extra categories) and injected into prompts.
 
 ### Key source files
 
 | File | Role |
 |------|------|
 | `cli/bin/babok.js` | Commander.js entry point; routes commands to `cli/src/commands/*.js` |
-| `cli/src/journal.js` | Journal CRUD, stage transitions, Two-Key Journal guard functions |
-| `cli/src/project.js` | Project ID generation & path resolution |
+| `cli/src/journal.js` | Journal CRUD, stage transitions, Two-Key Journal guard functions, `getProjectProfile()` |
+| `cli/src/profiles.js` | Pipeline profile loader (`loadProfile`, `buildProjectIdRegex`, `profileIdFromJournal`); byte-identical mirror in `babok-mcp/src/lib/profiles.js` |
+| `cli/src/project.js` | Project ID generation (profile prefix) & path resolution |
 | `cli/src/llm.js` | Multi-provider LLM client (Gemini, OpenAI, Anthropic, HuggingFace, Vertex AI) with encrypted key storage |
 | `cli/src/lock.js` | File locking for concurrent team access |
-| `cli/src/quality/scorer.js` | Quality scoring: Completeness 40%, SMART 30%, Consistency 30% |
-| `cli/src/validation/cross-stage-validator.js` | Runs all rules in `cli/src/validation/rules/` against a project |
-| `cli/src/orchestrator/engine.js` | `babok run` pipeline sequencing, parallel groups, quality-loop invocation |
+| `cli/src/quality/scorer.js` | Quality scoring: Completeness 40%, SMART 30%, Consistency 30% (rubric from the project's profile) |
+| `cli/src/validation/cross-stage-validator.js` | Runs the profile's rules (`rulesForProfile`) from `cli/src/validation/rules/` against a project |
+| `cli/src/orchestrator/engine.js` | `babok run` pipeline sequencing from `profile.orchestrator.pipeline`, parallel groups, quality-loop invocation |
 | `babok-mcp/src/server.js` | MCP server: 19 tools + 9 stage resources (single ~1800-line file) |
 | `hooks/babok-gate.cjs` | PreToolUse: Two-Key Journal enforcement + `.stage_N.lock` check on `babok_save_deliverable` |
 | `hooks/babok-quality-gate.cjs` | PostToolUse/`postToolUse` on `babok_submit_for_review`: runs `scorer.js` + `cross-stage-validator.js`, feeds issues back as `additionalContext` (never blocks). Wired for Claude Code, Codex, and Copilot CLI — Copilot uses a flat `{ additionalContext }` payload and `toolName`/`toolArgs` field names instead of the nested `hookSpecificOutput` shape; the hook detects the host via `isCopilot` from `babok-runtime.cjs` |
@@ -145,12 +156,14 @@ Full design/roadmap (partly aspirational): `docs/L2_L3_ARCHITECTURE.md`.
 **MCP wiring**: `.mcp.json` at root uses `${CLAUDE_PLUGIN_ROOT}` variables for plugin-marketplace portability. Env vars `BABOK_PROJECTS_DIR` and `BABOK_AGENT_DIR` override default paths.
 
 ### Validation rules (cross-stage-validator, `cli/src/validation/rules/`)
+Each rule is `check(artifacts, bindings)`; a profile selects rules by id and binds role names to its stage numbers (defaults = BABOK numbers below).
 1. FR IDs in Stage 4 appear in RTM (`rule-fr-traceability.js`)
 2. Stage 8 budget ≤ Stage 1 ceiling (`rule-budget-ceiling.js`)
 3. Every system from Stage 2 addressed in Stage 5 TO-BE (`rule-integration-coverage.js`)
 4. Every KPI from Stage 1 has a Stage 2 baseline (`rule-kpi-coverage.js`)
 5. Every HIGH/critical risk in Stage 7 has an assigned owner (`rule-critical-risk-owner.js`)
 6. Stage 6 go-live date does not precede Stage 1 deadline (`rule-roadmap-date.js`)
+7. Recommended `OPT-NN` reappears in the target-operating-model stage (`rule-recommendation-traceability.js`, consulting profile: 3 → 4)
 
 ---
 
@@ -158,7 +171,7 @@ Full design/roadmap (partly aspirational): `docs/L2_L3_ARCHITECTURE.md`.
 
 This repo is distributed as a plugin across three agent ecosystems. Plugin artifacts:
 - `agents/*.md` — orchestrator, per-stage (0–8), knowledge-expert, and quality-audit subagent definitions
-- `commands/*.md + *.toml` — `/babok-new`, `/babok-new-pl`, `/babok-new-eng`, `/babok-status`, `/babok-help`
+- `commands/*.md + *.toml` — `/babok-new`, `/babok-new-pl`, `/babok-new-eng`, `/babok-new-consulting`, `/babok-status`, `/babok-help`
 - `hooks/*.cjs` — lifecycle hooks: `babok-activate`/`babok-deactivate` (SessionStart/SessionEnd), `babok-config` (shared path resolution), `babok-gate` (PreToolUse Two-Key + lock enforcement), `babok-quality-gate` (PostToolUse auto-scoring), `babok-instructions`, `babok-mcp-launcher`, `babok-runtime`
 - `.claude-plugin/`, `.codex-plugin/` — marketplace manifests (keep in sync via `npm run sync-codex-plugin`)
 - `.github/copilot-instructions.md` — Copilot Chat system prompt (~1600 lines) — authoritative source for VS Code/Copilot behavior

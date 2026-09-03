@@ -33,13 +33,18 @@ function extractCostSection(content) {
   return match ? match[0] : '';
 }
 
+/** Role → default BABOK stage number; a profile may rebind these. */
+export const DEFAULT_BINDINGS = { charter: 1, business_case: 8 };
+
 /**
  * @param {{ [key: string]: string|null }} artifacts
+ * @param {{ charter?: number, business_case?: number }} [bindings]
  * @returns {import('../cross-stage-validator.js').Finding[]}
  */
-export function check(artifacts) {
-  const stage1 = artifacts.stage1;
-  const stage8 = artifacts.stage8;
+export function check(artifacts, bindings = DEFAULT_BINDINGS) {
+  const b = { ...DEFAULT_BINDINGS, ...bindings };
+  const stage1 = artifacts[`stage${b.charter}`];
+  const stage8 = artifacts[`stage${b.business_case}`];
 
   if (!stage1 || !stage8) return []; // Cannot check if either stage is absent
 
@@ -64,9 +69,9 @@ export function check(artifacts) {
       {
         ruleId: 'BUDGET-CEILING',
         severity: 'warning',
-        message: `Stage 8 cost figure (${maxCost.toLocaleString()}) exceeds Stage 1 budget ceiling (${budgetCeiling.toLocaleString()}) by more than 50%`,
-        stagesInvolved: [1, 8],
-        remediation: 'Reconcile the project budget in Stage 1 with the cost estimates in Stage 8',
+        message: `Stage ${b.business_case} cost figure (${maxCost.toLocaleString()}) exceeds Stage ${b.charter} budget ceiling (${budgetCeiling.toLocaleString()}) by more than 50%`,
+        stagesInvolved: [b.charter, b.business_case],
+        remediation: `Reconcile the project budget in Stage ${b.charter} with the cost estimates in Stage ${b.business_case}`,
       },
     ];
   }

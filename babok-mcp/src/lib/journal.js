@@ -1,5 +1,6 @@
 import fs from 'fs';
-import { getProjectDir, getJournalPath, STAGES } from './project.js';
+import { getProjectDir, getJournalPath } from './project.js';
+import { DEFAULT_PROFILE_ID, loadProfile, profileIdFromJournal } from './profiles.js';
 import {
   assertCanSaveDeliverable,
   ensureStageTwoKeyFields,
@@ -30,17 +31,19 @@ export function readJournalNormalized(projectId) {
   return journal;
 }
 
-export function createJournal(projectId, projectName, language = 'EN') {
+export function createJournal(projectId, projectName, language = 'EN', profileId = DEFAULT_PROFILE_ID) {
+  const profile = loadProfile(profileId);
   const now = new Date().toISOString();
   const journal = {
     project_id: projectId,
     project_name: projectName,
+    profile: profile.id,
     language,
     created_at: now,
     last_updated: now,
     current_stage: 0,
     current_status: 'in_progress',
-    stages: STAGES.map((s, i) => ({
+    stages: profile.stages.map((s, i) => ({
       stage: s.stage,
       name: s.name,
       status: i === 0 ? 'in_progress' : 'not_started',
@@ -65,7 +68,13 @@ export function readJournal(projectId) {
   }
   const journal = JSON.parse(fs.readFileSync(journalPath, 'utf-8'));
   normalizeJournalTwoKey(journal);
+  journal.profile = profileIdFromJournal(journal);
   return journal;
+}
+
+/** Profile object for an existing project (from its journal). */
+export function getProjectProfile(projectId) {
+  return loadProfile(readJournal(projectId).profile);
 }
 
 export function writeJournal(projectId, journal) {

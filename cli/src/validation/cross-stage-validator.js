@@ -12,7 +12,25 @@
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import path from 'path';
 import { getProjectDir } from '../project.js';
-import { ALL_RULES } from './rules/index.js';
+import { getProjectProfile } from '../journal.js';
+import { DEFAULT_PROFILE_ID, loadProfile } from '../profiles.js';
+import { rulesForProfile } from './rules/index.js';
+
+/**
+ * Profile for validation: explicit option → project journal → default.
+ * @param {string} projectId
+ * @param {{ profile?: string|object }} options
+ */
+function resolveProfile(projectId, options) {
+  if (options.profile) {
+    return typeof options.profile === 'string' ? loadProfile(options.profile) : options.profile;
+  }
+  try {
+    return getProjectProfile(projectId);
+  } catch {
+    return loadProfile(DEFAULT_PROFILE_ID);
+  }
+}
 
 /**
  * Load the markdown content of a stage deliverable.
@@ -37,33 +55,37 @@ function loadStageContent(projectDir, stageNumber) {
 }
 
 /**
- * Build the artifacts object consumed by each rule.
+ * Build the artifacts object consumed by each rule, keyed stage<N> for every
+ * stage of the profile (stage 0 included; rules pick what they need).
  *
  * @param {string} projectDir
- * @returns {{ stage1: string|null, ..., stage8: string|null }}
+ * @param {object} profile
+ * @returns {{ [key: string]: string|null }}
  */
-function buildArtifacts(projectDir) {
+function buildArtifacts(projectDir, profile) {
   const artifacts = {};
-  for (let i = 1; i <= 8; i++) {
-    artifacts[`stage${i}`] = loadStageContent(projectDir, i);
+  for (const s of profile.stages) {
+    artifacts[`stage${s.stage}`] = loadStageContent(projectDir, s.stage);
   }
   return artifacts;
 }
 
 /**
- * Run all cross-stage validation rules against a project's deliverables.
+ * Run the profile's cross-stage validation rules against a project's deliverables.
  *
  * @param {string} projectId
- * @param {{ projectDir?: string }} [options]
+ * @param {{ projectDir?: string, profile?: string|object }} [options]
  * @returns {Promise<ValidationReport>}
  */
 export async function validateProject(projectId, options = {}) {
   const projectDir = options.projectDir || getProjectDir(projectId);
-  const artifacts = buildArtifacts(projectDir);
+  const profile = resolveProfile(projectId, options);
+  const rules = rulesForProfile(profile);
+  const artifacts = buildArtifacts(projectDir, profile);
 
   const allFindings = [];
 
-  for (const rule of ALL_RULES) {
+  for (const rule of rules) {
     try {
       const findings = rule.check(artifacts);
       allFindings.push(...findings);
@@ -81,13 +103,13 @@ export async function validateProject(projectId, options = {}) {
   const errors = allFindings.filter(f => f.severity === 'error').length;
   const warnings = allFindings.filter(f => f.severity === 'warning').length;
   const infos = allFindings.filter(f => f.severity === 'info').length;
-  const passed = ALL_RULES.length - new Set(allFindings.filter(f => f.severity === 'error').map(f => f.ruleId)).size;
+  const passed = rules.length - new Set(allFindings.filter(f => f.severity === 'error').map(f => f.ruleId)).size;
 
   /** @type {ValidationReport} */
   const report = {
     projectId,
     timestamp: new Date().toISOString(),
-    rulesRun: ALL_RULES.length,
+    rulesRun: rules.length,
     passed,
     failed: errors,
     warnings,

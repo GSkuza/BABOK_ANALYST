@@ -1,6 +1,6 @@
 {
   "name": "babok-web",
-  "version": "2.2.8",
+  "version": "2.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -29,6 +29,7 @@
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "@tailwindcss/postcss": "^4.3.3",
     "autoprefixer": "^10.5.4",
     "eslint": "^10.8.1",
     "eslint-config-next": "^16.2.10",

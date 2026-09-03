@@ -1,0 +1,36 @@
+{
+  "agent": {
+    "id": "stage2",
+    "name": "Stage 2 Agent — Current State Diagnostic & Root Cause Analysis",
+    "version": "1.0",
+    "description": "Consulting-profile agent producing: Current Operating Model, KPI Baseline, Root Cause Register, Value at Stake.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.4
+    }
+  },
+  "consulting": {
+    "stage_number": 2,
+    "stage_name": "Current State Diagnostic & Root Cause Analysis",
+    "practice_area": "Operating Model Diagnostic",
+    "primary_deliverable": "Current Operating Model, KPI Baseline, Root Cause Register, Value at Stake"
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage2"
+  },
+  "mcp_tools": [
+    "file_system"
+  ],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage2/",
+    "artifact_type": "markdown"
+  }
+}

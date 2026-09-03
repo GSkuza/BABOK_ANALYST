@@ -2,7 +2,7 @@
 
 Developer guide for working on the BABOK Analyst repository. This is a multi-interface business analysis platform implementing the BABOK v3 framework as a 9-stage pipeline (Stage 0 charter + Stages 1–8).
 
-**Current Version:** 2.2.8 | **Node.js:** 18+ required | **Module System:** ESM throughout (`"type": "module"`)
+**Current Version:** 2.3.0 | **Node.js:** 18+ required | **Module System:** ESM throughout (`"type": "module"`)
 
 ---
 
@@ -80,7 +80,9 @@ BABOK Analyst ships as four independent interfaces that all read/write the same 
 - `STAGE_0N_<name>.md` — Per-stage deliverable markdown files
 - `.stage_N.lock` — File lock for team collaboration (2-hour stale threshold)
 
-### 9-Stage Pipeline
+### 9-Stage Pipeline (default profile `babok`)
+
+The stage shape is declared per **pipeline profile** in `profiles/<id>/profile.json` (schema `profiles/profile.schema.json`). The default `babok` profile points at the existing files below; the `consulting` profile (`profiles/consulting/`, prefix `BC-`, stages 0–6) covers non-IT advisory engagements. The profile is chosen at creation (`babok new --profile`, `babok_new_project { profile }`, `/babok-new-consulting`) and stored in `journal.profile`; everything else derives from the journal. Loader `cli/src/profiles.js` is mirrored byte-for-byte in `babok-mcp/src/lib/profiles.js` (`tests/unit/lib-parity.test.js`).
 
 Each stage represents a distinct business analysis deliverable:
 
@@ -115,7 +117,8 @@ Stage approval is enforced **outside the LLM** as a hard gate:
 
 ### Project ID Format
 
-All projects use unique identifiers: `BABOK-YYYYMMDD-XXXX`
+All projects use unique identifiers: `<PREFIX>-YYYYMMDD-XXXX`
+- `PREFIX` — from the profile (`BABOK` default, `BC` consulting)
 - `YYYYMMDD` — project creation date
 - `XXXX` — 4-character random alphanumeric suffix
 
@@ -242,12 +245,12 @@ The repository distributes as a plugin across three ecosystems:
 
 ### Adding a New Stage
 
-1. Create `BABOK_AGENT/stages/BABOK_agent_stage_N.md` with process, questions, template
-2. Create `templates/stages/STAGE_0N_*.md` skeleton
-3. Update `agent_config.json` with stage config (model, retries, etc.)
-4. Add validation rules in `cli/src/validation/rules/` if needed
-5. Update version in `VERSION` file and all `package.json` files
-6. Run `npm run check-versions` to verify sync
+Stages are declared per profile. To add or reshape stages, prefer a new profile:
+
+1. Create `profiles/<id>/profile.json` (copy `profiles/consulting/profile.json`), with `stages[]`, `id_prefix`, `paths`, `scoring`, `validation.rules` (bindings), `orchestrator.pipeline`
+2. Add stage prompts, `templates/manifest.json` + skeletons, `agents/quality_scoring_rubric.json`, `agents/stageN_config.json`, `agents/quality_audit_agent.md` under the paths declared
+3. Run `node --test tests/unit/profiles.test.js` — it verifies every referenced file exists and template H2s match the rubric
+4. Update version in `VERSION` file and all `package.json` files; run `npm run check-versions`
 
 ### Modifying the Journal Schema
 

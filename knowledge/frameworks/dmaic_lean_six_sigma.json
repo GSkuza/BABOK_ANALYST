@@ -1,0 +1,24 @@
+{
+  "framework": "DMAIC (Lean Six Sigma)",
+  "origin": "Motorola / General Electric, 1980s–1990s",
+  "description": "Data-driven process-improvement cycle: Define, Measure, Analyze, Improve, Control. Anchors process-optimisation engagements in measured baselines and statistically verified root causes.",
+  "best_for": [
+    "Process optimisation with a measurable defect, cycle-time or cost problem",
+    "Establishing a KPI baseline before recommending change",
+    "Structuring root-cause analysis (5-Whys, Fishbone, Pareto)"
+  ],
+  "steps": [
+    { "order": 1, "name": "Define", "description": "Problem statement, scope, customer (CTQ) requirements and business case.", "outputs": ["Project charter", "SIPOC", "Voice of Customer"] },
+    { "order": 2, "name": "Measure", "description": "Map the current process and collect baseline data on its performance.", "outputs": ["Process map", "Baseline KPIs", "Data collection plan"] },
+    { "order": 3, "name": "Analyze", "description": "Identify and verify root causes of variation and waste.", "outputs": ["Fishbone / 5-Whys", "Pareto of causes", "Validated root causes"] },
+    { "order": 4, "name": "Improve", "description": "Generate, evaluate and pilot solutions that address the verified root causes.", "outputs": ["Options evaluation", "Pilot results"] },
+    { "order": 5, "name": "Control", "description": "Standardise the improvement and monitor to hold the gains.", "outputs": ["Control plan", "Updated SOPs", "Monitoring KPIs"] }
+  ],
+  "pitfalls": [
+    "Recommending solutions in Analyze before root causes are verified with data",
+    "Baselines built from anecdotes rather than measured samples",
+    "No Control phase owner — gains erode within two quarters"
+  ],
+  "applies_to_stages": [2, 3],
+  "sources": ["George, M.L. — 'Lean Six Sigma' (2002)"]
+}

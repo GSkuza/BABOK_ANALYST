@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/GSkuza/BABOK_ANALYST/templates/project_context.schema.json",
+  "title": "BABOK Project Context",
+  "description": "Input context for babok run --context. Remove _instructions keys before use.",
+  "type": "object",
+  "required": ["project_name", "scope"],
+  "additionalProperties": true,
+  "properties": {
+    "_instructions": { "type": "string" },
+    "_remove_instructions_before_use": { "type": "boolean" },
+    "project_name": { "type": "string", "minLength": 1 },
+    "language": { "type": "string", "enum": ["PL", "EN", "pl", "en"] },
+    "company": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "industry": {
+          "type": "string",
+          "description": "Primary industry: Manufacturing, Distribution, Services, or compliance pack trigger"
+        },
+        "sector": { "type": "string" },
+        "size": { "type": "string" },
+        "employees": { "type": ["integer", "string"] },
+        "revenue_eur": { "type": "string" },
+        "locations": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "scope": { "type": "string", "minLength": 1 },
+    "systems": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "version": { "type": "string" },
+              "owner": { "type": "string" },
+              "integrations": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "compliance": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "regulatory_deadlines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["regulation", "deadline"],
+        "properties": {
+          "regulation": { "type": "string" },
+          "deadline": { "type": "string", "format": "date" },
+          "mandatory": { "type": "boolean" }
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "range": { "type": "string" },
+        "currency": { "type": "string" },
+        "estimated": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "properties": {
+        "project_start": { "type": "string" },
+        "target_go_live": { "type": "string" },
+        "target_date": { "type": "string" },
+        "hard_deadline": { "type": "string" },
+        "phases": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "roi_targets": {
+      "type": "object",
+      "properties": {
+        "payback_months_max": { "type": "number" },
+        "npv_min": { "type": "number" },
+        "irr_min_percent": { "type": "number" },
+        "discount_rate_percent": { "type": "number" }
+      }
+    },
+    "stakeholders": { "type": "object" },
+    "pain_points": { "type": "array", "items": { "type": "string" } },
+    "success_criteria": { "type": "object" },
+    "constraints": { "type": "array", "items": { "type": "string" } },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "risks_known": { "type": "array", "items": { "type": "string" } },
+    "industry_pack": {
+      "type": "string",
+      "enum": ["manufacturing", "distribution", "compliance", "none"],
+      "description": "Activates templates/industry/ supplements per manifest"
+    }
+  }
+}

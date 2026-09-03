@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
 import os from 'os';
+import { DEFAULT_PROFILE_ID, getStage, loadProfile, resolveProfilePath } from './profiles.js';
 
 // ──────────────────────────────────────────────
 //  PROVIDER REGISTRY
@@ -696,20 +697,20 @@ export function getActiveProviderInfo() {
 //  PROMPT LOADING
 // ──────────────────────────────────────────────
 
-export function loadStagePrompt(stageNumber) {
-  const possiblePaths = [
-    path.join(process.cwd(), 'BABOK_AGENT', 'stages', `BABOK_agent_stage_${stageNumber}.md`),
-    path.join(process.cwd(), 'BABOK_AGENT', 'BABOK_Agent_System_Prompt.md'),
-  ];
+export function loadStagePrompt(stageNumber, profile = loadProfile(DEFAULT_PROFILE_ID)) {
+  const stage = getStage(profile, stageNumber);
+  const possiblePaths = [];
+  if (stage) possiblePaths.push(path.join(resolveProfilePath(profile, 'stages_dir'), stage.prompt_file));
+  possiblePaths.push(resolveProfilePath(profile, 'system_prompt'));
   for (const p of possiblePaths) {
     if (fs.existsSync(p)) return fs.readFileSync(p, 'utf-8');
   }
-  return getGenericStagePrompt(stageNumber);
+  return getGenericStagePrompt(stageNumber, profile);
 }
 
-export function loadMainSystemPrompt() {
+export function loadMainSystemPrompt(profile = loadProfile(DEFAULT_PROFILE_ID)) {
   const possiblePaths = [
-    path.join(process.cwd(), 'BABOK_AGENT', 'BABOK_Agent_System_Prompt.md'),
+    resolveProfilePath(profile, 'system_prompt'),
     path.join(process.cwd(), 'BABOK_AGENT_SYSTEM_PROMPT.md'),
   ];
   for (const p of possiblePaths) {
@@ -718,20 +719,12 @@ export function loadMainSystemPrompt() {
   return '';
 }
 
-function getGenericStagePrompt(stageNumber) {
-  const stageNames = {
-    1: 'Project Initialization & Stakeholder Mapping',
-    2: 'Current State Analysis (AS-IS)',
-    3: 'Problem Domain Analysis',
-    4: 'Solution Requirements Definition',
-    5: 'Future State Design (TO-BE)',
-    6: 'Gap Analysis & Implementation Roadmap',
-    7: 'Risk Assessment & Mitigation Strategy',
-    8: 'Business Case & ROI Model',
-  };
-  return `You are BABOK Agent, an expert Business Analyst specializing in IT projects.
+function getGenericStagePrompt(stageNumber, profile) {
+  const stageName = getStage(profile, stageNumber)?.name ?? `Stage ${stageNumber}`;
+  return `You are the ${profile.name} Agent, an expert Business Analyst.
+${profile.description ?? ''}
 
-Currently working on: Stage ${stageNumber} - ${stageNames[stageNumber]}
+Currently working on: Stage ${stageNumber} - ${stageName}
 
 Guidelines:
 - Ask clarifying questions when needed

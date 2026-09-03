@@ -1,0 +1,24 @@
+{
+  "framework": "ADKAR",
+  "origin": "Jeff Hiatt, Prosci, 2003",
+  "description": "Individual-level change model. Change succeeds only when each affected person progresses through Awareness, Desire, Knowledge, Ability and Reinforcement; the first element that is missing is where resistance appears.",
+  "best_for": [
+    "Change readiness assessment per stakeholder group",
+    "Diagnosing adoption risk on a roadmap",
+    "Designing training and reinforcement in a change plan"
+  ],
+  "steps": [
+    { "order": 1, "name": "Awareness", "description": "Of the need for change — why, why now, and what happens if nothing changes.", "outputs": ["Awareness score per group"] },
+    { "order": 2, "name": "Desire", "description": "To participate and support the change — personal motivation and WIIFM.", "outputs": ["Resistance map"] },
+    { "order": 3, "name": "Knowledge", "description": "Of how to change — new processes, roles, tools and behaviours.", "outputs": ["Training needs analysis"] },
+    { "order": 4, "name": "Ability", "description": "To implement required skills and behaviours in day-to-day work.", "outputs": ["Coaching / support plan"] },
+    { "order": 5, "name": "Reinforcement", "description": "To sustain the change — recognition, metrics, corrective action.", "outputs": ["Reinforcement mechanisms", "Adoption KPIs"] }
+  ],
+  "pitfalls": [
+    "Jumping to Knowledge (training) before Awareness and Desire are established",
+    "Scoring ADKAR for the organisation as a whole instead of per stakeholder group",
+    "No owner for Reinforcement after the project team disbands"
+  ],
+  "applies_to_stages": [4, 5],
+  "sources": ["Hiatt, J. — 'ADKAR: A Model for Change in Business, Government and our Community' (2006)"]
+}

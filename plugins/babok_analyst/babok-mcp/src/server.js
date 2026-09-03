@@ -6,16 +6,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import {
-  STAGES,
-  STAGE_FILE_NAMES,
-  STAGE_PROMPT_FILE_NAMES,
   generateProjectId,
   listProjectIds,
   resolveProjectId,
   getProjectDir,
   getProjectsDir,
-  getAgentStagesDir,
   getStagePrompt,
+  getStageFileName,
   getDeliverable,
 } from './lib/project.js';
 
@@ -31,6 +28,52 @@ import {
 } from './lib/journal.js';
 
 import { hashFileUtf8, sha256Content } from './lib/two-key-gate.js';
+import { getStageTemplatePayload } from './lib/templates.js';
+import {
+  DEFAULT_PROFILE_ID,
+  getMaxStage,
+  listProfileIds,
+  loadProfile,
+  resolveProfilePath,
+} from './lib/profiles.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Profile helpers — every tool derives the pipeline shape from the project's journal
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PROFILE_IDS = listProfileIds();
+// Upper bound for stage_n schemas; per-project range is enforced at runtime.
+const MAX_STAGE_ANY = Math.max(...PROFILE_IDS.map(id => getMaxStage(loadProfile(id))));
+
+function profileOf(journal) {
+  return loadProfile(journal.profile || DEFAULT_PROFILE_ID);
+}
+
+function stageName(journal, stageN) {
+  return journal.stages.find(s => s.stage === stageN)?.name || '?';
+}
+
+/** Deliverable filename for a stage of the project's profile; throws if the stage is out of range. */
+function stageFile(journal, stageN) {
+  const filename = getStageFileName(stageN, profileOf(journal));
+  if (!filename) {
+    throw new Error(`Stage ${stageN} does not exist in profile "${journal.profile}" (0–${getMaxStage(profileOf(journal))})`);
+  }
+  return filename;
+}
+
+/** Read journal and assert stage_n is in range for the project's profile. */
+function readJournalForStage(projectId, stageN) {
+  const journal = readJournal(projectId);
+  stageFile(journal, stageN);
+  return journal;
+}
+
+/** "stage3" → 3 (null if malformed) */
+function stageKeyToN(stageKey) {
+  const m = /^stage(\d+)$/.exec(stageKey);
+  return m ? Number(m[1]) : null;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Helper: format journal summary for LLM consumption
@@ -39,10 +82,11 @@ import { hashFileUtf8, sha256Content } from './lib/two-key-gate.js';
 function journalSummary(journal) {
   const lines = [
     `Project: ${journal.project_name} (${journal.project_id})`,
+    `Profile: ${journal.profile || DEFAULT_PROFILE_ID}`,
     `Language: ${journal.language || 'EN'}`,
     `Created: ${journal.created_at}`,
     `Last updated: ${journal.last_updated}`,
-    `Current stage: ${journal.current_stage} — ${STAGES.find(s => s.stage === journal.current_stage)?.name || '?'}`,
+    `Current stage: ${journal.current_stage} — ${stageName(journal, journal.current_stage)}`,
     `Status: ${journal.current_status}`,
     '',
     'Stages:',
@@ -126,30 +170,37 @@ const server = new McpServer({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  RESOURCES: Stage prompt files exposed as babok://stages/{n}
+//  RESOURCES: Stage prompt files.
+//  Default profile: babok://stages/{n}   Other profiles: babok://profiles/{id}/stages/{n}
 // ─────────────────────────────────────────────────────────────────────────────
 
-for (const s of STAGES) {
-  server.resource(
-    `babok-stage-${s.stage}`,
-    `babok://stages/${s.stage}`,
-    { mimeType: 'text/markdown', description: `BABOK Agent prompt for Stage ${s.stage}: ${s.name}` },
-    async (uri) => {
-      const content = getStagePrompt(s.stage);
-      if (!content) {
+for (const profileId of PROFILE_IDS) {
+  const profile = loadProfile(profileId);
+  const isDefault = profileId === DEFAULT_PROFILE_ID;
+  for (const s of profile.stages) {
+    const resourceName = isDefault ? `babok-stage-${s.stage}` : `babok-${profileId}-stage-${s.stage}`;
+    const uri = isDefault ? `babok://stages/${s.stage}` : `babok://profiles/${profileId}/stages/${s.stage}`;
+    server.resource(
+      resourceName,
+      uri,
+      { mimeType: 'text/markdown', description: `${profile.name} — agent prompt for Stage ${s.stage}: ${s.name}` },
+      async (uri) => {
+        const content = getStagePrompt(s.stage, profile);
+        if (!content) {
+          return {
+            contents: [{
+              uri: uri.href,
+              mimeType: 'text/markdown',
+              text: `Stage ${s.stage} prompt file not found for profile ${profileId}. Expected ${s.prompt_file} in ${resolveProfilePath(profile, 'stages_dir')}.`,
+            }],
+          };
+        }
         return {
-          contents: [{
-            uri: uri.href,
-            mimeType: 'text/markdown',
-            text: `Stage ${s.stage} prompt file not found. Set BABOK_AGENT_DIR env var to the BABOK_AGENT/stages/ directory.`,
-          }],
+          contents: [{ uri: uri.href, mimeType: 'text/markdown', text: content }],
         };
       }
-      return {
-        contents: [{ uri: uri.href, mimeType: 'text/markdown', text: content }],
-      };
-    }
-  );
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -158,14 +209,16 @@ for (const s of STAGES) {
 
 server.tool(
   'babok_new_project',
-  'Create a new BABOK analysis project. Returns the project ID needed for all subsequent tools.',
+  'Create a new analysis project. Returns the project ID needed for all subsequent tools. Choose a pipeline profile: "babok" (BABOK v3, IT delivery, stages 0–8) or another profile listed under profiles/.',
   {
     name: z.string().min(1).describe('Project name (e.g. "ERP Integration for Acme Corp")'),
     language: z.enum(['EN', 'PL']).default('EN').describe('Analysis language: EN (English) or PL (Polish)'),
+    profile: z.enum(PROFILE_IDS).default(DEFAULT_PROFILE_ID).describe(`Pipeline profile: ${PROFILE_IDS.join(' | ')}`),
   },
-  async ({ name, language }) => {
-    const projectId = generateProjectId();
-    const journal = createJournal(projectId, name, language);
+  async ({ name, language, profile: profileId }) => {
+    const profile = loadProfile(profileId);
+    const projectId = generateProjectId(profile);
+    const journal = createJournal(projectId, name, language, profile.id);
 
     return {
       content: [{
@@ -175,12 +228,13 @@ server.tool(
           '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
           `  Project ID:   ${projectId}`,
           `  Project Name: ${journal.project_name}`,
+          `  Profile:      ${profile.id} — ${profile.name} (stages 0–${getMaxStage(profile)})`,
           `  Language:     ${language}`,
           `  Created:      ${journal.created_at}`,
           `  Directory:    ${getProjectDir(projectId)}`,
           '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
           '',
-          `Current stage: Stage 0 — Project Charter (IN PROGRESS)`,
+          `Current stage: Stage 0 — ${journal.stages[0].name} (IN PROGRESS)`,
           '',
           'Next step: Call babok_get_stage with stage_n=0 to get the Stage 0 instructions,',
           'then work through the questions with the human before approving.',
@@ -216,8 +270,7 @@ server.tool(
     for (const id of ids) {
       try {
         const j = readJournal(id);
-        const stageName = STAGES.find(s => s.stage === j.current_stage)?.name || '?';
-        rows.push(`  ${id}  |  ${j.project_name}  |  Stage ${j.current_stage}: ${stageName}  |  ${j.current_status.toUpperCase()}`);
+        rows.push(`  ${id}  |  ${j.project_name}  |  ${j.profile}  |  Stage ${j.current_stage}: ${stageName(j, j.current_stage)}  |  ${j.current_status.toUpperCase()}`);
       } catch {
         rows.push(`  ${id}  |  [unreadable journal]`);
       }
@@ -226,7 +279,7 @@ server.tool(
     return {
       content: [{
         type: 'text',
-        text: ['BABOK Projects:', '━━━━━━━━━━━━━━━━', ...rows].join('\n'),
+        text: ['Projects:', '━━━━━━━━━━━━━━━━', ...rows].join('\n'),
       }],
     };
   }
@@ -238,10 +291,10 @@ server.tool(
 
 server.tool(
   'babok_get_stage',
-  'Get full context for a project stage: instructions from the BABOK Agent prompt file + current journal state. Use this before starting work on any stage.',
+  'Get full context for a project stage: instructions from the profile\'s stage prompt file + current journal state. Use this before starting work on any stage.',
   {
     project_id: z.string().describe('Full or partial project ID (e.g. "TK7X" or "BABOK-20260316-TK7X")'),
-    stage_n: z.number().int().min(0).max(8).describe('Stage number (0–8)'),
+    stage_n: z.number().int().min(0).max(MAX_STAGE_ANY).describe('Stage number (range depends on the project profile)'),
   },
   async ({ project_id, stage_n }) => {
     const fullId = resolveProjectId(project_id);
@@ -249,15 +302,17 @@ server.tool(
 
     const journal = readJournal(fullId);
     const stageInfo = journal.stages.find(s => s.stage === stage_n);
-    if (!stageInfo) throw new Error(`Stage ${stage_n} not found in journal`);
+    if (!stageInfo) throw new Error(`Stage ${stage_n} not found in journal (profile ${journal.profile})`);
 
-    const prompt = getStagePrompt(stage_n);
-    const deliverable = getDeliverable(fullId, stage_n);
+    const profile = profileOf(journal);
+    const prompt = getStagePrompt(stage_n, profile);
+    const deliverable = getDeliverable(fullId, stage_n, profile);
 
     const sections = [];
 
-    sections.push(`# Stage ${stage_n}: ${STAGES.find(s => s.stage === stage_n)?.name}`);
+    sections.push(`# Stage ${stage_n}: ${stageInfo.name}`);
     sections.push(`**Project:** ${journal.project_name} (${fullId})`);
+    sections.push(`**Profile:** ${profile.id} — ${profile.name}`);
     sections.push(`**Stage Status:** ${stageInfo.status.toUpperCase()}`);
 
     if (stageInfo.started_at) sections.push(`**Started:** ${stageInfo.started_at}`);
@@ -270,12 +325,12 @@ server.tool(
 
     if (prompt) {
       sections.push('');
-      sections.push('## Stage Instructions (BABOK Agent Prompt)');
+      sections.push('## Stage Instructions (Agent Prompt)');
       sections.push(prompt);
     } else {
       sections.push('');
       sections.push(`## Stage Instructions`);
-      sections.push(`*(Prompt file not found — set BABOK_AGENT_DIR to the BABOK_AGENT/stages/ directory)*`);
+      sections.push(`*(Prompt file not found — expected ${profile.stages[stage_n].prompt_file} in ${resolveProfilePath(profile, 'stages_dir')})*`);
     }
 
     if (deliverable) {
@@ -291,6 +346,71 @@ server.tool(
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  TOOL: babok_get_stage_template
+// ─────────────────────────────────────────────────────────────────────────────
+
+server.tool(
+  'babok_get_stage_template',
+  'Get the deliverable output template for a stage (skeleton + optional modules). Use before writing STAGE_0N deliverables to match required rubric headings. Pass project_id so the template matches the project\'s profile.',
+  {
+    stage_n: z.number().int().min(0).max(MAX_STAGE_ANY).describe('Stage number (range depends on the profile)'),
+    include_modules: z.boolean().optional().default(true).describe('Include RTM, DPIA, industry supplements, etc.'),
+    project_id: z.string().optional().describe('Optional project ID — selects the profile and loads journal context for industry pack resolution'),
+    profile: z.enum(PROFILE_IDS).optional().describe('Profile to use when no project_id is given (default: babok)'),
+  },
+  async ({ stage_n, include_modules, project_id, profile: profileId }) => {
+    let projectContext = null;
+    let profile = loadProfile(profileId || DEFAULT_PROFILE_ID);
+    if (project_id) {
+      const fullId = resolveProjectId(project_id);
+      if (fullId) {
+        try {
+          const journal = readJournal(fullId);
+          profile = profileOf(journal);
+          projectContext = {
+            industry_pack: journal.industry_pack,
+            company: { industry: journal.industry || journal.project_industry },
+            compliance: journal.compliance,
+          };
+        } catch {
+          // journal optional for template-only fetch
+        }
+      }
+    }
+
+    const payload = getStageTemplatePayload(stage_n, {
+      includeModules: include_modules,
+      projectContext,
+      profile,
+    });
+
+    const sections = [
+      `# Stage ${stage_n} Output Template (profile: ${profile.id})`,
+      `**Primary file:** ${payload.deliverable_file}`,
+      `**Template path:** ${payload.primary}`,
+      '',
+      '## Required Sections (quality rubric)',
+      ...(payload.required_sections.length
+        ? payload.required_sections.map(s => `- ${s}`)
+        : ['- (Stage 0 — no automated rubric; follow charter structure)']),
+      '',
+      '## Template Files Loaded',
+      ...payload.template_files.map(f => `- ${f}`),
+      '',
+      '## Combined Template Content',
+      payload.combined_text || '(no template files found — check BABOK_TEMPLATES_DIR)',
+    ];
+
+    return {
+      content: [{
+        type: 'text',
+        text: sections.join('\n'),
+      }],
+    };
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  TOOL 4: babok_approve_stage
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -299,14 +419,14 @@ server.tool(
   'Approve a stage after Two-Key Journal validation (agent_submission + human_attestation with matching content_sha256). Prefer `babok approve` CLI for human attestation; agents are blocked by PreToolUse hook.',
   {
     project_id: z.string().describe('Full or partial project ID'),
-    stage_n: z.number().int().min(0).max(8).describe('Stage number to approve (0–8)'),
+    stage_n: z.number().int().min(0).max(MAX_STAGE_ANY).describe('Stage number to approve'),
     notes: z.string().optional().describe('Optional approval notes or summary of key decisions made'),
   },
   async ({ project_id, stage_n, notes }) => {
     const fullId = resolveProjectId(project_id);
     if (!fullId) throw new Error(`Project not found: ${project_id}`);
 
-    const filename = STAGE_FILE_NAMES[stage_n];
+    const filename = stageFile(readJournal(fullId), stage_n);
     const filePath = path.join(getProjectDir(fullId), filename);
     const deliverableSha = hashFileUtf8(filePath);
 
@@ -317,7 +437,7 @@ server.tool(
       `✅ Stage ${stage_n} APPROVED`,
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
       `  Project:  ${fullId}`,
-      `  Stage:    ${stage_n} — ${STAGES.find(s => s.stage === stage_n)?.name}`,
+      `  Stage:    ${stage_n} — ${stageName(journal, stage_n)}`,
       `  Approved: ${new Date().toISOString().slice(0, 19).replace('T', ' ')}`,
     ];
 
@@ -345,14 +465,14 @@ server.tool(
   'Agent submits deliverable snapshot for human review (Two-Key key 1). Call after babok_save_deliverable. Hashes on-disk file unless content_sha256 is provided.',
   {
     project_id: z.string().describe('Full or partial project ID'),
-    stage_n: z.number().int().min(0).max(8).describe('Stage number (0–8)'),
+    stage_n: z.number().int().min(0).max(MAX_STAGE_ANY).describe('Stage number'),
     content_sha256: z.string().optional().describe('Optional SHA-256 hex of deliverable; defaults to hash of saved file'),
   },
   async ({ project_id, stage_n, content_sha256 }) => {
     const fullId = resolveProjectId(project_id);
     if (!fullId) throw new Error(`Project not found: ${project_id}`);
 
-    const filename = STAGE_FILE_NAMES[stage_n];
+    const filename = stageFile(readJournal(fullId), stage_n);
     const filePath = path.join(getProjectDir(fullId), filename);
     const sha = content_sha256 || hashFileUtf8(filePath);
     if (!sha) {
@@ -371,7 +491,7 @@ server.tool(
           '🔑 Agent submission recorded (Two-Key key 1)',
           '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
           `  Project:   ${fullId}`,
-          `  Stage:     ${stage_n} — ${STAGES.find(s => s.stage === stage_n)?.name}`,
+          `  Stage:     ${stage_n} — ${stageName(journal, stage_n)}`,
           `  Review ID: ${sub?.review_id}`,
           `  SHA-256:   ${sha}`,
           '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
@@ -392,7 +512,7 @@ server.tool(
   'Open a new revision on an approved stage. Clears human attestation and unlocks babok_save_deliverable.',
   {
     project_id: z.string().describe('Full or partial project ID'),
-    stage_n: z.number().int().min(0).max(8).describe('Approved stage to revise (0–8)'),
+    stage_n: z.number().int().min(0).max(MAX_STAGE_ANY).describe('Approved stage to revise'),
   },
   async ({ project_id, stage_n }) => {
     const fullId = resolveProjectId(project_id);
@@ -407,7 +527,7 @@ server.tool(
           '🔓 Revision opened',
           '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
           `  Project: ${fullId}`,
-          `  Stage:   ${stage_n} — ${STAGES.find(s => s.stage === stage_n)?.name}`,
+          `  Stage:   ${stage_n} — ${stageName(journal, stage_n)}`,
           `  Status:  IN PROGRESS (revision_open=true)`,
           '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
           '',
@@ -427,14 +547,15 @@ server.tool(
   'Read the Markdown deliverable file for a specific stage. Returns the full document content.',
   {
     project_id: z.string().describe('Full or partial project ID'),
-    stage_n: z.number().int().min(0).max(8).describe('Stage number (0–8)'),
+    stage_n: z.number().int().min(0).max(MAX_STAGE_ANY).describe('Stage number'),
   },
   async ({ project_id, stage_n }) => {
     const fullId = resolveProjectId(project_id);
     if (!fullId) throw new Error(`Project not found: ${project_id}`);
 
-    const filename = STAGE_FILE_NAMES[stage_n];
-    const content = getDeliverable(fullId, stage_n);
+    const journal = readJournalForStage(fullId, stage_n);
+    const filename = stageFile(journal, stage_n);
+    const content = getDeliverable(fullId, stage_n, profileOf(journal));
 
     if (!content) {
       const expectedPath = path.join(getProjectDir(fullId), filename);
@@ -553,7 +674,7 @@ server.tool(
   'Save AI-generated stage content as a Markdown deliverable file in the project directory. Call this after generating a stage document to persist it.',
   {
     project_id: z.string().describe('Full or partial project ID'),
-    stage_n: z.number().int().min(0).max(8).describe('Stage number (0–8)'),
+    stage_n: z.number().int().min(0).max(MAX_STAGE_ANY).describe('Stage number'),
     content: z.string().min(1).describe('Full Markdown content of the deliverable'),
   },
   async ({ project_id, stage_n, content }) => {
@@ -562,10 +683,10 @@ server.tool(
 
     const journal = readJournal(fullId);
     const stage = journal.stages.find(s => s.stage === stage_n);
-    if (!stage) throw new Error(`Stage ${stage_n} not found`);
+    if (!stage) throw new Error(`Stage ${stage_n} not found (profile ${journal.profile})`);
     guardSaveDeliverable(stage);
 
-    const filename = STAGE_FILE_NAMES[stage_n];
+    const filename = stageFile(journal, stage_n);
     const filePath = path.join(getProjectDir(fullId), filename);
 
     fs.writeFileSync(filePath, content, 'utf-8');
@@ -588,7 +709,7 @@ server.tool(
         text: [
           `✅ Deliverable saved`,
           `  File: ${filePath}`,
-          `  Stage: ${stage_n} — ${STAGES.find(s => s.stage === stage_n)?.name}`,
+          `  Stage: ${stage_n} — ${stage.name}`,
           `  Size: ${content.length} characters`,
           `  SHA-256: ${sha}`,
           '',
@@ -698,19 +819,13 @@ server.tool(
 
 const __mcpDirname = path.dirname(fileURLToPath(import.meta.url));
 
-/** Map "stage1"..."stage8" → integer 1...8 */
-const STAGE_KEY_TO_N = {
-  stage1: 1, stage2: 2, stage3: 3, stage4: 4,
-  stage5: 5, stage6: 6, stage7: 7, stage8: 8,
-};
+/** Stage keys accepted by the L2 artefact tools: "stage1".."stage<max>" across all profiles. */
+const STAGE_KEYS = Array.from({ length: MAX_STAGE_ANY }, (_, i) => `stage${i + 1}`);
 
-/** Resolve BABOK_AGENT/agents/ directory */
-function getAgentConfigDir() {
-  const cwdAgents = path.join(process.cwd(), 'BABOK_AGENT', 'agents');
-  if (fs.existsSync(cwdAgents)) return cwdAgents;
-  const relAgents = path.join(__mcpDirname, '..', '..', 'BABOK_AGENT', 'agents');
-  if (fs.existsSync(relAgents)) return relAgents;
-  return null;
+/** Resolve the agents/ config directory for a profile (rubric, quality audit prompt). */
+function getAgentConfigDir(profile) {
+  const dir = resolveProfilePath(profile, 'agents_dir');
+  return fs.existsSync(dir) ? dir : null;
 }
 
 /**
@@ -741,15 +856,15 @@ server.tool(
   'Read the Markdown artefact file for a specific stage using the L2 stage key (e.g. "stage1"). Returns file content and metadata.',
   {
     project_id: z.string().describe('Full or partial project ID'),
-    stage: z.enum(['stage1', 'stage2', 'stage3', 'stage4', 'stage5', 'stage6', 'stage7', 'stage8'])
+    stage: z.enum(STAGE_KEYS)
       .describe('Stage key (e.g. "stage1")'),
   },
   async ({ project_id, stage }) => {
     const fullId = resolveProjectId(project_id);
     if (!fullId) throw new Error(`Project not found: ${project_id}`);
 
-    const stageN = STAGE_KEY_TO_N[stage];
-    const filename = STAGE_FILE_NAMES[stageN];
+    const stageN = stageKeyToN(stage);
+    const filename = stageFile(readJournal(fullId), stageN);
     const filePath = path.join(getProjectDir(fullId), filename);
 
     if (!fs.existsSync(filePath)) {
@@ -785,10 +900,10 @@ server.tool(
 
 server.tool(
   'babok_quality_check',
-  'Run the BABOK Quality Audit Agent against a stage artefact using the quality scoring rubric. Requires GEMINI_API_KEY. Stores the quality report in the project journal.',
+  'Run the Quality Audit Agent against a stage artefact using the profile\'s quality scoring rubric. Requires GEMINI_API_KEY. Stores the quality report in the project journal.',
   {
     project_id: z.string().describe('Full or partial project ID (e.g. "BABOK-20260330-XXXX")'),
-    stage: z.enum(['stage1', 'stage2', 'stage3', 'stage4', 'stage5', 'stage6', 'stage7', 'stage8'])
+    stage: z.enum(STAGE_KEYS)
       .describe('Stage to audit (e.g. "stage1")'),
     artifact_path: z.string().optional()
       .describe('Override: explicit path to artefact file. If omitted, resolved from project directory.'),
@@ -805,14 +920,16 @@ server.tool(
     if (!fullId) throw new Error(`Project not found: ${project_id}`);
 
     // Resolve artefact file
-    const stageN = STAGE_KEY_TO_N[stage];
+    const stageN = stageKeyToN(stage);
+    const auditJournal = readJournal(fullId);
+    const profile = profileOf(auditJournal);
     let artifactContent;
     let resolvedPath;
 
     if (artifact_path) {
       resolvedPath = path.resolve(artifact_path);
     } else {
-      resolvedPath = path.join(getProjectDir(fullId), STAGE_FILE_NAMES[stageN]);
+      resolvedPath = path.join(getProjectDir(fullId), stageFile(auditJournal, stageN));
     }
 
     if (!fs.existsSync(resolvedPath)) {
@@ -826,8 +943,8 @@ server.tool(
     artifactContent = fs.readFileSync(resolvedPath, 'utf-8');
 
     // Load quality audit system prompt
-    const agentConfigDir = getAgentConfigDir();
-    let systemPrompt = 'You are a BABOK quality auditor. Evaluate the artefact and return ONLY a JSON quality report.';
+    const agentConfigDir = getAgentConfigDir(profile);
+    let systemPrompt = 'You are a quality auditor. Evaluate the artefact and return ONLY a JSON quality report.';
     if (agentConfigDir) {
       const promptPath = path.join(agentConfigDir, 'quality_audit_agent.md');
       if (fs.existsSync(promptPath)) {
@@ -837,22 +954,20 @@ server.tool(
 
     // Load quality scoring rubric
     let rubricText = '';
-    if (agentConfigDir) {
-      const rubricPath = path.join(agentConfigDir, 'quality_scoring_rubric.json');
-      if (fs.existsSync(rubricPath)) {
-        rubricText = fs.readFileSync(rubricPath, 'utf-8');
-      }
+    const rubricPath = resolveProfilePath(profile, 'rubric');
+    if (fs.existsSync(rubricPath)) {
+      rubricText = fs.readFileSync(rubricPath, 'utf-8');
     }
 
     // Build user message
-    const stageName = STAGES.find(s => s.stage === stageN)?.name || stage;
+    const stageNameText = stageName(auditJournal, stageN);
     const priorIssuesText = (prior_issues?.length)
       ? `\n\nPRIOR ISSUES (iteration ${iteration - 1}):\n${JSON.stringify(prior_issues, null, 2)}`
       : '';
 
     const userMessage = [
       `## Audit Request`,
-      `Stage: ${stage} — ${stageName}`,
+      `Stage: ${stage} — ${stageNameText}`,
       `Iteration: ${iteration} of 3`,
       priorIssuesText,
       '',
@@ -931,7 +1046,7 @@ server.tool(
   'Export a stage artefact to an external system: Confluence, SharePoint, or a local copy. Confluence requires CONFLUENCE_BASE_URL, CONFLUENCE_USER, CONFLUENCE_API_TOKEN. SharePoint requires SHAREPOINT_TENANT_ID, SHAREPOINT_CLIENT_ID, SHAREPOINT_CLIENT_SECRET.',
   {
     project_id: z.string().describe('Full or partial project ID'),
-    stage: z.enum(['stage1', 'stage2', 'stage3', 'stage4', 'stage5', 'stage6', 'stage7', 'stage8', 'final'])
+    stage: z.enum([...STAGE_KEYS, 'final'])
       .describe('Stage to sync'),
     target_system: z.enum(['confluence', 'sharepoint', 'local_copy'])
       .describe('Destination system'),
@@ -970,8 +1085,8 @@ server.tool(
     if (stage === 'final') {
       artifactFilePath = path.join(getProjectDir(fullId), 'FINAL_Complete_Documentation.md');
     } else {
-      const stageN = STAGE_KEY_TO_N[stage];
-      artifactFilePath = path.join(getProjectDir(fullId), STAGE_FILE_NAMES[stageN]);
+      const stageN = stageKeyToN(stage);
+      artifactFilePath = path.join(getProjectDir(fullId), stageFile(readJournal(fullId), stageN));
     }
 
     if (!fs.existsSync(artifactFilePath)) {
@@ -1035,7 +1150,7 @@ server.tool(
         };
       }
 
-      const pageTitle = `${confluence_page_title_prefix} — ${stage.toUpperCase()} ${STAGES.find(s => s.stage === STAGE_KEY_TO_N[stage])?.name || stage}`;
+      const pageTitle = `${confluence_page_title_prefix} — ${stage.toUpperCase()} ${stage === 'final' ? 'Final Documentation' : stageName(readJournal(fullId), stageKeyToN(stage))}`;
       const auth = Buffer.from(`${user}:${token}`).toString('base64');
       const apiBase = baseUrl.replace(/\/$/, '');
 

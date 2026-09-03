@@ -10,6 +10,7 @@
   "stages": {
     "stage1": {
       "name": "Project Initialization & Stakeholder Mapping",
+      "builtin_consistency": "stakeholder_raci",
       "required_sections": [
         "Executive Summary",
         "Project Scope — In Scope",
@@ -170,6 +171,7 @@
     },
     "stage4": {
       "name": "Solution Requirements Definition",
+      "builtin_consistency": "fr_rtm",
       "required_sections": [
         "Functional Requirements (FR-NNN)",
         "Non-Functional Requirements (NFR-NNN)",

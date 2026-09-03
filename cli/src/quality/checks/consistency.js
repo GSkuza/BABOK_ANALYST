@@ -150,26 +150,23 @@ function checkGenericConsistency(content, consistencyChecks) {
   return { passed: consistencyChecks.length, total: consistencyChecks.length, issues: [] };
 }
 
+/** Built-in checks selectable from the rubric via `builtin_consistency`. */
+const BUILTIN_CHECKS = {
+  stakeholder_raci: checkStage1Consistency,
+  fr_rtm: checkStage4Consistency,
+};
+
 /**
  * @param {string} content - Raw markdown of the deliverable
  * @param {Array} consistencyChecks - Consistency check descriptors from rubric
- * @param {number} stageNumber
+ * @param {string} [builtin] - Key into BUILTIN_CHECKS (from the stage rubric's `builtin_consistency`)
  * @returns {{ score: number, issues: import('../scorer.js').ScorerIssue[] }}
  */
-export function checkConsistency(content, consistencyChecks, stageNumber) {
-  let result;
-
-  switch (stageNumber) {
-    case 1:
-      result = checkStage1Consistency(content);
-      break;
-    case 4:
-      result = checkStage4Consistency(content);
-      break;
-    default:
-      result = checkGenericConsistency(content, consistencyChecks);
-      break;
-  }
+export function checkConsistency(content, consistencyChecks, builtin) {
+  const builtinCheck = builtin ? BUILTIN_CHECKS[builtin] : null;
+  const result = builtinCheck
+    ? builtinCheck(content)
+    : checkGenericConsistency(content, consistencyChecks);
 
   const score = result.total > 0
     ? Math.round((result.passed / result.total) * 100)

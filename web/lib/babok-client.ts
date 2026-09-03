@@ -3,6 +3,7 @@ const BASE_URL = process.env.BABOK_MCP_URL ?? 'http://localhost:3001';
 export interface Project {
   id: string;
   name: string;
+  profile?: string;
   stages: StageInfo[];
   createdAt: string;
 }
@@ -34,7 +35,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 export const babokClient = {
   listProjects: () => apiFetch<Project[]>('/projects'),
   getProject: (id: string) => apiFetch<Project>(`/projects/${id}`),
-  createProject: (data: { name: string; language?: string }) =>
+  createProject: (data: { name: string; language?: string; profile?: string }) =>
     apiFetch<Project>('/projects', { method: 'POST', body: JSON.stringify(data) }),
   getStage: (id: string, n: number) => apiFetch<StageInfo>(`/projects/${id}/stages/${n}`),
   approveStage: (id: string, n: number) =>

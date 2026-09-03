@@ -1,0 +1,36 @@
+{
+  "agent": {
+    "id": "stage1",
+    "name": "Stage 1 Agent — Stakeholder & Governance Mapping",
+    "version": "1.0",
+    "description": "Consulting-profile agent producing: Stakeholder Map, Governance Model, Success KPIs.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.4
+    }
+  },
+  "consulting": {
+    "stage_number": 1,
+    "stage_name": "Stakeholder & Governance Mapping",
+    "practice_area": "Engagement Governance",
+    "primary_deliverable": "Stakeholder Map, Governance Model, Success KPIs"
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage1"
+  },
+  "mcp_tools": [
+    "file_system"
+  ],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage1/",
+    "artifact_type": "markdown"
+  }
+}

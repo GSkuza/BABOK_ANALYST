@@ -5,16 +5,22 @@ on:
     paths:
       - 'BABOK_AGENT/stages/**'
       - 'templates/**'
+      - 'profiles/**'
       - 'cli/scripts/lint-stages.js'
       - 'cli/src/templates.js'
+      - 'cli/src/profiles.js'
       - 'tests/unit/templates.test.js'
+      - 'tests/unit/profiles.test.js'
   pull_request:
     paths:
       - 'BABOK_AGENT/stages/**'
       - 'templates/**'
+      - 'profiles/**'
       - 'cli/scripts/lint-stages.js'
       - 'cli/src/templates.js'
+      - 'cli/src/profiles.js'
       - 'tests/unit/templates.test.js'
+      - 'tests/unit/profiles.test.js'
 
 jobs:
   lint:
@@ -35,3 +41,6 @@ jobs:
 
       - name: Validate templates (manifest + rubric headings)
         run: node --test tests/unit/templates.test.js
+
+      - name: Validate pipeline profiles
+        run: node --test tests/unit/profiles.test.js tests/unit/lib-parity.test.js

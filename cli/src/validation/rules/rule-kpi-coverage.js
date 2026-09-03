@@ -25,13 +25,18 @@ function extractBaselineMetricsSection(stage2Content) {
   return match ? match[0].toLowerCase() : '';
 }
 
+/** Role → default BABOK stage number; a profile may rebind these. */
+export const DEFAULT_BINDINGS = { charter: 1, as_is: 2 };
+
 /**
  * @param {{ [key: string]: string|null }} artifacts
+ * @param {{ charter?: number, as_is?: number }} [bindings]
  * @returns {import('../cross-stage-validator.js').Finding[]}
  */
-export function check(artifacts) {
-  const stage1 = artifacts.stage1;
-  const stage2 = artifacts.stage2;
+export function check(artifacts, bindings = DEFAULT_BINDINGS) {
+  const b = { ...DEFAULT_BINDINGS, ...bindings };
+  const stage1 = artifacts[`stage${b.charter}`];
+  const stage2 = artifacts[`stage${b.as_is}`];
 
   if (!stage1 || !stage2) return [];
 
@@ -44,9 +49,9 @@ export function check(artifacts) {
       {
         ruleId: 'KPI-COVERAGE',
         severity: 'warning',
-        message: 'Stage 2 has no Baseline Metrics section',
-        stagesInvolved: [1, 2],
-        remediation: 'Add a "Baseline Metrics" section to Stage 2 documenting current-state KPI values',
+        message: `Stage ${b.as_is} has no Baseline Metrics section`,
+        stagesInvolved: [b.charter, b.as_is],
+        remediation: `Add a "Baseline Metrics" section to Stage ${b.as_is} documenting current-state KPI values`,
       },
     ];
   }
@@ -61,9 +66,9 @@ export function check(artifacts) {
       {
         ruleId: 'KPI-COVERAGE',
         severity: 'warning',
-        message: `Stage 2 Baseline Metrics covers only ${Math.round(coverageRatio * 100)}% of the KPI dimensions set in Stage 1 Success Criteria. Missing: ${uncovered.slice(0, 4).join(', ')}`,
-        stagesInvolved: [1, 2],
-        remediation: 'Ensure Stage 2 Baseline Metrics includes numeric baselines for all KPI dimensions defined in Stage 1',
+        message: `Stage ${b.as_is} Baseline Metrics covers only ${Math.round(coverageRatio * 100)}% of the KPI dimensions set in Stage ${b.charter} Success Criteria. Missing: ${uncovered.slice(0, 4).join(', ')}`,
+        stagesInvolved: [b.charter, b.as_is],
+        remediation: `Ensure Stage ${b.as_is} Baseline Metrics includes numeric baselines for all KPI dimensions defined in Stage ${b.charter}`,
       },
     ];
   }

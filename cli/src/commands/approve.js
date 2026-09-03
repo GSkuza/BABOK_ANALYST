@@ -8,8 +8,21 @@ import {
   submitForReview,
   openRevision,
   getStageDeliverableHash,
+  getProjectProfile,
 } from '../journal.js';
+import { getMaxStage } from '../profiles.js';
 import { header, keyValue, printStageList, line } from '../display.js';
+
+/** Parse and range-check a stage argument against the project's profile; exits on error. */
+function parseStageArg(projectId, stageStr) {
+  const maxStage = getMaxStage(getProjectProfile(projectId));
+  const stageNumber = parseInt(stageStr, 10);
+  if (isNaN(stageNumber) || stageNumber < 0 || stageNumber > maxStage) {
+    console.error(`Error: Stage must be a number between 0 and ${maxStage}.`);
+    process.exit(1);
+  }
+  return stageNumber;
+}
 
 /**
  * Human approval: attest on-disk deliverable (key 2) then approve if SHA matches agent submission.
@@ -21,11 +34,7 @@ export async function approveCommand(partialId, stageStr, options = {}) {
     process.exit(1);
   }
 
-  const stageNumber = parseInt(stageStr, 10);
-  if (isNaN(stageNumber) || stageNumber < 0 || stageNumber > 8) {
-    console.error('Error: Stage must be a number between 0 and 8.');
-    process.exit(1);
-  }
+  const stageNumber = parseStageArg(projectId, stageStr);
 
   const attestor = options.attestor || process.env.USER || process.env.USERNAME || os.userInfo().username || 'Human';
   const spotCheckPassed = options.spotCheck !== false;
@@ -74,11 +83,7 @@ export async function rejectCommand(partialId, stageStr, options) {
     process.exit(1);
   }
 
-  const stageNumber = parseInt(stageStr, 10);
-  if (isNaN(stageNumber) || stageNumber < 0 || stageNumber > 8) {
-    console.error('Error: Stage must be a number between 0 and 8.');
-    process.exit(1);
-  }
+  const stageNumber = parseStageArg(projectId, stageStr);
 
   const reason = options.reason || 'No reason provided';
 
@@ -107,11 +112,7 @@ export async function openRevisionCommand(partialId, stageStr) {
     process.exit(1);
   }
 
-  const stageNumber = parseInt(stageStr, 10);
-  if (isNaN(stageNumber) || stageNumber < 0 || stageNumber > 8) {
-    console.error('Error: Stage must be a number between 0 and 8.');
-    process.exit(1);
-  }
+  const stageNumber = parseStageArg(projectId, stageStr);
 
   try {
     const journal = openRevision(projectId, stageNumber);

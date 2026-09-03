@@ -79,15 +79,43 @@ function getProjectsDir() {
 }
 
 /**
- * Resolve a full BABOK-YYYYMMDD-XXXX project ID from a full or partial ID.
+ * Project-ID prefixes declared by profiles/<id>/profile.json (falls back to BABOK).
+ * Hooks are CommonJS and cannot import the ESM profiles loader, so the files are read directly.
+ * @returns {string[]}
+ */
+function getProjectIdPrefixes() {
+  const prefixes = new Set(['BABOK']);
+  const profilesDir = path.join(getPluginRoot(), 'profiles');
+  try {
+    for (const entry of fs.readdirSync(profilesDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const profilePath = path.join(profilesDir, entry.name, 'profile.json');
+      if (!fs.existsSync(profilePath)) continue;
+      const prefix = JSON.parse(fs.readFileSync(profilePath, 'utf8')).id_prefix;
+      if (typeof prefix === 'string' && /^[A-Z][A-Z0-9]{1,7}$/.test(prefix)) prefixes.add(prefix);
+    }
+  } catch {
+    // profiles dir optional in minimal installs
+  }
+  return [...prefixes];
+}
+
+/** @returns {RegExp} matches a project ID of any known profile (by prefix; `babok run` IDs carry a title slug) */
+function getProjectIdRegex() {
+  return new RegExp(`^(${getProjectIdPrefixes().join('|')})-[A-Z0-9_-]+$`);
+}
+
+/**
+ * Resolve a full <PREFIX>-YYYYMMDD-XXXX project ID from a full or partial ID.
  * @param {string} partialId
  * @returns {string|null}
  */
 function resolveProjectId(partialId) {
   const dir = getProjectsDir();
   if (!fs.existsSync(dir)) return null;
+  const idRe = getProjectIdRegex();
   const ids = fs.readdirSync(dir).filter(name =>
-    name.startsWith('BABOK-') && fs.statSync(path.join(dir, name)).isDirectory(),
+    idRe.test(name) && fs.statSync(path.join(dir, name)).isDirectory(),
   );
   if (!partialId) return ids.length === 1 ? ids[0] : null;
   const exact = ids.find(id => id === partialId);
@@ -104,5 +132,7 @@ module.exports = {
   getClaudeDir,
   isShellSafe,
   getProjectsDir,
+  getProjectIdPrefixes,
+  getProjectIdRegex,
   resolveProjectId,
 };

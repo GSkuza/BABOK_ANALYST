@@ -1,0 +1,36 @@
+{
+  "agent": {
+    "id": "stage3",
+    "name": "Stage 3 Agent — Strategic Options & Recommendation",
+    "version": "1.0",
+    "description": "Consulting-profile agent producing: Options Evaluation Matrix and Recommendation.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.5
+    }
+  },
+  "consulting": {
+    "stage_number": 3,
+    "stage_name": "Strategic Options & Recommendation",
+    "practice_area": "Strategy Formulation",
+    "primary_deliverable": "Options Evaluation Matrix and Recommendation"
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage3"
+  },
+  "mcp_tools": [
+    "file_system"
+  ],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage3/",
+    "artifact_type": "markdown"
+  }
+}

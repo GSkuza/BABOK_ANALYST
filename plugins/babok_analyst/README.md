@@ -80,13 +80,14 @@ BABOK_ANALYST/
 |   |-- README.md                         # Setup guide for Claude/Cursor/VS Code
 |   |-- babok-mcp-user-manual.md          # Full user manual (EN)
 |
-|-- web/                                  # Web UI — Next.js 15 App Router (NEW v2.1.0)
+|-- web/                                  # Web UI — Next.js 15 App Router
 |   |-- app/                              # App Router pages & API routes
-|   |   |-- page.tsx                      # Dashboard — project list + progress bars
-|   |   |-- projects/                     # Project detail, stage view, export page
+|   |   |-- page.tsx                      # Dashboard — server-rendered project overview
+|   |   |-- projects/                     # Project detail, stage review, export page
 |   |   |-- api/                          # REST API routes (projects, stages, export)
-|   |-- components/                       # Reusable React components
-|   |-- lib/babok-client.ts               # Typed API client (server-side)
+|   |-- components/                       # Reusable React components + UI primitives
+|   |-- lib/project-store.ts              # Shared server-side project/stage readers
+|   |-- lib/babok-client.ts               # Typed API client helpers
 |   |-- next.config.js
 |   |-- package.json
 |
@@ -165,6 +166,44 @@ BABOK_ANALYST/
 | **Stage 6** | Gap Analysis & Implementation Roadmap | Gap analysis, implementation roadmap |
 | **Stage 7** | Risk Assessment & Mitigation Strategy | Risk register, mitigation plans |
 | **Stage 8** | Business Case & ROI Model | Financial model, ROI, NPV, payback period |
+
+### Pipeline profiles
+
+The table above is the default **`babok`** profile. A project can instead run the **`consulting`** profile (`babok new --profile consulting`, `/babok-new-consulting`, or `babok_new_project { profile: "consulting" }`) — a leaner, non-IT advisory pipeline with project IDs prefixed `BC-`:
+
+| Stage | Name | What You Get |
+|------|-------|----------------|
+| **Stage 0** ⭐ | Engagement Charter & Mandate | Sponsor & mandate, scope with explicit no-IT exclusion, fee & budget ceiling, Go/No-Go |
+| **Stage 1** | Stakeholder & Governance Mapping | Power/interest grid, steering committee, RACI, success KPIs, communication plan |
+| **Stage 2** | Current State Diagnostic & Root Cause Analysis | Operating model canvas, KPI baseline, findings, 5-Whys/Fishbone root causes, value at stake |
+| **Stage 3** | Strategic Options & Recommendation | Options (OPT-NN), weighted evaluation matrix, recommendation, risks of inaction |
+| **Stage 4** | Target Operating Model & Change Roadmap | Target model by dimension, org-design changes, phased roadmap, ADKAR/Kotter change plan |
+| **Stage 5** | Risk, Governance & Change Readiness | Risk register with owners, readiness per stakeholder group, escalation cadence |
+| **Stage 6** | Business Case & Value Realization Plan | CBA, ROI/NPV/payback, benefits tracker, budget alignment, value governance |
+
+Profiles are plain data under `profiles/<id>/` (see `profiles/profile.schema.json`); the same CLI, MCP server, hooks and web UI serve every profile.
+
+---
+
+## Web UI Highlights
+
+The bundled Next.js UI provides a lightweight review layer over the shared project files in `projects/<project_id>/`.
+
+- **Dashboard**: server-rendered project cards with progress bars and approval counts
+- **Project view**: stage list, overall progress, and ZIP export
+- **Stage view**: rendered deliverables, Mermaid diagrams, quality score badge, and approve/reject controls
+- **Export endpoint**: project ZIP download via `web/app/api/projects/[id]/export/route.ts`, with Windows-compatible archive creation
+
+Run locally:
+
+```bash
+cd web
+npm install
+npm run build
+npm run start
+```
+
+Open `http://localhost:3000`.
 
 ---
 
@@ -248,7 +287,7 @@ copilot plugin install babok_analyst@babok_analyst
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | Marketplace manifest | `.claude-plugin/` (Claude), `.agents/plugins/` (Codex) | Plugin registry per host |
-| MCP wiring | `.mcp.json` | 16 tools + 9 stage resources (`${CLAUDE_PLUGIN_ROOT}`) |
+| MCP wiring | `.mcp.json` | 19 tools + 9 stage resources (`${CLAUDE_PLUGIN_ROOT}`) |
 | Lifecycle hooks | `hooks/` | Session activation + `babok-mcp` dependency install |
 | Skills | `skills/babok-analyst/`, `skills/eu-pl-law-tracker/` | BABOK operating rules + EU/PL legal tracking workflow |
 | Agents | `agents/` | Orchestrator + per-stage subagents (12) |

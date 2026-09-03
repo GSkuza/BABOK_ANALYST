@@ -3,20 +3,8 @@ import path from 'path';
 import chalk from 'chalk';
 import { resolveProjectId, getProjectDir } from '../project.js';
 import { readJournal } from '../journal.js';
+import { getMaxStage, getStageFileNames, loadProfile } from '../profiles.js';
 import { header, keyValue, line } from '../display.js';
-
-/** Maps stage numbers to their canonical deliverable filenames (mirrors run.js) */
-const STAGE_FILE_NAMES = {
-  0: 'STAGE_00_Project_Charter.md',
-  1: 'STAGE_01_Project_Initialization.md',
-  2: 'STAGE_02_Current_State_Analysis.md',
-  3: 'STAGE_03_Problem_Domain_Analysis.md',
-  4: 'STAGE_04_Solution_Requirements.md',
-  5: 'STAGE_05_Future_State_Design.md',
-  6: 'STAGE_06_Gap_Analysis_Roadmap.md',
-  7: 'STAGE_07_Risk_Assessment.md',
-  8: 'STAGE_08_Business_Case_ROI.md',
-};
 
 // ──────────────────────────────────────────────
 //  LCS-based line diff
@@ -97,20 +85,22 @@ function renderContextDiff(diff, contextLines = 3) {
 
 function resolveDeliverableFile(projectId, stageNum) {
   const projectDir = getProjectDir(projectId);
-  const canonical = path.join(projectDir, STAGE_FILE_NAMES[stageNum]);
-  if (fs.existsSync(canonical)) return canonical;
+  let journal = null;
+  try { journal = readJournal(projectId); } catch (_) { /* fall through to filename scan */ }
 
-  // Fallback: check journal.deliverable_file
-  try {
-    const journal = readJournal(projectId);
-    const stageEntry = journal.stages.find(s => s.stage === stageNum);
-    if (stageEntry?.deliverable_file) {
-      const fromJournal = path.isAbsolute(stageEntry.deliverable_file)
-        ? stageEntry.deliverable_file
-        : path.join(projectDir, stageEntry.deliverable_file);
-      if (fs.existsSync(fromJournal)) return fromJournal;
-    }
-  } catch (_) { /* ignore */ }
+  const canonicalName = journal ? getStageFileNames(loadProfile(journal.profile))[stageNum] : null;
+  if (canonicalName && fs.existsSync(path.join(projectDir, canonicalName))) {
+    return path.join(projectDir, canonicalName);
+  }
+
+  // Fallback: journal.deliverable_file
+  const stageEntry = journal?.stages.find(s => s.stage === stageNum);
+  if (stageEntry?.deliverable_file) {
+    const fromJournal = path.isAbsolute(stageEntry.deliverable_file)
+      ? stageEntry.deliverable_file
+      : path.join(projectDir, stageEntry.deliverable_file);
+    if (fs.existsSync(fromJournal)) return fromJournal;
+  }
 
   return null;
 }
@@ -155,8 +145,9 @@ export async function diffCommand(id1, id2, options) {
     keyValue('Status:', journal.current_status);
 
     if (stageOpt !== undefined) {
-      if (isNaN(stageOpt) || stageOpt < 0 || stageOpt > 8) {
-        console.error(chalk.red('Error: --stage must be between 0 and 8'));
+      const maxStage = getMaxStage(loadProfile(journal.profile));
+      if (isNaN(stageOpt) || stageOpt < 0 || stageOpt > maxStage) {
+        console.error(chalk.red(`Error: --stage must be between 0 and ${maxStage}`));
         process.exit(1);
       }
       printStageSummary(journal, stageOpt);
@@ -195,9 +186,18 @@ export async function diffCommand(id1, id2, options) {
   if (!pid2) { console.error(chalk.red(`Error: Project not found: ${id2}`)); process.exit(1); }
   if (pid1 === pid2) { console.error(chalk.red('Error: Both IDs resolve to the same project.')); process.exit(1); }
 
+  const journal1 = readJournal(pid1);
+  const journal2 = readJournal(pid2);
+  if (journal1.profile !== journal2.profile) {
+    console.error(chalk.red(`Error: Cannot diff projects with different profiles (${journal1.profile} vs ${journal2.profile}).`));
+    process.exit(1);
+  }
+  const profile = loadProfile(journal1.profile);
+  const fileNames = getStageFileNames(profile);
+
   const targetStages = stageOpt !== undefined
     ? [stageOpt]
-    : [1, 2, 3, 4, 5, 6, 7, 8];  // default: diff all stages
+    : profile.scoring.scorable_stages;  // default: diff all deliverable stages
 
   let totalAdded = 0, totalRemoved = 0;
 
@@ -209,7 +209,7 @@ export async function diffCommand(id1, id2, options) {
 
     if (!f1 && !f2) continue;  // stage doesn't exist in either project — skip silently
 
-    const stageName = STAGE_FILE_NAMES[sn] ?? `Stage ${sn}`;
+    const stageName = fileNames[sn] ?? `Stage ${sn}`;
     console.log('');
     console.log(chalk.bold.cyan(`  Stage ${sn}: ${stageName}`));
     console.log(chalk.dim('  ' + line()));

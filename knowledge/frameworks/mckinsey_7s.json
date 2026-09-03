@@ -1,0 +1,80 @@
+{
+  "framework": "McKinsey 7S",
+  "origin": "Peters & Waterman, McKinsey & Company, 1980",
+  "description": "Organisational-alignment diagnostic. Effectiveness depends on seven interdependent elements being mutually consistent; misalignment between any two is a root-cause candidate for performance gaps.",
+  "best_for": [
+    "Current-state operating-model diagnostic",
+    "Assessing readiness for a strategic shift or reorganisation",
+    "Explaining why a prior change initiative under-delivered"
+  ],
+  "dimensions": [
+    {
+      "name": "Strategy",
+      "description": "The plan to build and sustain competitive advantage.",
+      "diagnostic_questions": [
+        "Is the strategy explicit, and can middle management restate it?",
+        "Which KPIs prove the strategy is being executed?",
+        "Where does daily decision-making contradict the stated strategy?"
+      ]
+    },
+    {
+      "name": "Structure",
+      "description": "Reporting lines, spans of control and how units are grouped.",
+      "diagnostic_questions": [
+        "Where do decisions wait for escalation more than one level?",
+        "Which processes cross more than three organisational boundaries?",
+        "Are accountabilities duplicated or orphaned?"
+      ]
+    },
+    {
+      "name": "Systems",
+      "description": "Formal procedures, workflows, controls and information flows (described as AS-IS context, not solutioned).",
+      "diagnostic_questions": [
+        "Which controls exist on paper but are bypassed in practice?",
+        "Where is the same data re-keyed or reconciled manually?",
+        "Which management reports are produced but not used for decisions?"
+      ]
+    },
+    {
+      "name": "Shared Values",
+      "description": "The core beliefs and norms that actually guide behaviour.",
+      "diagnostic_questions": [
+        "What behaviour gets rewarded informally that contradicts stated values?",
+        "How do people describe 'how things really work here'?"
+      ]
+    },
+    {
+      "name": "Style",
+      "description": "Leadership behaviour and the dominant management approach.",
+      "diagnostic_questions": [
+        "Are decisions made by consensus, by decree, or by default?",
+        "How is bad news received by the leadership team?"
+      ]
+    },
+    {
+      "name": "Staff",
+      "description": "Workforce composition, capacity and capability.",
+      "diagnostic_questions": [
+        "Where are single points of failure in critical roles?",
+        "Which capabilities are outsourced that should be core, or vice versa?"
+      ]
+    },
+    {
+      "name": "Skills",
+      "description": "Distinctive competences of the organisation as a whole.",
+      "diagnostic_questions": [
+        "Which capabilities do customers actually pay for?",
+        "Which skills will the target operating model require that do not exist today?"
+      ]
+    }
+  ],
+  "pitfalls": [
+    "Treating the seven elements as a checklist instead of testing pairwise alignment",
+    "Reporting Systems as software inventory rather than as procedures and information flows",
+    "Skipping the soft elements (Shared Values, Style, Staff, Skills) because they are harder to evidence"
+  ],
+  "applies_to_stages": [2, 4],
+  "sources": [
+    "Waterman, Peters, Phillips — 'Structure Is Not Organization', Business Horizons (1980)"
+  ]
+}

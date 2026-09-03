@@ -1,0 +1,132 @@
+{
+  "version": "1.0",
+  "description": "Quality scoring rubric for the consulting profile — one entry per deliverable stage (1–6). Required sections are H2 headings of profiles/consulting/templates/stages/*.md.",
+  "scoring": {
+    "completeness_weight": 0.40,
+    "consistency_weight": 0.30,
+    "quality_weight": 0.30,
+    "min_overall_score": 75
+  },
+  "stages": {
+    "stage1": {
+      "name": "Stakeholder & Governance Mapping",
+      "builtin_consistency": "stakeholder_raci",
+      "required_sections": [
+        "Stakeholder Map & Power/Interest Grid",
+        "Governance Model & Steering Committee",
+        "RACI for the Engagement",
+        "Success Criteria & Target KPIs",
+        "Communication Plan"
+      ],
+      "quality_criteria": [
+        { "id": "S1-Q1", "description": "Every high-power stakeholder has a named engagement strategy", "applies_to": "Stakeholder Map & Power/Interest Grid", "smart_dimension": "Specific" },
+        { "id": "S1-Q2", "description": "Steering committee has named members and a fixed cadence", "applies_to": "Governance Model & Steering Committee", "smart_dimension": "Specific" },
+        { "id": "S1-Q3", "description": "Every KPI has a numeric baseline and target with dates", "applies_to": "Success Criteria & Target KPIs", "smart_dimension": "Measurable" }
+      ],
+      "consistency_checks": [
+        { "id": "S1-C1", "description": "RACI has exactly one Accountable per activity", "source": "Stage 1 internal" },
+        { "id": "S1-C2", "description": "Communication plan covers every quadrant of the power/interest grid", "source": "Stage 1 internal" }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    },
+    "stage2": {
+      "name": "Current State Diagnostic & Root Cause Analysis",
+      "required_sections": [
+        "Current Operating Model",
+        "KPI Baseline",
+        "Findings & Root Cause Analysis",
+        "Value-at-Stake Sizing"
+      ],
+      "quality_criteria": [
+        { "id": "S2-Q1", "description": "Every Stage 1 KPI has a numeric baseline or an explicit data gap", "applies_to": "KPI Baseline", "smart_dimension": "Measurable" },
+        { "id": "S2-Q2", "description": "Every finding cites evidence and a quantified impact", "applies_to": "Findings & Root Cause Analysis", "smart_dimension": "Measurable" },
+        { "id": "S2-Q3", "description": "Every root cause explains at least one finding and has a confidence level", "applies_to": "Findings & Root Cause Analysis", "smart_dimension": "Specific" },
+        { "id": "S2-Q4", "description": "Value at stake is numeric with a basis of estimate", "applies_to": "Value-at-Stake Sizing", "smart_dimension": "Measurable" }
+      ],
+      "consistency_checks": [
+        { "id": "S2-C1", "description": "Systems are described as AS-IS context only; no solution or vendor language", "source": "Stage 0 exclusions" },
+        { "id": "S2-C2", "description": "KPI Baseline covers the KPIs defined in Stage 1", "source": "stage1" }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    },
+    "stage3": {
+      "name": "Strategic Options & Recommendation",
+      "required_sections": [
+        "Option Generation",
+        "Evaluation Criteria & Weighted Scoring",
+        "Options Evaluation Matrix",
+        "Recommended Option & Rationale",
+        "Risks of Inaction"
+      ],
+      "quality_criteria": [
+        { "id": "S3-Q1", "description": "At least three options plus a do-nothing baseline are evaluated", "applies_to": "Option Generation", "smart_dimension": "Specific" },
+        { "id": "S3-Q2", "description": "Criteria weights sum to 100 and each has a stated source", "applies_to": "Evaluation Criteria & Weighted Scoring", "smart_dimension": "Measurable" },
+        { "id": "S3-Q3", "description": "Recommendation names one OPT-NN and states its weighted score against the runner-up", "applies_to": "Recommended Option & Rationale", "smart_dimension": "Specific" },
+        { "id": "S3-Q4", "description": "Risks of inaction are quantified with a timeframe", "applies_to": "Risks of Inaction", "smart_dimension": "Time-bound" }
+      ],
+      "consistency_checks": [
+        { "id": "S3-C1", "description": "Every option references the Stage 2 root causes it addresses", "source": "stage2" },
+        { "id": "S3-C2", "description": "Options describe business change, not system implementation", "source": "Stage 0 exclusions" }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    },
+    "stage4": {
+      "name": "Target Operating Model & Change Roadmap",
+      "required_sections": [
+        "Target Operating Model Design",
+        "Capability & Org Design Changes",
+        "Phased Roadmap",
+        "Change Management Plan",
+        "Dependencies & Sequencing"
+      ],
+      "quality_criteria": [
+        { "id": "S4-Q1", "description": "Every roadmap phase has a dated, measurable milestone and an owner", "applies_to": "Phased Roadmap", "smart_dimension": "Time-bound" },
+        { "id": "S4-Q2", "description": "No system implementation or vendor selection is proposed", "applies_to": "Target Operating Model Design", "smart_dimension": "Relevant" }
+      ],
+      "consistency_checks": [
+        { "id": "S4-C1", "description": "Target Operating Model names the implemented OPT-NN from Stage 3", "source": "stage3" },
+        { "id": "S4-C2", "description": "Every target-state dimension maps to Stage 2 root causes", "source": "stage2" },
+        { "id": "S4-C3", "description": "Change plan covers every high-power stakeholder group from Stage 1", "source": "stage1" }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    },
+    "stage5": {
+      "name": "Risk, Governance & Change Readiness",
+      "required_sections": [
+        "Risk Register",
+        "Change Readiness Assessment",
+        "Governance & Escalation Cadence",
+        "Mitigation Owners"
+      ],
+      "quality_criteria": [
+        { "id": "S5-Q1", "description": "Every Critical/High risk has a named individual owner and a dated mitigation", "applies_to": "Risk Register", "smart_dimension": "Specific" },
+        { "id": "S5-Q2", "description": "Readiness is scored per stakeholder group", "applies_to": "Change Readiness Assessment", "smart_dimension": "Measurable" },
+        { "id": "S5-Q3", "description": "Escalation triggers are numeric or observable", "applies_to": "Governance & Escalation Cadence", "smart_dimension": "Measurable" }
+      ],
+      "consistency_checks": [
+        { "id": "S5-C1", "description": "Steering committee named here matches Stage 1", "source": "stage1" },
+        { "id": "S5-C2", "description": "Adoption risks reference the Stage 4 change plan", "source": "stage4" }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    },
+    "stage6": {
+      "name": "Business Case & Value Realization Plan",
+      "required_sections": [
+        "Cost-Benefit Analysis & ROI/NPV",
+        "Benefits Realization Tracker",
+        "Funding & Budget Alignment",
+        "Value Tracking Governance"
+      ],
+      "quality_criteria": [
+        { "id": "S6-Q1", "description": "Costs and benefits are numeric with a basis of estimate", "applies_to": "Cost-Benefit Analysis & ROI/NPV", "smart_dimension": "Measurable" },
+        { "id": "S6-Q2", "description": "ROI, payback and NPV are stated with assumptions and a sensitivity", "applies_to": "Cost-Benefit Analysis & ROI/NPV", "smart_dimension": "Measurable" },
+        { "id": "S6-Q3", "description": "Tracker has a named client-side owner, cadence and corrective-action trigger", "applies_to": "Value Tracking Governance", "smart_dimension": "Specific" }
+      ],
+      "consistency_checks": [
+        { "id": "S6-C1", "description": "Every benefit traces to a Stage 2 root cause and a Stage 1 KPI", "source": "stage2" },
+        { "id": "S6-C2", "description": "Total cost is compared to the Stage 0 budget ceiling", "source": "stage0" }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    }
+  }
+}

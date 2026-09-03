@@ -30,12 +30,17 @@ function splitSections(content) {
   return sections;
 }
 
+/** Role → default BABOK stage number; a profile may rebind these. */
+export const DEFAULT_BINDINGS = { requirements: 4 };
+
 /**
- * @param {{ [key: string]: string|null }} artifacts - keyed stage1..stage8
+ * @param {{ [key: string]: string|null }} artifacts - keyed stageN
+ * @param {{ requirements?: number }} [bindings]
  * @returns {import('../cross-stage-validator.js').Finding[]}
  */
-export function check(artifacts) {
-  const content = artifacts.stage4;
+export function check(artifacts, bindings = DEFAULT_BINDINGS) {
+  const b = { ...DEFAULT_BINDINGS, ...bindings };
+  const content = artifacts[`stage${b.requirements}`];
   if (!content) return [];
 
   const findings = [];
@@ -62,8 +67,8 @@ export function check(artifacts) {
     findings.push({
       ruleId: 'FR-TRACEABILITY',
       severity: 'error',
-      message: 'Stage 4 has no Functional Requirements with FR-NNN identifiers',
-      stagesInvolved: [4],
+      message: `Stage ${b.requirements} has no Functional Requirements with FR-NNN identifiers`,
+      stagesInvolved: [b.requirements],
       remediation: 'Define functional requirements using FR-001, FR-002, … identifiers',
     });
     return findings;
@@ -73,8 +78,8 @@ export function check(artifacts) {
     findings.push({
       ruleId: 'FR-TRACEABILITY',
       severity: 'error',
-      message: 'Stage 4 is missing a Requirements Traceability Matrix (RTM) section',
-      stagesInvolved: [4],
+      message: `Stage ${b.requirements} is missing a Requirements Traceability Matrix (RTM) section`,
+      stagesInvolved: [b.requirements],
       remediation: 'Add a "Requirements Traceability Matrix" section that references all FR-NNN identifiers',
     });
     return findings;

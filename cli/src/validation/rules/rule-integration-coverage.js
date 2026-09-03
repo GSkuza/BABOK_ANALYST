@@ -21,13 +21,18 @@ function extractIntegrationSection(content) {
   return match ? match[0] : '';
 }
 
+/** Role → default BABOK stage number; a profile may rebind these. */
+export const DEFAULT_BINDINGS = { as_is: 2, to_be: 5 };
+
 /**
  * @param {{ [key: string]: string|null }} artifacts
+ * @param {{ as_is?: number, to_be?: number }} [bindings]
  * @returns {import('../cross-stage-validator.js').Finding[]}
  */
-export function check(artifacts) {
-  const stage2 = artifacts.stage2;
-  const stage5 = artifacts.stage5;
+export function check(artifacts, bindings = DEFAULT_BINDINGS) {
+  const b = { ...DEFAULT_BINDINGS, ...bindings };
+  const stage2 = artifacts[`stage${b.as_is}`];
+  const stage5 = artifacts[`stage${b.to_be}`];
 
   if (!stage2 || !stage5) return [];
 
@@ -40,9 +45,9 @@ export function check(artifacts) {
       {
         ruleId: 'INTEGRATION-COVERAGE',
         severity: 'warning',
-        message: 'Stage 5 is missing an Integration Points section',
-        stagesInvolved: [2, 5],
-        remediation: 'Add an "Integration Points" section to Stage 5 covering all systems from Stage 2',
+        message: `Stage ${b.to_be} is missing an Integration Points section`,
+        stagesInvolved: [b.as_is, b.to_be],
+        remediation: `Add an "Integration Points" section to Stage ${b.to_be} covering all systems from Stage ${b.as_is}`,
       },
     ];
   }
@@ -55,9 +60,9 @@ export function check(artifacts) {
       {
         ruleId: 'INTEGRATION-COVERAGE',
         severity: 'warning',
-        message: `Stage 5 Integration Points may not cover all systems from Stage 2 inventory. Possibly missing: ${missing.slice(0, 5).join(', ')}`,
-        stagesInvolved: [2, 5],
-        remediation: 'Ensure every system in the Stage 2 inventory has a corresponding entry in Stage 5 Integration Points',
+        message: `Stage ${b.to_be} Integration Points may not cover all systems from Stage ${b.as_is} inventory. Possibly missing: ${missing.slice(0, 5).join(', ')}`,
+        stagesInvolved: [b.as_is, b.to_be],
+        remediation: `Ensure every system in the Stage ${b.as_is} inventory has a corresponding entry in Stage ${b.to_be} Integration Points`,
       },
     ];
   }

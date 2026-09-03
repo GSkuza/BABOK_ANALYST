@@ -5,6 +5,7 @@
 
 import chalk from 'chalk';
 import { resolveProjectId } from '../project.js';
+import { getProjectProfile } from '../journal.js';
 import { scoreStage, scoreAll } from '../quality/scorer.js';
 import { line } from '../display.js';
 
@@ -122,8 +123,9 @@ export async function scoreCommand(partialId, stageArg, _options) {
       printSummary(reports);
     } else {
       const stageNumber = parseInt(stageArg, 10);
-      if (isNaN(stageNumber) || stageNumber < 1 || stageNumber > 8) {
-        console.error(chalk.red('Error: Stage must be a number 1–8 or "all"'));
+      const scorable = getProjectProfile(projectId).scoring.scorable_stages;
+      if (!scorable.includes(stageNumber)) {
+        console.error(chalk.red(`Error: Stage must be one of ${scorable.join(', ')} or "all"`));
         process.exit(1);
       }
       const report = await scoreStage(projectId, stageNumber);

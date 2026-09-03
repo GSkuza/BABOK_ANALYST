@@ -78,20 +78,26 @@ function tryLoadKnowledge(category, key) {
 
 /**
  * Get relevant knowledge files based on project context.
+ * Built-in categories (industries, regulations, benchmarks, technology) are always
+ * consulted; a profile may declare `knowledge.extra_categories` (e.g. frameworks,
+ * change_management) whose keys are read from `projectContext[category]`.
  * @param {{
  *   industry?: string,
  *   regulations?: string[],
  *   benchmarks?: string[],
- *   technology?: string[]
+ *   technology?: string[],
+ *   [extraCategory: string]: any
  * }} projectContext
+ * @param {{ knowledge?: { extra_categories?: string[] } }|null} [profile]
  * @returns {{
  *   industries: object[],
  *   regulations: object[],
  *   benchmarks: object[],
- *   technology: object[]
+ *   technology: object[],
+ *   [extraCategory: string]: object[]
  * }}
  */
-export function getRelevantKnowledge(projectContext = {}) {
+export function getRelevantKnowledge(projectContext = {}, profile = null) {
   const result = {
     industries: [],
     regulations: [],
@@ -131,6 +137,18 @@ export function getRelevantKnowledge(projectContext = {}) {
       const techKey = tech.toLowerCase().replace(/\s+/g, '_');
       const data = tryLoadKnowledge('technology', techKey);
       if (data) result.technology.push(data);
+    }
+  }
+
+  // Profile-declared extra categories (keys listed under projectContext[category])
+  for (const category of profile?.knowledge?.extra_categories ?? []) {
+    result[category] = [];
+    const keys = projectContext[category];
+    if (!Array.isArray(keys)) continue;
+    for (const key of keys) {
+      const normalized = String(key).toLowerCase().replace(/\s+/g, '_');
+      const data = tryLoadKnowledge(category, normalized);
+      if (data) result[category].push(data);
     }
   }
 
@@ -237,6 +255,47 @@ function serializeToMarkdown(sectionTitle, obj) {
     return lines.join('\n');
   }
 
+  // Management / change framework (knowledge/frameworks)
+  if (obj.framework) {
+    lines.push(`**Framework:** ${obj.framework}${obj.origin ? ` (${obj.origin})` : ''}`);
+    lines.push(`**Description:** ${obj.description}`);
+    if (obj.best_for?.length) lines.push('**Best for:** ' + obj.best_for.join('; '));
+    lines.push('');
+    for (const dim of (obj.dimensions || [])) {
+      lines.push(`### ${dim.name}`);
+      lines.push(dim.description);
+      for (const q of (dim.diagnostic_questions || []).slice(0, 3)) lines.push(`- ${q}`);
+      lines.push('');
+    }
+    for (const step of (obj.steps || [])) {
+      lines.push(`${step.order}. **${step.name}** — ${step.description}`);
+    }
+    if (obj.pitfalls?.length) {
+      lines.push('');
+      lines.push('**Common pitfalls:** ' + obj.pitfalls.slice(0, 4).join('; '));
+    }
+    return lines.join('\n');
+  }
+
+  // Change-management reference (knowledge/change_management)
+  if (obj.topic && (obj.items || obj.benchmarks)) {
+    lines.push(`**Topic:** ${obj.topic}`);
+    lines.push(`**Description:** ${obj.description}`);
+    lines.push('');
+    for (const item of (obj.items || [])) {
+      lines.push(`### ${item.name}`);
+      lines.push(item.description);
+      if (item.indicators?.length) lines.push('**Indicators:** ' + item.indicators.slice(0, 3).join('; '));
+      if (item.response) lines.push(`**Response:** ${item.response}`);
+      lines.push('');
+    }
+    if (obj.benchmarks?.length) {
+      lines.push('**Benchmarks:**');
+      for (const b of obj.benchmarks) lines.push(`- **${b.metric}**: ${b.value} *(${b.source}, ${b.year})*`);
+    }
+    return lines.join('\n');
+  }
+
   // Generic fallback: JSON dump
   lines.push('```json');
   lines.push(JSON.stringify(obj, null, 2));
@@ -260,7 +319,7 @@ export function formatKnowledgeForPrompt(knowledgeSet, maxTokens = 4000) {
     sections.push(`# Knowledge: ${category.charAt(0).toUpperCase() + category.slice(1)}`);
     sections.push('');
     for (const item of items) {
-      const title = item.industry || item.regulation || item.category || category;
+      const title = item.industry || item.regulation || item.framework || item.topic || item.category || category;
       sections.push(serializeToMarkdown(title, item));
       sections.push('');
     }

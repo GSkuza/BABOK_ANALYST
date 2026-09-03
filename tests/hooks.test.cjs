@@ -124,6 +124,36 @@ const staleLockPass = spawnSync(
 );
 assert.equal(staleLockPass.status, 0, 'stale stage lock should not block save_deliverable');
 
+// gate resolves consulting-profile (BC-) project IDs and enforces the approved lock on them too
+const bcProjectId = 'BC-20260101-CONS';
+const bcProjectDir = path.join(gateEnv.BABOK_PROJECTS_DIR, bcProjectId);
+fs.mkdirSync(bcProjectDir, { recursive: true });
+fs.writeFileSync(
+  path.join(bcProjectDir, `PROJECT_JOURNAL_${bcProjectId}.json`),
+  JSON.stringify({
+    project_id: bcProjectId,
+    profile: 'consulting',
+    stages: [
+      { stage: 0, status: 'approved', revision_open: false },
+      { stage: 1, status: 'in_progress', revision_open: false },
+    ],
+  }),
+);
+const bcApprovedBlock = spawnSync(
+  process.execPath,
+  [path.join(root, 'hooks', 'babok-gate.cjs')],
+  {
+    env: gateEnv,
+    input: JSON.stringify({
+      tool_name: 'mcp__babok__babok_save_deliverable',
+      tool_input: { project_id: 'CONS', stage_n: 0 },
+    }),
+    encoding: 'utf8',
+  },
+);
+assert.equal(bcApprovedBlock.status, 2, 'save on an approved stage of a BC- project must be blocked');
+assert.match(bcApprovedBlock.stderr, /approved and locked/);
+
 assert.ok(hooksJson.hooks.PostToolUse, 'PostToolUse hook configured for quality gate');
 
 // babok-quality-gate scores a submitted deliverable and reports issues, non-blocking

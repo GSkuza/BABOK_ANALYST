@@ -30,6 +30,10 @@ PreToolUse hook blocks agents from `babok_approve_stage` and from saving on lock
 
 Each project directory contains `PROJECT_JOURNAL_<id>.json` and `STAGE_0N_*.md` files.
 
+## Pipeline profiles
+
+`journal.profile` selects the stage shape: `babok` (default, prefix `BABOK-`, stages 0–8 below) or `consulting` (prefix `BC-`, stages 0–6: Engagement Charter → Stakeholder & Governance → Current State Diagnostic & Root Cause → Strategic Options → Target Operating Model & Roadmap → Risk & Change Readiness → Business Case & Value Realization — **no software requirements or system design**). Always take stage names and instructions from `babok_get_stage`; start a consulting engagement with `/babok-new-consulting` or `babok_new_project { profile: "consulting" }`.
+
 ## MCP tools (when connected)
 
 Use `babok_new_project`, `babok_get_stage`, `babok_save_deliverable`,
@@ -49,6 +53,7 @@ Detailed instructions: `BABOK_AGENT/stages/BABOK_agent_stage_N.md`
 - `BEGIN NEW PROJECT` / `/babok-new` — start Stage 0 (asks PL vs ENG if not specified)
 - `/babok-new PL` / `/babok-new-pl` — start Stage 0 in Polish
 - `/babok-new ENG` / `/babok-new-eng` — start Stage 0 in English
+- `/babok-new-consulting [PL|ENG]` — start a consulting engagement (profile `consulting`)
 - `Status` / `/babok-status` — show pipeline progress
 - `Approve [N]` — approve stage N
 - `Reject [N] [reason]` — reject with feedback

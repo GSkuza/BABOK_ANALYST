@@ -1,16 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { runParallel } from './parallel-runner.js';
 import { readContext, mergeStageOutput } from './context-manager.js';
 import { executeStage } from './stage-executor.js';
 import { runQualityLoop } from './quality-loop.js';
 import { getProjectDir } from '../project.js';
+import { getProjectProfile } from '../journal.js';
+import { DEFAULT_PROFILE_ID, loadProfile, resolveProfilePath } from '../profiles.js';
 import { createMessageBus } from './message-bus.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// cli/src/orchestrator → ../../../ = BABOK_ANALYST/
-const AGENTS_DIR = path.join(__dirname, '..', '..', '..', 'BABOK_AGENT', 'agents');
 
 function loadJsonConfig(filePath) {
   try {
@@ -26,12 +23,21 @@ function stageNumberFromKey(key) {
   return match ? parseInt(match[1], 10) : 0;
 }
 
-// Stages requiring a more capable (deep analysis) model per BABOK system prompt
-const DEEP_ANALYSIS_STAGES = new Set([3, 4, 6, 8]);
+/** Profile: explicit option → project journal → default. */
+function resolveProfile(projectId, options) {
+  if (options.profile) {
+    return typeof options.profile === 'string' ? loadProfile(options.profile) : options.profile;
+  }
+  try {
+    return getProjectProfile(projectId);
+  } catch {
+    return loadProfile(DEFAULT_PROFILE_ID);
+  }
+}
 
 /**
  * @param {string} projectId
- * @param {{ maxParallel?: number, dryRun?: boolean, stopAfterStage?: number, onProgress?: Function, llmClient?: object, deepAnalysisClient?: object, taskRouter?: object }} options
+ * @param {{ maxParallel?: number, dryRun?: boolean, stopAfterStage?: number, onProgress?: Function, llmClient?: object, deepAnalysisClient?: object, taskRouter?: object, profile?: string|object }} options
  * @returns {Promise<{ projectId: string, stagesCompleted: string[], stagesFailed: string[], totalDurationMs: number, artefacts: Object }>}
  */
 export async function runPipeline(projectId, options = {}) {
@@ -44,13 +50,20 @@ export async function runPipeline(projectId, options = {}) {
     taskRouter,
   } = options;
 
-  // Load orchestrator config (informational — pipeline shape is defined below)
-  const _orchConfig = loadJsonConfig(path.join(AGENTS_DIR, 'orchestrator_config.json'));
+  const profile = resolveProfile(projectId, options);
+  const agentsDir = resolveProfilePath(profile, 'agents_dir');
+  const deepAnalysisStages = new Set(profile.orchestrator.deep_analysis_stages);
 
-  // Load per-stage configs for stage1..stage8
+  // Load orchestrator config (informational — pipeline shape comes from the profile)
+  const _orchConfig = loadJsonConfig(path.join(agentsDir, 'orchestrator_config.json'));
+
+  // Load per-stage configs for every stage referenced by the pipeline
   const stageConfigs = {};
-  for (let n = 1; n <= 8; n++) {
-    stageConfigs[`stage${n}`] = loadJsonConfig(path.join(AGENTS_DIR, `stage${n}_config.json`));
+  for (const group of profile.orchestrator.pipeline) {
+    for (const key of group.stages) {
+      const n = stageNumberFromKey(key);
+      stageConfigs[`stage${n}`] ??= loadJsonConfig(path.join(agentsDir, `stage${n}_config.json`));
+    }
   }
 
   // Noop client when none provided
@@ -75,7 +88,7 @@ export async function runPipeline(projectId, options = {}) {
   const runStage = async (stageKey) => {
     const stageNumber = stageNumberFromKey(stageKey);
     const stageConfig = stageConfigs[`stage${stageNumber}`] ?? {};
-    const isDeepStage = DEEP_ANALYSIS_STAGES.has(stageNumber);
+    const isDeepStage = deepAnalysisStages.has(stageNumber);
     const clientForStage = taskRouter?.getStageClient
       ? taskRouter.getStageClient(stageNumber)
       : (isDeepStage ? deepAnalysisClient : llmClient);
@@ -90,6 +103,7 @@ export async function runPipeline(projectId, options = {}) {
       const qualityResult = await runQualityLoop(
         projectId, stageNumber, execResult.artefact, clientForStage, {
           dryRun,
+          profile,
           taskRouter,
           onIteration: (e) => emit({
             type: e.escalated ? 'quality_escalate' : 'quality_iteration',
@@ -114,39 +128,30 @@ export async function runPipeline(projectId, options = {}) {
     }
   };
 
-  // ── Pipeline execution ───────────────────────────────────────────────────
+  // ── Pipeline execution (shape declared in profile.orchestrator.pipeline) ──
 
-  // 1. Stage 1 (mandatory first, sequential)
-  await runStage('stage1');
-  if (stopAfterStage === 1) {
+  const finish = () => {
     const totalDurationMs = Date.now() - startTime;
     emit({ type: 'pipeline_complete', stagesCompleted, totalDurationMs });
     return { projectId, stagesCompleted, stagesFailed, totalDurationMs, artefacts };
+  };
+
+  // Stages numbered above stopAfterStage are skipped wherever they appear in the pipeline.
+  const pastStop = (key) => stopAfterStage !== undefined && stageNumberFromKey(key) > stopAfterStage;
+
+  for (const group of profile.orchestrator.pipeline) {
+    const keys = group.stages.filter(key => !pastStop(key));
+    if (keys.length === 0) continue;
+
+    if (group.type === 'parallel') {
+      // Errors in parallel stages are captured by runParallel — pipeline continues
+      await runParallel(keys.map(key => ({ key, fn: () => runStage(key) })));
+    } else {
+      for (const key of keys) {
+        await runStage(key);
+      }
+    }
   }
 
-  // 2. Parallel group: stage2 + stage7_initial_risk_scan
-  const parallelResult = await runParallel([
-    { key: 'stage2', fn: () => runStage('stage2') },
-    { key: 'stage7_initial_risk_scan', fn: () => runStage('stage7_initial_risk_scan') },
-  ]);
-  // Errors in parallel stages are captured in parallelResult.errors — pipeline continues
-
-  // 3. Remaining stages in sequence
-  const sequentialStages = [
-    { key: 'stage3', num: 3 },
-    { key: 'stage4', num: 4 },
-    { key: 'stage5', num: 5 },
-    { key: 'stage6', num: 6 },
-    { key: 'stage8', num: 8 },
-  ];
-
-  for (const { key, num } of sequentialStages) {
-    if (stopAfterStage !== undefined && num > stopAfterStage) break;
-    await runStage(key);
-  }
-
-  const totalDurationMs = Date.now() - startTime;
-  emit({ type: 'pipeline_complete', stagesCompleted, totalDurationMs });
-
-  return { projectId, stagesCompleted, stagesFailed, totalDurationMs, artefacts };
+  return finish();
 }

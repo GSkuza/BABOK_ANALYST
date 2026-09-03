@@ -1,0 +1,34 @@
+{
+  "topic": "Change Readiness Benchmarks",
+  "description": "Reference figures for assessing organisational readiness for change and for calibrating adoption-risk assumptions in a roadmap or business case. Use as priors, not as forecasts — replace with client data as soon as it is measured.",
+  "items": [
+    {
+      "name": "Sponsor visibility",
+      "description": "Active, visible executive sponsorship is the single strongest predictor of change success.",
+      "indicators": ["Sponsor attends steering committee in person", "Sponsor communicates directly to affected staff at least monthly", "Sponsor removes at least one escalated barrier per quarter"],
+      "response": "Where sponsorship is passive, treat adoption as HIGH risk and add a sponsor-coaching workstream."
+    },
+    {
+      "name": "Middle-management alignment",
+      "description": "Line managers translate change into daily priorities; their resistance is the most common cause of stalled adoption.",
+      "indicators": ["Managers can restate the case for change", "Manager objectives include change outcomes", "Managers cascade communications within one week"],
+      "response": "Add manager-specific ADKAR interventions before staff training."
+    },
+    {
+      "name": "Change saturation",
+      "description": "Number of concurrent change initiatives hitting the same population.",
+      "indicators": ["More than three concurrent initiatives per team", "Recent failed or reversed initiative in the same area"],
+      "response": "Sequence the roadmap to limit concurrent change per population; make saturation explicit in the risk register."
+    }
+  ],
+  "benchmarks": [
+    { "metric": "Projects meeting or exceeding objectives with excellent change management", "value": "~88% vs ~13% with poor change management", "source": "Prosci Best Practices in Change Management (12th ed.)", "year": 2023 },
+    { "metric": "Large-scale transformations that fail to achieve stated goals", "value": "~70%", "source": "McKinsey & Company, organisational transformation surveys", "year": 2021 },
+    { "metric": "Transformations reporting success when senior leaders model behaviour change", "value": "5.3× more likely", "source": "McKinsey Global Survey — How to beat the transformation odds", "year": 2015 },
+    { "metric": "Recommended limit of concurrent major changes per team before adoption degrades", "value": "2–3", "source": "Prosci change saturation research", "year": 2020 }
+  ],
+  "sources": [
+    "Prosci — Best Practices in Change Management (2023)",
+    "McKinsey & Company — The people power of transformations (2017)"
+  ]
+}

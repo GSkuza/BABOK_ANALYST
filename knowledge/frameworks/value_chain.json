@@ -1,0 +1,28 @@
+{
+  "framework": "Porter Value Chain",
+  "origin": "Michael E. Porter, 1985",
+  "description": "Decomposes an organisation into primary and support activities to locate where value (margin) is created or destroyed. Used to scope a diagnostic and to size value-at-stake by activity.",
+  "best_for": [
+    "Scoping which activities an engagement covers and excludes",
+    "Value-at-stake sizing by activity",
+    "Locating cost pools and hand-off waste between activities"
+  ],
+  "dimensions": [
+    { "name": "Inbound Logistics", "description": "Receiving, storing and distributing inputs.", "diagnostic_questions": ["Where do inputs wait, and what does the wait cost?"] },
+    { "name": "Operations", "description": "Transforming inputs into the final product or service.", "diagnostic_questions": ["What is first-pass yield and where is rework concentrated?"] },
+    { "name": "Outbound Logistics", "description": "Collecting, storing and delivering the product to customers.", "diagnostic_questions": ["What is on-time-in-full and what drives misses?"] },
+    { "name": "Marketing & Sales", "description": "Inducing and enabling customers to buy.", "diagnostic_questions": ["What is cost of acquisition per segment and conversion by stage?"] },
+    { "name": "Service", "description": "Maintaining or enhancing value after the sale.", "diagnostic_questions": ["What share of service demand is failure demand?"] },
+    { "name": "Procurement", "description": "Support: acquiring inputs.", "diagnostic_questions": ["What share of spend is under managed contracts?"] },
+    { "name": "Human Resource Management", "description": "Support: recruiting, developing, retaining people.", "diagnostic_questions": ["Where is attrition or vacancy hurting a primary activity?"] },
+    { "name": "Firm Infrastructure", "description": "Support: general management, finance, legal, planning.", "diagnostic_questions": ["Which governance steps add cycle time without reducing risk?"] },
+    { "name": "Technology Development", "description": "Support: know-how and process technology (described as AS-IS context, not solutioned).", "diagnostic_questions": ["Which activities depend on undocumented tacit knowledge?"] }
+  ],
+  "pitfalls": [
+    "Mapping the org chart instead of activities",
+    "Sizing value by headcount rather than by margin impact",
+    "Ignoring support activities because they are 'overhead'"
+  ],
+  "applies_to_stages": [0, 2],
+  "sources": ["Porter, M.E. — 'Competitive Advantage' (1985)"]
+}

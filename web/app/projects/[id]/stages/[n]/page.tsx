@@ -73,7 +73,7 @@ export default async function StagePage({
 
                 <div className="space-y-3">
                   <h1 className="text-4xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                    {STAGE_LABELS[stageNumber] ?? stage.name}
+                    {stage.name ?? STAGE_LABELS[stageNumber]}
                   </h1>
                   <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-400">
                     Review the stage deliverable, then approve or reject it to keep the Two-Key Journal flow moving.
@@ -155,7 +155,7 @@ export default async function StagePage({
                     Previous
                   </div>
                   <div className="mt-1 font-semibold text-slate-950 dark:text-white">
-                    Stage {previousStage.stage}: {STAGE_LABELS[previousStage.stage] ?? previousStage.name}
+                    Stage {previousStage.stage}: {previousStage.name ?? STAGE_LABELS[previousStage.stage]}
                   </div>
                 </Link>
               ) : null}
@@ -167,7 +167,7 @@ export default async function StagePage({
                     <ChevronRight className="h-4 w-4" />
                   </div>
                   <div className="mt-1 text-right font-semibold text-slate-950 dark:text-white">
-                    Stage {nextStage.stage}: {STAGE_LABELS[nextStage.stage] ?? nextStage.name}
+                    Stage {nextStage.stage}: {nextStage.name ?? STAGE_LABELS[nextStage.stage]}
                   </div>
                 </Link>
               ) : null}

@@ -1,0 +1,52 @@
+{
+  "_instructions": "Example project context for the consulting profile. Copy to my_project_context.json, edit, then run: babok run --profile consulting --context my_project_context.json",
+  "project_name": "Order-to-Cash Process Optimisation — Nordwind Logistics",
+  "language": "EN",
+  "engagement_type": "process_optimization",
+  "company": {
+    "name": "Nordwind Logistics Sp. z o.o.",
+    "industry": "Distribution",
+    "size": "450 employees, 3 regional hubs",
+    "country": "Poland"
+  },
+  "sponsor": {
+    "name": "Anna Kowalczyk",
+    "title": "Chief Operating Officer",
+    "level": "C-level"
+  },
+  "engagement_scope": "Diagnose and redesign the order-to-cash operating model across sales administration, warehouse dispatch and invoicing for the domestic B2B channel.",
+  "exclusions": [
+    "No software or system delivery — existing WMS and ERP are described as current-state context only",
+    "Export channel and international entities",
+    "Pricing strategy"
+  ],
+  "fee_structure": {
+    "type": "fixed_fee",
+    "engagement_fee": "180000 PLN",
+    "client_change_budget_ceiling": "1500000 PLN"
+  },
+  "timeline": {
+    "target_date": "2027-03-31"
+  },
+  "governance_cadence": "Steering committee bi-weekly; sponsor 1:1 weekly",
+  "stakeholders": {
+    "key_decision_makers": ["Anna Kowalczyk (COO)", "Marek Nowak (CFO)", "Piotr Zieliński (Head of Sales Administration)"],
+    "affected_functions": ["Sales administration", "Warehouse dispatch", "Invoicing & collections", "Regional hub managers"]
+  },
+  "pain_points": [
+    "Order-to-cash cycle averages 18 days; competitors quote 10",
+    "32% of orders require manual correction before dispatch",
+    "Credit-hold decisions take 2–3 days and sit with a single controller",
+    "Regional hubs run different dispatch procedures"
+  ],
+  "success_criteria": [
+    "Order-to-cash cycle ≤ 10 days by 2027-06-30",
+    "Manual order correction rate ≤ 8%",
+    "Credit-hold decision ≤ 4 hours",
+    "Steering committee adopts one recommended option by 2026-12-15"
+  ],
+  "frameworks": ["dmaic_lean_six_sigma", "value_chain", "adkar"],
+  "change_management": ["change_readiness_benchmarks", "resistance_patterns"],
+  "benchmarks": [],
+  "regulations": []
+}

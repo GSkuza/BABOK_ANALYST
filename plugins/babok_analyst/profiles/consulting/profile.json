@@ -1,0 +1,45 @@
+{
+  "$schema": "../profile.schema.json",
+  "id": "consulting",
+  "name": "Management Consulting Engagement",
+  "description": "Non-IT advisory engagements: process optimisation, digital-transformation strategy (business layer), organisation design and C-level advisory. Diagnostic → options → target operating model → value realisation. Produces recommendations and change roadmaps, never software requirements.",
+  "id_prefix": "BC",
+  "stages": [
+    { "stage": 0, "name": "Engagement Charter & Mandate", "deliverable_file": "STAGE_00_Engagement_Charter.md", "prompt_file": "Consulting_agent_stage_0.md" },
+    { "stage": 1, "name": "Stakeholder & Governance Mapping", "deliverable_file": "STAGE_01_Stakeholder_Governance.md", "prompt_file": "Consulting_agent_stage_1.md" },
+    { "stage": 2, "name": "Current State Diagnostic & Root Cause Analysis", "deliverable_file": "STAGE_02_Current_State_Diagnostic.md", "prompt_file": "Consulting_agent_stage_2.md" },
+    { "stage": 3, "name": "Strategic Options & Recommendation", "deliverable_file": "STAGE_03_Strategic_Options.md", "prompt_file": "Consulting_agent_stage_3.md" },
+    { "stage": 4, "name": "Target Operating Model & Change Roadmap", "deliverable_file": "STAGE_04_Target_Operating_Model.md", "prompt_file": "Consulting_agent_stage_4.md" },
+    { "stage": 5, "name": "Risk, Governance & Change Readiness", "deliverable_file": "STAGE_05_Risk_Change_Readiness.md", "prompt_file": "Consulting_agent_stage_5.md" },
+    { "stage": 6, "name": "Business Case & Value Realization Plan", "deliverable_file": "STAGE_06_Business_Case_Value.md", "prompt_file": "Consulting_agent_stage_6.md" }
+  ],
+  "paths": {
+    "stages_dir": "profiles/consulting/stages",
+    "system_prompt": "profiles/consulting/Consulting_Agent_System_Prompt.md",
+    "templates_dir": "profiles/consulting/templates",
+    "rubric": "profiles/consulting/agents/quality_scoring_rubric.json",
+    "agents_dir": "profiles/consulting/agents"
+  },
+  "scoring": {
+    "scorable_stages": [1, 2, 3, 4, 5, 6]
+  },
+  "validation": {
+    "rules": [
+      { "id": "CRITICAL-RISK-OWNER", "bindings": { "risk": 5 } },
+      { "id": "ROADMAP-DATE", "bindings": { "charter": 0, "roadmap": 4 } },
+      { "id": "BUDGET-CEILING", "bindings": { "charter": 0, "business_case": 6 } },
+      { "id": "RECOMMENDATION-TRACEABILITY", "bindings": { "options": 3, "tom": 4 } }
+    ]
+  },
+  "orchestrator": {
+    "pipeline": [
+      { "type": "sequential", "stages": ["stage1"] },
+      { "type": "parallel", "stages": ["stage2", "stage5_initial_risk_scan"] },
+      { "type": "sequential", "stages": ["stage3", "stage4", "stage6"] }
+    ],
+    "deep_analysis_stages": [2, 3, 6]
+  },
+  "knowledge": {
+    "extra_categories": ["frameworks", "change_management"]
+  }
+}

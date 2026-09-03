@@ -1,0 +1,40 @@
+{
+  "topic": "Resistance Patterns",
+  "description": "Catalogue of recurring resistance behaviours in organisational change, with early indicators and the ADKAR element most often missing. Use when populating the change-readiness assessment and the adoption section of the risk register.",
+  "items": [
+    {
+      "name": "Passive compliance",
+      "description": "People agree in meetings and continue old practice afterwards; no open objection, no adoption.",
+      "indicators": ["Attendance high, usage of new process low", "Workarounds documented in personal spreadsheets", "'We tried this before' in corridor conversations"],
+      "response": "Missing Desire. Surface WIIFM per group; involve informal leaders in design; publish adoption metrics per team."
+    },
+    {
+      "name": "Loss of status or expertise",
+      "description": "Experts whose knowledge is embedded in the current process see the change as devaluing them.",
+      "indicators": ["Key experts absent from workshops", "Objections framed as technical impossibility", "Information hoarding"],
+      "response": "Missing Desire/Ability. Give experts a designer or coach role in the target model; recognise legacy contribution explicitly."
+    },
+    {
+      "name": "Change fatigue",
+      "description": "Cumulative exhaustion from repeated initiatives, regardless of the merit of the current one.",
+      "indicators": ["Cynical humour about 'the next big thing'", "Low workshop energy", "Requests to 'just tell us what to do'"],
+      "response": "Missing Awareness (why this one is different). Sequence the roadmap, retire zombie initiatives, over-deliver on the first quick win."
+    },
+    {
+      "name": "Structural disincentive",
+      "description": "Targets, bonuses or reporting lines reward the old behaviour.",
+      "indicators": ["KPIs unchanged after go-live", "Managers penalised for short-term dips during transition"],
+      "response": "Missing Reinforcement. Align performance management before, not after, the change; make it a roadmap dependency."
+    },
+    {
+      "name": "Sponsor drift",
+      "description": "Executive sponsor's attention moves on before the change is anchored.",
+      "indicators": ["Sponsor delegates steering-committee attendance", "Decisions deferred for more than two cycles", "Budget for reinforcement quietly reallocated"],
+      "response": "Missing Reinforcement at the top. Fix sponsor commitments in the governance cadence; escalate drift as a HIGH risk with a named owner."
+    }
+  ],
+  "sources": [
+    "Hiatt, J. — ADKAR (2006)",
+    "Kotter, J.P., Schlesinger, L.A. — 'Choosing Strategies for Change', HBR (1979, 2008 ed.)"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "../profile.schema.json",
+  "id": "babok",
+  "name": "BABOK v3 Business Analysis",
+  "description": "IT-delivery business analysis per BABOK v3: charter gate plus 8 deliverable stages ending in solution requirements, TO-BE design, roadmap, risk and business case.",
+  "id_prefix": "BABOK",
+  "stages": [
+    { "stage": 0, "name": "Project Charter", "deliverable_file": "STAGE_00_Project_Charter.md", "prompt_file": "BABOK_agent_stage_0.md" },
+    { "stage": 1, "name": "Project Initialization & Stakeholder Mapping", "deliverable_file": "STAGE_01_Project_Initialization.md", "prompt_file": "BABOK_agent_stage_1.md" },
+    { "stage": 2, "name": "Current State Analysis (AS-IS)", "deliverable_file": "STAGE_02_Current_State_Analysis.md", "prompt_file": "BABOK_agent_stage_2.md" },
+    { "stage": 3, "name": "Problem Domain Analysis", "deliverable_file": "STAGE_03_Problem_Domain_Analysis.md", "prompt_file": "BABOK_agent_stage_3.md" },
+    { "stage": 4, "name": "Solution Requirements Definition", "deliverable_file": "STAGE_04_Solution_Requirements.md", "prompt_file": "BABOK_agent_stage_4.md" },
+    { "stage": 5, "name": "Future State Design (TO-BE)", "deliverable_file": "STAGE_05_Future_State_Design.md", "prompt_file": "BABOK_agent_stage_5.md" },
+    { "stage": 6, "name": "Gap Analysis & Implementation Roadmap", "deliverable_file": "STAGE_06_Gap_Analysis_Roadmap.md", "prompt_file": "BABOK_agent_stage_6.md" },
+    { "stage": 7, "name": "Risk Assessment & Mitigation Strategy", "deliverable_file": "STAGE_07_Risk_Assessment.md", "prompt_file": "BABOK_agent_stage_7.md" },
+    { "stage": 8, "name": "Business Case & ROI Model", "deliverable_file": "STAGE_08_Business_Case_ROI.md", "prompt_file": "BABOK_agent_stage_8.md" }
+  ],
+  "paths": {
+    "stages_dir": "BABOK_AGENT/stages",
+    "system_prompt": "BABOK_AGENT/BABOK_Agent_System_Prompt.md",
+    "templates_dir": "templates",
+    "rubric": "BABOK_AGENT/agents/quality_scoring_rubric.json",
+    "agents_dir": "BABOK_AGENT/agents"
+  },
+  "scoring": {
+    "scorable_stages": [1, 2, 3, 4, 5, 6, 7, 8]
+  },
+  "validation": {
+    "rules": [
+      { "id": "FR-TRACEABILITY", "bindings": { "requirements": 4 } },
+      { "id": "BUDGET-CEILING", "bindings": { "charter": 1, "business_case": 8 } },
+      { "id": "INTEGRATION-COVERAGE", "bindings": { "as_is": 2, "to_be": 5 } },
+      { "id": "KPI-COVERAGE", "bindings": { "charter": 1, "as_is": 2 } },
+      { "id": "CRITICAL-RISK-OWNER", "bindings": { "risk": 7 } },
+      { "id": "ROADMAP-DATE", "bindings": { "charter": 1, "roadmap": 6 } }
+    ]
+  },
+  "orchestrator": {
+    "pipeline": [
+      { "type": "sequential", "stages": ["stage1"] },
+      { "type": "parallel", "stages": ["stage2", "stage7_initial_risk_scan"] },
+      { "type": "sequential", "stages": ["stage3", "stage4", "stage5", "stage6", "stage8"] }
+    ],
+    "deep_analysis_stages": [3, 4, 6, 8]
+  },
+  "knowledge": {
+    "extra_categories": []
+  }
+}

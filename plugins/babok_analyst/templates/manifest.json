@@ -1,0 +1,75 @@
+{
+  "version": "2.0",
+  "description": "BABOK deliverable template manifest — maps stages to primary skeletons and optional modules",
+  "rubric_source": "BABOK_AGENT/agents/quality_scoring_rubric.json",
+  "stages": {
+    "0": {
+      "primary": "stages/STAGE_00_Project_Charter.md",
+      "deliverable_file": "STAGE_00_Project_Charter.md",
+      "modules": []
+    },
+    "1": {
+      "primary": "stages/STAGE_01_Project_Initialization.md",
+      "deliverable_file": "STAGE_01_Project_Initialization.md",
+      "modules": ["modules/Approval_Section_Template.md", "modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "2": {
+      "primary": "stages/STAGE_02_Current_State_Analysis.md",
+      "deliverable_file": "STAGE_02_Current_State_Analysis.md",
+      "modules": ["modules/AS_IS_Process_Map_Template.md", "modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "3": {
+      "primary": "stages/STAGE_03_Problem_Domain_Analysis.md",
+      "deliverable_file": "STAGE_03_Problem_Domain_Analysis.md",
+      "modules": ["modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "4": {
+      "primary": "stages/STAGE_04_Solution_Requirements.md",
+      "deliverable_file": "STAGE_04_Solution_Requirements.md",
+      "modules": [
+        "modules/RTM_Template.md",
+        "modules/User_Story_Template.md",
+        "modules/Change_Request_Template.md",
+        "modules/Short_Rationale_Evidence_Block.md"
+      ]
+    },
+    "5": {
+      "primary": "stages/STAGE_05_Future_State_Design.md",
+      "deliverable_file": "STAGE_05_Future_State_Design.md",
+      "modules": ["modules/TO_BE_Design_Decisions_Template.md", "modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "6": {
+      "primary": "stages/STAGE_06_Gap_Analysis_Roadmap.md",
+      "deliverable_file": "STAGE_06_Gap_Analysis_Roadmap.md",
+      "modules": ["modules/Gap_Analysis_Table_Template.md", "modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "7": {
+      "primary": "stages/STAGE_07_Risk_Assessment.md",
+      "deliverable_file": "STAGE_07_Risk_Assessment.md",
+      "modules": ["modules/DPIA_Template.md", "modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "8": {
+      "primary": "stages/STAGE_08_Business_Case_ROI.md",
+      "deliverable_file": "STAGE_08_Business_Case_ROI.md",
+      "modules": ["modules/Business_Case_Financial_Model_Template.md", "modules/Short_Rationale_Evidence_Block.md"]
+    }
+  },
+  "industry_supplements": {
+    "manufacturing": {
+      "1": ["industry/manufacturing/OEE_KPI_Supplement.md"],
+      "2": ["industry/manufacturing/Shop_Floor_Process_AS-IS.md"]
+    },
+    "distribution": {
+      "1": ["industry/distribution/WMS_Inventory_KPI_Supplement.md"]
+    },
+    "compliance": {
+      "4": ["industry/compliance/KSeF_E-Invoicing_Supplement.md"],
+      "7": ["industry/compliance/GDPR_DPIA_Supplement.md"]
+    }
+  },
+  "industry_triggers": {
+    "manufacturing": ["Manufacturing", "manufacturing"],
+    "distribution": ["Distribution", "distribution", "Logistics", "logistics"],
+    "compliance": ["compliance", "GDPR", "KSeF"]
+  }
+}

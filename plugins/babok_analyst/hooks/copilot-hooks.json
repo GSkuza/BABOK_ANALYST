@@ -8,6 +8,32 @@
         "powershell": "node \"${PLUGIN_ROOT}\\hooks\\babok-activate.cjs\"",
         "timeoutSec": 120
       }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "node \"${PLUGIN_ROOT}/hooks/babok-deactivate.cjs\"",
+        "powershell": "node \"${PLUGIN_ROOT}\\hooks\\babok-deactivate.cjs\"",
+        "timeoutSec": 10
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "node \"${PLUGIN_ROOT}/hooks/babok-gate.cjs\"",
+        "powershell": "node \"${PLUGIN_ROOT}\\hooks\\babok-gate.cjs\"",
+        "matcher": ".*babok.*",
+        "timeoutSec": 30
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "node \"${PLUGIN_ROOT}/hooks/babok-quality-gate.cjs\"",
+        "powershell": "node \"${PLUGIN_ROOT}\\hooks\\babok-quality-gate.cjs\"",
+        "matcher": ".*babok.*",
+        "timeoutSec": 30
+      }
     ]
   }
 }

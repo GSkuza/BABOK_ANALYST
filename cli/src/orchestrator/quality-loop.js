@@ -1,23 +1,17 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { getProjectDir } from '../project.js';
 import { readJournal, writeJournal } from '../journal.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// quality_audit_agent.md: cli/src/orchestrator → ../../../ = BABOK_ANALYST/
-const AUDIT_PROMPT_PATH = path.join(
-  __dirname, '..', '..', '..', 'BABOK_AGENT', 'agents', 'quality_audit_agent.md'
-);
+import { DEFAULT_PROFILE_ID, loadProfile, resolveProfilePath } from '../profiles.js';
 
 const FALLBACK_AUDIT_PROMPT =
   'You are a BABOK v3 quality auditor. Evaluate the artefact and return a JSON object ' +
   'with keys: overall (number 0-100), completeness (number), consistency (number), ' +
   'quality (number), improvements (array of strings).';
 
-function loadAuditPrompt() {
+function loadAuditPrompt(profile) {
   try {
-    return fs.readFileSync(AUDIT_PROMPT_PATH, 'utf-8');
+    return fs.readFileSync(path.join(resolveProfilePath(profile, 'agents_dir'), 'quality_audit_agent.md'), 'utf-8');
   } catch {
     return FALLBACK_AUDIT_PROMPT;
   }
@@ -45,7 +39,7 @@ function parseScoreResponse(response) {
  * @param {number} stageNumber
  * @param {string} artefact
  * @param {object} llmClient - { chat(systemPrompt, userMessage): Promise<string> }
- * @param {{ maxIterations?: number, scoreThreshold?: number, onIteration?: Function, dryRun?: boolean }} options
+ * @param {{ maxIterations?: number, scoreThreshold?: number, onIteration?: Function, dryRun?: boolean, profile?: string|object }} options
  * @returns {Promise<{ finalArtefact: string, finalScore: number, iterations: number, passed: boolean, escalated: boolean }>}
  */
 export async function runQualityLoop(projectId, stageNumber, artefact, llmClient, options = {}) {
@@ -55,13 +49,15 @@ export async function runQualityLoop(projectId, stageNumber, artefact, llmClient
     onIteration,
     taskRouter,
     dryRun = false,
+    profile: profileOpt,
   } = options;
 
   if (dryRun) {
     return { finalArtefact: artefact, finalScore: 80, iterations: 1, passed: true, escalated: false };
   }
 
-  const auditSystemPrompt = loadAuditPrompt();
+  const profile = typeof profileOpt === 'string' ? loadProfile(profileOpt) : (profileOpt ?? loadProfile(DEFAULT_PROFILE_ID));
+  const auditSystemPrompt = loadAuditPrompt(profile);
   const iterDir = path.join(getProjectDir(projectId), 'quality_iterations');
   fs.mkdirSync(iterDir, { recursive: true });
 
