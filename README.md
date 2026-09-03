@@ -273,7 +273,7 @@ copilot plugin install babok_analyst@babok_analyst
 | Marketplace manifest | `.claude-plugin/` (Claude), `.agents/plugins/` (Codex) | Plugin registry per host |
 | MCP wiring | `.mcp.json` | 19 tools + 9 stage resources (`${CLAUDE_PLUGIN_ROOT}`) |
 | Lifecycle hooks | `hooks/` | Session activation + `babok-mcp` dependency install |
-| Skills | `skills/babok-analyst/` | Auto-activated BABOK operating rules |
+| Skills | `skills/babok-analyst/`, `skills/eu-pl-law-tracker/` | BABOK operating rules + EU/PL legal tracking workflow |
 | Agents | `agents/` | Orchestrator + per-stage subagents (12) |
 | Commands | `commands/babok-*.md` | `/babok-new`, `/babok-new PL`, `/babok-new ENG`, `/babok-new-pl`, `/babok-new-eng`, `/babok-status`, `/babok-help` |
 | Always-on rules | `AGENTS.md` | Generic agents / Gemini CLI fallback |
