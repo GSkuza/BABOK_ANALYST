@@ -9,6 +9,33 @@ import readline from 'readline';
 import os from 'os';
 import { DEFAULT_PROFILE_ID, getStage, loadProfile, resolveProfilePath } from './profiles.js';
 
+export const LLM_REQUEST_TIMEOUT_MS = 10 * 60 * 1000;
+const LLM_REQUEST_OPTIONS = { timeout: LLM_REQUEST_TIMEOUT_MS, maxRetries: 0 };
+
+/**
+ * Return the provider-suggested delay for a rate-limit error, or null when the
+ * error is unrelated to rate limiting.
+ */
+export function getRateLimitRetryDelayMs(error) {
+  const status = error?.status ?? error?.statusCode ?? error?.response?.status;
+  const message = String(error?.message || '');
+  const code = String(error?.code || error?.type || error?.error?.type || '');
+  if (status !== 429 && !/rate.?limit|too many requests|tpm/i.test(`${code} ${message}`)) return null;
+
+  const headers = error?.headers || error?.response?.headers;
+  const retryAfterMs = headers?.['retry-after-ms'] ?? headers?.get?.('retry-after-ms');
+  const retryAfter = headers?.['retry-after'] ?? headers?.get?.('retry-after');
+  const secondsInMessage = message.match(/(?:try again|retry).*?in\s+([\d.]+)\s*s/i)?.[1];
+  const delayMs = retryAfterMs != null
+    ? Number(retryAfterMs)
+    : retryAfter != null
+      ? Number(retryAfter) * 1000
+      : secondsInMessage != null
+        ? Number(secondsInMessage) * 1000
+        : 20_000;
+  return Number.isFinite(delayMs) ? Math.min(Math.max(1_000, delayMs), 120_000) : 20_000;
+}
+
 // ──────────────────────────────────────────────
 //  PROVIDER REGISTRY
 // ──────────────────────────────────────────────
@@ -482,7 +509,7 @@ export async function initializeProvider(provider, apiKey, modelName) {
       return;
     }
     case 'anthropic': {
-      activeClient = new Anthropic({ apiKey });
+      activeClient = new Anthropic({ apiKey, maxRetries: 0 });
       break;
     }
     case 'huggingface': {
@@ -500,7 +527,7 @@ export async function createOpenAITextResponse(client, model, messages) {
     model,
     input: messages,
     max_output_tokens: 8192,
-  });
+  }, LLM_REQUEST_OPTIONS);
   return response.output_text || '';
 }
 
@@ -510,9 +537,15 @@ export async function streamOpenAITextResponse(client, model, messages, onChunk)
     input: messages,
     max_output_tokens: 8192,
     stream: true,
-  });
+  }, LLM_REQUEST_OPTIONS);
   let fullResponse = '';
   for await (const event of stream) {
+    if (event.type === 'error' || event.type === 'response.failed') {
+      throw new Error(event.message || event.response?.error?.message || 'LLM response failed');
+    }
+    if (event.type === 'response.incomplete') {
+      throw new Error(`LLM response incomplete: ${event.response?.incomplete_details?.reason || 'unknown reason'}`);
+    }
     if (event.type !== 'response.output_text.delta' || !event.delta) continue;
     fullResponse += event.delta;
     if (onChunk) onChunk(event.delta);
@@ -548,7 +581,7 @@ export async function streamAnthropicTextResponse(client, model, systemPrompt, m
 
 /**
  * Create a stateless, reusable LLM client without touching global state.
- * Each chat() call is a single-turn, non-streaming request.
+ * Each chat() call is a single-turn request; onChunk enables live progress.
  * Use in the orchestrator pipeline for per-stage model routing.
  *
  * @param {string} provider
@@ -560,16 +593,28 @@ export function createLlmClient(provider, apiKey, modelName) {
   const info = PROVIDERS[provider];
   if (!info) throw new Error(`createLlmClient: unknown provider "${provider}"`);
   const model = modelName || info.defaultModel;
+  // Reuse the SDK instance across drafts, judges and revisions.
+  let sdkClient;
 
-  const chat = async (systemPrompt, userMessage) => {
+  const chat = async (systemPrompt, userMessage, onChunk) => {
     switch (provider) {
       case 'gemini': {
-        const genAI = new GoogleGenerativeAI(apiKey);
+        const genAI = sdkClient ??= new GoogleGenerativeAI(apiKey);
         const genModel = genAI.getGenerativeModel({
           model,
           systemInstruction: systemPrompt,
           generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
         });
+        if (onChunk) {
+          const result = await genModel.generateContentStream(userMessage);
+          let text = '';
+          for await (const chunk of result.stream) {
+            const delta = chunk.text();
+            text += delta;
+            onChunk(delta);
+          }
+          return text;
+        }
         const result = await genModel.generateContent(userMessage);
         return result.response.text();
       }
@@ -597,13 +642,13 @@ export function createLlmClient(provider, apiKey, modelName) {
         const baseURL = provider === 'local'
           ? (model?.startsWith('http') ? model : 'http://localhost:30000/v1')
           : undefined;
-        const client = new OpenAI({ apiKey: apiKey || 'not-needed', ...(baseURL ? { baseURL } : {}) });
+        const client = sdkClient ??= new OpenAI({ apiKey: apiKey || 'not-needed', maxRetries: 0, ...(baseURL ? { baseURL } : {}) });
         const selectedModel = provider === 'local' ? info.defaultModel : model;
         if (provider === 'openai') {
-          return createOpenAITextResponse(client, selectedModel, [
+          return streamOpenAITextResponse(client, selectedModel, [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage },
-          ]);
+          ], onChunk);
         }
         const resp = await client.chat.completions.create({
           model: selectedModel,
@@ -617,7 +662,11 @@ export function createLlmClient(provider, apiKey, modelName) {
         return resp.choices?.[0]?.message?.content || '';
       }
       case 'anthropic': {
-        const client = new Anthropic({ apiKey });
+        const client = sdkClient ??= new Anthropic({ apiKey, maxRetries: 0 });
+        if (onChunk) {
+          return streamAnthropicTextResponse(client, model, systemPrompt,
+            [{ role: 'user', content: userMessage }], onChunk);
+        }
         return createAnthropicTextResponse(
           client,
           model,
@@ -626,7 +675,7 @@ export function createLlmClient(provider, apiKey, modelName) {
         );
       }
       case 'huggingface': {
-        const hf = new HfInference(apiKey);
+        const hf = sdkClient ??= new HfInference(apiKey);
         const resp = await hf.chatCompletion({
           model,
           messages: [

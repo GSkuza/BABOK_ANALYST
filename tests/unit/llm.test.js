@@ -2,12 +2,80 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   PROVIDERS,
+  LLM_REQUEST_TIMEOUT_MS,
   createAnthropicTextResponse,
+  createLlmClient,
   createOpenAITextResponse,
   discoverProviderModels,
+  getRateLimitRetryDelayMs,
   streamAnthropicTextResponse,
   streamOpenAITextResponse,
 } from '../../cli/src/llm.js';
+
+describe('draft progress through the provider SDKs', () => {
+  for (const provider of ['openai', 'anthropic']) {
+    it(`${provider} does not retry a rejected drafting request`, async t => {
+      let requests = 0;
+      t.mock.method(globalThis, 'fetch', async () => {
+        requests++;
+        return new Response(JSON.stringify({ error: { type: 'rate_limit_error', message: 'Rate limit' } }),
+          { status: 429, headers: { 'content-type': 'application/json' } });
+      });
+      const client = createLlmClient(provider, 'test-key');
+      await assert.rejects(client.chat('System', 'Draft', () => {}));
+      assert.equal(requests, 1);
+    });
+  }
+  it('streams Gemini draft chunks through createLlmClient', async t => {
+    let requestUrl;
+    t.mock.method(globalThis, 'fetch', async url => {
+      requestUrl = String(url);
+      return new Response('data: ' + JSON.stringify({
+        candidates: [{ index: 0, content: { role: 'model', parts: [{ text: 'Live draft' }] }, finishReason: 'STOP' }],
+      }) + '\n\n', { headers: { 'content-type': 'text/event-stream' } });
+    });
+    const chunks = [];
+    const client = createLlmClient('gemini', 'test-key');
+    assert.equal(await client.chat('System', 'Draft', chunk => chunks.push(chunk)), 'Live draft');
+    assert.match(requestUrl, /streamGenerateContent/);
+    assert.deepEqual(chunks, ['Live draft']);
+  });
+
+  it('streams Anthropic draft chunks through createLlmClient', async t => {
+    let request;
+    const events = [
+      { type: 'message_start', message: { id: 'test', type: 'message', role: 'assistant', model: 'test', content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 1, output_tokens: 0 } } },
+      { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
+      { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Live draft' } },
+      { type: 'content_block_stop', index: 0 },
+      { type: 'message_delta', delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: 2 } },
+      { type: 'message_stop' },
+    ];
+    t.mock.method(globalThis, 'fetch', async (url, init) => {
+      request = JSON.parse(init.body);
+      return new Response(events.map(event => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join(''),
+        { headers: { 'content-type': 'text/event-stream' } });
+    });
+    const chunks = [];
+    const client = createLlmClient('anthropic', 'test-key');
+    assert.equal(await client.chat('System', 'Draft', chunk => chunks.push(chunk)), 'Live draft');
+    assert.equal(request.stream, true);
+    assert.deepEqual(chunks, ['Live draft']);
+  });
+});
+
+describe('rate-limit retry guidance', () => {
+  it('uses the wait time included in a provider error', () => {
+    assert.equal(getRateLimitRetryDelayMs({
+      status: 429,
+      message: 'Please try again in 16.593s.',
+    }), 16593);
+  });
+
+  it('does not classify unrelated errors as rate limits', () => {
+    assert.equal(getRateLimitRetryDelayMs({ status: 500, message: 'server error' }), null);
+  });
+});
 
 describe('OpenAI model discovery', () => {
   it('uses the current recommended fallback models', () => {
@@ -171,12 +239,28 @@ describe('Anthropic Messages API', () => {
 });
 
 describe('OpenAI Responses API', () => {
+  for (const event of [
+    { type: 'error', message: 'rate limited' },
+    { type: 'response.failed', response: { error: { message: 'server error' } } },
+    { type: 'response.incomplete', response: { incomplete_details: { reason: 'max_output_tokens' } } },
+  ]) {
+    it(`rejects ${event.type} instead of sending partial text to revision loops`, async () => {
+      const client = { responses: { create: async () => (async function* () {
+        yield { type: 'response.output_text.delta', delta: 'partial document' };
+        yield event;
+      })() } };
+      await assert.rejects(streamOpenAITextResponse(client, 'test-model', []));
+    });
+  }
+
   it('creates a non-streaming text response with supported parameters', async () => {
     let request;
+    let requestOptions;
     const client = {
       responses: {
-        create: async value => {
+        create: async (value, options) => {
           request = value;
+          requestOptions = options;
           return { output_text: 'analysis result' };
         },
       },
@@ -191,6 +275,7 @@ describe('OpenAI Responses API', () => {
       input: messages,
       max_output_tokens: 8192,
     });
+    assert.deepEqual(requestOptions, { timeout: LLM_REQUEST_TIMEOUT_MS, maxRetries: 0 });
   });
 
   it('collects only output-text delta events from a stream', async () => {
@@ -201,10 +286,12 @@ describe('OpenAI Responses API', () => {
       yield { type: 'response.completed' };
     }
     let request;
+    let requestOptions;
     const client = {
       responses: {
-        create: async value => {
+        create: async (value, options) => {
           request = value;
+          requestOptions = options;
           return events();
         },
       },
@@ -223,5 +310,6 @@ describe('OpenAI Responses API', () => {
     assert.equal(request.stream, true);
     assert.equal(request.model, 'gpt-6-astra');
     assert.equal('temperature' in request, false);
+    assert.deepEqual(requestOptions, { timeout: LLM_REQUEST_TIMEOUT_MS, maxRetries: 0 });
   });
 });

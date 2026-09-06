@@ -11,9 +11,9 @@ import path from 'path';
 import { getProjectDir } from '../project.js';
 import { getProjectProfile } from '../journal.js';
 import { DEFAULT_PROFILE_ID, loadProfile, resolveProfilePath } from '../profiles.js';
-import { checkCompleteness } from './checks/completeness.js';
-import { checkSmart } from './checks/smart.js';
-import { checkConsistency } from './checks/consistency.js';
+import { scoreContent } from './score-content.js';
+
+export { scoreContent };
 
 const _rubricCache = new Map();
 function loadRubric(profile) {
@@ -83,44 +83,14 @@ export async function scoreStage(projectId, stageNumber, options = {}) {
   }
 
   const content = readFileSync(deliverablePath, 'utf-8');
-
-  // --- Run checks ---
-  const completenessResult = checkCompleteness(content, stageRubric.required_sections || []);
-  const smartResult = checkSmart(content, stageRubric.quality_criteria || []);
-  const consistencyResult = checkConsistency(content, stageRubric.consistency_checks || [], stageRubric.builtin_consistency);
-
-  // Weights from rubric (fall back to global defaults)
-  const weights = stageRubric.weights || rubric.scoring || {};
-  const wComp = weights.completeness ?? 0.4;
-  const wCons = weights.consistency ?? 0.3;
-  const wQual = weights.quality ?? 0.3;
-
-  const overall =
-    completenessResult.score * wComp +
-    consistencyResult.score * wCons +
-    smartResult.score * wQual;
-
-  const roundedOverall = Math.round(overall * 10) / 10;
-  const minScore = rubric.scoring?.min_overall_score ?? 75; // 75 is the BABOK standard default
+  const scored = await scoreContent(content, stageRubric, rubric, { stageNumber });
 
   /** @type {ScoreReport} */
   const report = {
     projectId,
     stage: stageNumber,
     timestamp: new Date().toISOString(),
-    scores: {
-      completeness: completenessResult.score,
-      consistency: consistencyResult.score,
-      quality: smartResult.score,
-      overall: roundedOverall,
-    },
-    passed: roundedOverall >= minScore,
-    issues: [
-      ...completenessResult.issues,
-      ...smartResult.issues,
-      ...consistencyResult.issues,
-    ],
-    rubricVersion: rubric.version,
+    ...scored,
   };
 
   // --- Persist score report ---

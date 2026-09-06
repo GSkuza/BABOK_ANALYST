@@ -235,6 +235,36 @@ Load before writing the deliverable:
 - CLI/file: read `templates/stages/STAGE_04_Solution_Requirements.md`
 
 **Critical:** Keep all H2 headings from the template unchanged so `babok score` completeness checks pass.
+
+---
+
+## Single-Request Generation Procedure (MANDATORY — this is a deep-analysis stage)
+
+Generate the complete deliverable in exactly one LLM request. Treat the groups below as the required section
+order inside that response. Perform consistency and quality checks internally before returning the final
+Markdown; do not make separate LLM calls for scoring, critique, revision, or summarisation.
+
+1. **Batch "core"** — Executive Summary, Functional Requirements (FR-NNN), Non-Functional Requirements
+   (NFR-NNN). Every FR must trace to a problem from Stage 3 — do not invent requirements addressing
+   problems not identified there. NFRs need real numeric thresholds (e.g. response time < 2s), not vague
+   adjectives like "fast" or "secure". Do not reference RTM/Change Control/Compliance yet.
+2. **Batch "derived"** — User Stories with Acceptance Criteria, Requirements Traceability Matrix (RTM),
+   Change Control Process. Build on the FR/NFR already in the document above. Every FR-NNN must appear in
+   the RTM with no gaps. Acceptance criteria must each produce an observable, testable outcome.
+3. **Batch "closing"** — Regulatory Compliance Requirements, Quality Checklist, Approval Section. Use the
+   complete document above as context. Only include regulatory requirements Stage 1 actually identified as
+   applicable.
+
+Before returning the response, perform this **deep-analysis check** internally within the same request,
+explicitly playing three roles in sequence:
+- **Analyst** — a thorough, BABOK-compliant pass over everything written so far.
+- **Critic** — challenge every claim: does every FR genuinely trace to a Stage 3 problem, do NFRs carry
+  real thresholds, does every FR appear in the RTM, or is any of this plausible-sounding filler?
+- **Synthesiser** — produce the final version resolving every objection the Critic raised.
+
+Use these perspectives as an internal checklist and return only the final synthesis. Do not expose chain of
+thought or make follow-up model calls. Save and submit the result for human review after this check.
+
 ---
 
 ## Quality Checklist for Stage 4

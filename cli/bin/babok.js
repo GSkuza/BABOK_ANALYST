@@ -196,8 +196,8 @@ program
   .option('-s, --stages <list>', 'Comma-separated stages to run, e.g. "1,2,3" (default: all)')
   .option('--profile <id>', 'Pipeline profile (see profiles/); prompts interactively if omitted')
   .option('--auto', 'Skip interactive review — run all stages fully automatically')
-  .option('--debate', 'Enable Analyst→Critic→Synthesiser debate for deep-analysis stages (3,4,6,8)')
-  .option('--verify', 'Enable Chain-of-Verification (CoVe) fact-check pass on all stages')
+  .option('--debate', '(compatibility) Drafting uses one LLM request with local validation')
+  .option('--verify', '(compatibility) Drafting uses one LLM request with local validation')
   .option('--diagram', 'Generate Mermaid process diagrams for Stage 2 (AS-IS) and Stage 5 (TO-BE)')
   .option('--orchestrate', 'Use orchestrator engine for automated multi-stage pipeline')
   .action(runAnalysis);

@@ -3,6 +3,11 @@ import path from 'path';
 import { getProjectDir } from '../project.js';
 import { readJournal, writeJournal } from '../journal.js';
 import { DEFAULT_PROFILE_ID, loadProfile, resolveProfilePath } from '../profiles.js';
+import { iterateUntilThreshold } from '../quality/iterate-loop.js';
+import { loadRubric } from '../templates.js';
+import { scoreContent } from '../quality/score-content.js';
+
+const DEFAULT_FALLBACK_SCORE = 50;
 
 const FALLBACK_AUDIT_PROMPT =
   'You are a BABOK v3 quality auditor. Evaluate the artefact and return a JSON object ' +
@@ -60,18 +65,17 @@ export async function runQualityLoop(projectId, stageNumber, artefact, llmClient
   const auditSystemPrompt = loadAuditPrompt(profile);
   const iterDir = path.join(getProjectDir(projectId), 'quality_iterations');
   fs.mkdirSync(iterDir, { recursive: true });
+  const stageTag = String(stageNumber).padStart(2, '0');
 
-  let currentArtefact = artefact;
-  let finalScore = 0;
-  let passed = false;
-  let iteration = 0;
-
-  for (iteration = 1; iteration <= maxIterations; iteration++) {
-    // Step a: score the artefact
+  const scoreFn = async (content, iteration) => {
     let scoreObj = null;
-    if (taskRouter?.scoreQuality) {
+    if (options.localOnly) {
+      const rubric = loadRubric(profile);
+      const result = await scoreContent(content, rubric.stages[`stage${stageNumber}`] || {}, rubric);
+      scoreObj = { ...result.scores, issues: result.issues, validation: 'local' };
+    } else if (taskRouter?.scoreQuality) {
       try {
-        scoreObj = await taskRouter.scoreQuality({ stageNumber, artefact: currentArtefact });
+        scoreObj = await taskRouter.scoreQuality({ stageNumber, artefact: content });
       } catch {
         scoreObj = null;
       }
@@ -81,62 +85,56 @@ export async function runQualityLoop(projectId, stageNumber, artefact, llmClient
       const scoreMessage =
         'Score this BABOK stage ' + stageNumber + ' artefact and return JSON: ' +
         '{"overall":number,"completeness":number,"consistency":number,"quality":number,' +
-        '"improvements":["string"]}\n\nARTEFACT:\n' + currentArtefact;
+        '"improvements":["string"]}\n\nARTEFACT:\n' + content;
 
       const scoreResponse = await llmClient.chat(auditSystemPrompt, scoreMessage);
       scoreObj = parseScoreResponse(scoreResponse);
     }
-    finalScore = scoreObj?.overall ?? 50;
 
-    // Save iteration snapshot
-    const stageTag = String(stageNumber).padStart(2, '0');
+    // Save iteration snapshot (same on-disk shape as before the iterate-loop extraction)
     const snapshotPath = path.join(iterDir, `STAGE_${stageTag}_iter${iteration}.json`);
     fs.writeFileSync(snapshotPath, JSON.stringify({
       stage: stageNumber,
       iteration,
-      score: scoreObj ?? { overall: finalScore },
-      artefactLength: currentArtefact.length,
+      score: scoreObj ?? { overall: DEFAULT_FALLBACK_SCORE },
+      artefactLength: content.length,
       timestamp: new Date().toISOString(),
     }, null, 2), 'utf-8');
 
-    onIteration?.({ stage: stageNumber, iteration, score: finalScore, escalated: false });
+    return scoreObj;
+  };
 
-    // Step e: passed?
-    if (finalScore >= scoreThreshold) {
-      passed = true;
-      break;
-    }
+  const reviseFn = async (content, scoreObj) => {
+    const improvements = Array.isArray(scoreObj?.improvements)
+      ? scoreObj.improvements.join('\n- ')
+      : 'Improve completeness, consistency, and SMART quality.';
 
-    // Step f: not last iteration — request improvements
-    if (iteration < maxIterations) {
-      const improvements = Array.isArray(scoreObj?.improvements)
-        ? scoreObj.improvements.join('\n- ')
-        : 'Improve completeness, consistency, and SMART quality.';
+    const improveMessage =
+      'Improve this BABOK stage ' + stageNumber + ' artefact based on the following issues:\n' +
+      '- ' + improvements + '\n\n' +
+      'Return the complete improved artefact.\n\nARTEFACT:\n' + content;
 
-      const improveMessage =
-        'Improve this BABOK stage ' + stageNumber + ' artefact based on the following issues:\n' +
-        '- ' + improvements + '\n\n' +
-        'Return the complete improved artefact.\n\nARTEFACT:\n' + currentArtefact;
+    return llmClient.chat(auditSystemPrompt, improveMessage);
+  };
 
-      currentArtefact = await llmClient.chat(auditSystemPrompt, improveMessage);
-    }
-  }
-
-  const escalated = !passed;
-
-  if (escalated) {
-    onIteration?.({ stage: stageNumber, iteration: maxIterations, score: finalScore, escalated: true });
-  }
+  const result = await iterateUntilThreshold(artefact, {
+    scoreFn,
+    reviseFn,
+    maxIterations: options.localOnly ? 1 : maxIterations,
+    threshold: scoreThreshold,
+    defaultScore: DEFAULT_FALLBACK_SCORE,
+    onIteration: (e) => onIteration?.({ stage: stageNumber, iteration: e.iteration, score: e.score, escalated: e.escalated }),
+  });
 
   // Update journal
   try {
     const journal = readJournal(projectId);
     journal.quality_reports = journal.quality_reports || {};
     journal.quality_reports[`stage${stageNumber}`] = {
-      scores: { overall: finalScore },
-      iterations: iteration > maxIterations ? maxIterations : iteration,
-      passed,
-      escalated,
+      scores: { overall: result.finalScore },
+      iterations: result.iterations,
+      passed: result.passed,
+      escalated: result.escalated,
     };
     writeJournal(projectId, journal);
   } catch {
@@ -144,10 +142,10 @@ export async function runQualityLoop(projectId, stageNumber, artefact, llmClient
   }
 
   return {
-    finalArtefact: currentArtefact,
-    finalScore,
-    iterations: iteration > maxIterations ? maxIterations : iteration,
-    passed,
-    escalated,
+    finalArtefact: result.content,
+    finalScore: result.finalScore,
+    iterations: result.iterations,
+    passed: result.passed,
+    escalated: result.escalated,
   };
 }

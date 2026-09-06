@@ -1,8 +1,10 @@
 import chalk from 'chalk';
 import readline from 'readline';
 import { resolveProjectId, getProjectDir } from '../project.js';
-import { readJournal, writeJournal } from '../journal.js';
-import { getMaxStage, loadProfile } from '../profiles.js';
+import { readJournal, writeJournal, guardSaveDeliverable, submitForReview } from '../journal.js';
+import { sha256Content } from '../two-key-gate.js';
+import { getMaxStage, getStageFileNames, loadProfile } from '../profiles.js';
+import { loadRubric } from '../templates.js';
 import { header, keyValue, line } from '../display.js';
 import { 
   PROVIDERS,
@@ -23,6 +25,8 @@ import fs from 'fs';
 import path from 'path';
 import { acquireLock, releaseLock, formatLockInfo } from '../lock.js';
 import { runDebate } from '../reasoning/debate.js';
+import { generateStagedDeliverable } from '../generation/staged-generator.js';
+import { buildStageSystemPromptBase } from '../generation/prompt-builder.js';
 
 /**
  * Interactive chat command for BABOK stages
@@ -342,12 +346,16 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
       }
       return 'stage_changed';
 
+    case '/generate':
+      return await handleGenerate(projectId, stageNumber, journal);
+
     case '/help':
     case '/?':
       console.log(chalk.dim('\nAvailable commands:'));
       console.log(chalk.dim('  /exit, /quit, /q  - End chat session and save'));
       console.log(chalk.dim('  /save             - Save conversation to project'));
       console.log(chalk.dim('  /clear            - Clear conversation history'));
+      console.log(chalk.dim('  /generate         - Generate the complete stage deliverable in one request, validate locally and save it'));
       console.log(chalk.dim('  /stage N          - Switch to stage N (1-8)'));
       console.log(chalk.dim('  /status           - Show project status'));
       console.log(chalk.dim('  /provider         - Show current provider info'));
@@ -454,6 +462,117 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
       console.log(chalk.red(`\nUnknown command: ${cmd}. Type /help for available commands.`));
       return 'handled';
   }
+}
+
+/**
+ * `/generate` — produce the stage deliverable in one LLM request and
+ * persist it exactly like the MCP `babok_save_deliverable` +
+ * `babok_submit_for_review` tools would: Two-Key-gated save, then an agent
+ * submission so a human only needs to run `babok approve <id> <stage>` next.
+ */
+async function handleGenerate(projectId, stageNumber, journal) {
+  const stage = journal.stages.find(s => s.stage === stageNumber);
+  if (!stage) {
+    console.log(chalk.red(`\n  Error: stage ${stageNumber} not found in journal.`));
+    return 'handled';
+  }
+
+  try {
+    guardSaveDeliverable(stage);
+  } catch (err) {
+    console.log(chalk.red(`\n  Error: ${err.message}`));
+    return 'handled';
+  }
+
+  const profile = loadProfile(journal.profile);
+  const rubric = loadRubric(profile);
+  const stageRubric = rubric.stages[`stage${stageNumber}`];
+  if (!stageRubric) {
+    console.log(chalk.red(`\n  Error: no rubric entry for stage ${stageNumber} (profile ${profile.id}).`));
+    return 'handled';
+  }
+  const isDeepStage = profile.orchestrator.deep_analysis_stages.includes(stageNumber);
+  const stageMeta = profile.stages.find(s => s.stage === stageNumber);
+  const language = journal.language === 'PL' ? 'PL' : 'EN';
+
+  const projectContext = {
+    project_id: journal.project_id,
+    project_name: journal.project_name,
+    language: journal.language,
+    decisions: journal.decisions,
+    assumptions: journal.assumptions,
+    open_questions: journal.open_questions,
+    conversation: loadConversationHistory(projectId, stageNumber),
+  };
+
+  const systemPromptBase = buildStageSystemPromptBase(profile, stageNumber, projectContext, language);
+  const userMessageIntro = language === 'PL'
+    ? `Wygeneruj kompletny dokument dostarczany dla Etapu ${stageNumber}: "${stageMeta?.name || ''}". Użyj kontekstu projektu i dotychczasowej rozmowy.`
+    : `Generate the complete deliverable document for Stage ${stageNumber}: "${stageMeta?.name || ''}". Use the project context and the conversation so far.`;
+
+  // Reuse the already-initialized provider session (set by `initializeProvider`
+  // earlier in chatCommand) via the same {chat} adapter pattern already used
+  // for the --debate flag above.
+  const generationLlmClient = {
+    chat: async (systemPrompt, userMessage, onChunk) => {
+      startChatSession(systemPrompt, []);
+      return sendMessageStream(userMessage, onChunk);
+    },
+  };
+
+  console.log(chalk.yellow('\n  Generating complete deliverable...'));
+
+  try {
+    const generation = await generateStagedDeliverable({
+      stageNumber,
+      profile,
+      llmClient: generationLlmClient,
+      systemPromptBase,
+      userMessageIntro,
+      context: projectContext,
+      rubric,
+      stageRubric,
+      batchGroups: stageRubric.generation_batches,
+      isDeepStage,
+      projectDir: getProjectDir(projectId),
+      options: {
+        model: getActiveProviderInfo().model,
+        onProgress: event => {
+          if (event.type === 'draft_started') {
+            process.stdout.write('\n  Drafting...');
+          } else if (event.type === 'local_scoring') {
+            process.stdout.write(' -> local validation...');
+          } else if (event.type === 'generation_complete') {
+            process.stdout.write(` -> score ${event.score}${event.passed ? '' : ' (requires review)'}`);
+          }
+        },
+      },
+    });
+
+    const fileName = getStageFileNames(profile)[stageNumber];
+    const filePath = path.join(getProjectDir(projectId), fileName);
+    fs.writeFileSync(filePath, generation.finalDocument, 'utf-8');
+
+    const sha = sha256Content(generation.finalDocument);
+    stage.deliverable_file = fileName;
+    if (stage.status === 'in_progress' || stage.revision_open) {
+      stage.status = 'completed';
+      stage.revision_open = false;
+    }
+    if (!stage.completed_at) stage.completed_at = new Date().toISOString();
+    stage.generation_batches_used = generation.batches;
+    stage.final_pass_mode = generation.finalPass.mode;
+    writeJournal(projectId, journal);
+    submitForReview(projectId, stageNumber, sha);
+
+    console.log(chalk.green(`\n  ✓ Deliverable generated and saved: ${fileName}`));
+    console.log(chalk.dim(`    LLM requests: 1; local validation: ${generation.finalPass.finalScore}`));
+    console.log(chalk.dim(`    Submitted for review. Next: babok approve ${projectId} ${stageNumber}`));
+  } catch (err) {
+    console.log(chalk.red(`\n  Error generating deliverable: ${err.message}`));
+  }
+
+  return 'handled';
 }
 
 /**

@@ -224,6 +224,34 @@ Load before writing the deliverable:
 - CLI/file: read `templates/stages/STAGE_03_Problem_Domain_Analysis.md`
 
 **Critical:** Keep all H2 headings from the template unchanged so `babok score` completeness checks pass.
+
+---
+
+## Single-Request Generation Procedure (MANDATORY — this is a deep-analysis stage)
+
+Generate the complete deliverable in exactly one LLM request. Treat the groups below as the required section
+order inside that response. Perform consistency and quality checks internally before returning the final
+Markdown; do not make separate LLM calls for scoring, critique, revision, or summarisation.
+
+1. **Batch "core"** — Executive Summary, Root Cause Analysis (5 Whys or Ishikawa), Problem Statements.
+   Trace every root cause to a specific pain point or bottleneck from Stage 1/2 — go at least 3 levels deep
+   (3 Whys minimum), not a single surface-level cause. Problem statements must be measurable, not vague
+   complaints.
+2. **Batch "prioritisation"** — Problem Prioritisation Matrix, Impact Assessment. Use the problem statements
+   above. Prioritise using two quantifiable dimensions (e.g. Impact x Likelihood), and rank any
+   compliance-related problem high priority if Stage 1 identified applicable regulations.
+3. **Batch "closing"** — Quality Checklist, Approval Section. Use the complete document above as context.
+
+Before returning the response, perform this **deep-analysis check** internally within the same request,
+explicitly playing three roles in sequence:
+- **Analyst** — a thorough, BABOK-compliant pass over everything written so far.
+- **Critic** — challenge every claim: is each root cause genuinely traced 3+ levels deep, or does it stop
+  at a surface symptom? Is each problem statement truly measurable, or just plausible-sounding filler?
+- **Synthesiser** — produce the final version resolving every objection the Critic raised.
+
+Use these perspectives as an internal checklist and return only the final synthesis. Do not expose chain of
+thought or make follow-up model calls. Save and submit the result for human review after this check.
+
 ---
 
 ## Quality Checklist for Stage 3

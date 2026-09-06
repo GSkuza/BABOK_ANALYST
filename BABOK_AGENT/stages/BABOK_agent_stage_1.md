@@ -201,6 +201,35 @@ Load before writing the deliverable:
 - CLI/file: read `templates/stages/STAGE_01_Project_Initialization.md`
 
 **Critical:** Keep all H2 headings from the template unchanged so `babok score` completeness checks pass.
+
+---
+
+## Single-Request Generation Procedure (MANDATORY)
+
+Generate the complete deliverable in exactly one LLM request. Treat the groups below as the required section
+order inside that response. Perform consistency and quality checks internally before returning the final
+Markdown; do not make separate LLM calls for scoring, critique, revision, or summarisation.
+
+1. **Batch "core"** — Executive Summary, Project Scope — In Scope, Project Scope — Out of Scope.
+   Define what this project actually covers and excludes, in terms specific to the stated industry and
+   systems — not generic scope boilerplate.
+2. **Batch "landscape_stakeholders"** — System Landscape, Stakeholder Register, RACI Matrix.
+   Use the scope from the core batch above. Name real systems and real stakeholder roles implied by that
+   scope; the RACI must reference the same roles listed in the Stakeholder Register, not generic placeholders.
+3. **Batch "success_criteria"** — Success Criteria — Quantitative KPIs, Success Criteria — ROI Targets,
+   Communication Plan. KPIs must have real numeric baseline/target values grounded in the project context,
+   not placeholder numbers.
+4. **Batch "constraints_compliance"** — Regulatory Requirements, Project Constraints, Assumptions & Dependencies.
+   Regulatory requirements must be consistent with the scope items from the core batch (only flag regulations
+   actually implicated by what's in scope).
+5. **Batch "closing"** — Open Questions, Quality Checklist, Approval Section. Use the complete document
+   above as context.
+
+Before returning the response, check the entire document once against this bar — is every KPI/date/
+budget figure grounded in the actual context rather than invented filler, does the RACI genuinely reference
+the Stakeholder Register, are regulatory items tied to real scope items? Fix anything that reads as generic
+before saving and submitting it for human review.
+
 ---
 
 ## Quality Checklist for Stage 1

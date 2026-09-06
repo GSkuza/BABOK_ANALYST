@@ -15,6 +15,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const MIRRORED = [
   ['cli/src/profiles.js', 'babok-mcp/src/lib/profiles.js'],
   ['cli/src/two-key-gate.js', 'babok-mcp/src/lib/two-key-gate.js'],
+  ['cli/src/quality/checks/completeness.js', 'babok-mcp/src/lib/quality/checks/completeness.js'],
+  ['cli/src/quality/checks/smart.js', 'babok-mcp/src/lib/quality/checks/smart.js'],
+  ['cli/src/quality/checks/consistency.js', 'babok-mcp/src/lib/quality/checks/consistency.js'],
+  ['cli/src/quality/checks/depth.js', 'babok-mcp/src/lib/quality/checks/depth.js'],
+  ['cli/src/quality/score-content.js', 'babok-mcp/src/lib/quality/score-content.js'],
+  ['cli/src/quality/prompts/depth_judge.md', 'babok-mcp/src/lib/quality/prompts/depth_judge.md'],
 ];
 
 const normalize = (s) => s.replace(/\r\n/g, '\n');

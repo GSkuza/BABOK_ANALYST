@@ -5,9 +5,39 @@ import { readContext, mergeStageOutput } from './context-manager.js';
 import { executeStage } from './stage-executor.js';
 import { runQualityLoop } from './quality-loop.js';
 import { getProjectDir } from '../project.js';
-import { getProjectProfile } from '../journal.js';
-import { DEFAULT_PROFILE_ID, loadProfile, resolveProfilePath } from '../profiles.js';
+import { getProjectProfile, readJournal, writeJournal } from '../journal.js';
+import { DEFAULT_PROFILE_ID, getStageFileNames, loadProfile, resolveProfilePath } from '../profiles.js';
 import { createMessageBus } from './message-bus.js';
+
+/**
+ * Persist a full-stage deliverable's journal bookkeeping (status, deliverable
+ * file, next-stage unlock) the same way cli/src/commands/run.js's
+ * updateJournalStage does for its own (non-orchestrated) path — kept as a
+ * small local twin rather than a shared import because run.js supports an
+ * arbitrary --output directory while this path always uses the canonical
+ * projects/<id>/ directory via readJournal/writeJournal.
+ */
+function recordFullStageDeliverable(projectId, stageNumber, fileName, extra = {}) {
+  const journal = readJournal(projectId);
+  const now = new Date().toISOString();
+  const stage = journal.stages.find(s => s.stage === stageNumber);
+  if (stage) {
+    stage.status = 'approved';
+    stage.completed_at = now;
+    stage.approved_at = now;
+    stage.approved_by = 'auto-run';
+    stage.deliverable_file = fileName;
+    Object.assign(stage, extra);
+  }
+  const nextStage = journal.stages.find(s => s.stage === stageNumber + 1);
+  if (nextStage && nextStage.status === 'not_started') {
+    nextStage.status = 'in_progress';
+    nextStage.started_at = now;
+    journal.current_stage = stageNumber + 1;
+  }
+  journal.last_updated = now;
+  writeJournal(projectId, journal);
+}
 
 function loadJsonConfig(filePath) {
   try {
@@ -72,6 +102,15 @@ export async function runPipeline(projectId, options = {}) {
   const deepAnalysisClient = providedDeepClient ?? llmClient;
   const messageBus = createMessageBus(projectId);
 
+  // Best-effort — a journal may not exist yet (e.g. dryRun tests against a
+  // scratch projectId), in which case English is a safe default.
+  let language = 'EN';
+  try {
+    language = readJournal(projectId).language || 'EN';
+  } catch {
+    // no journal — default stands
+  }
+
   const emit = (event) => {
     onProgress?.(event);
     messageBus.publish(event.type, event);
@@ -97,14 +136,18 @@ export async function runPipeline(projectId, options = {}) {
 
     try {
       const execResult = await executeStage(
-        stageKey, stageConfig, context, clientForStage, { dryRun, projectId }
+        stageKey, stageConfig, context, clientForStage, { dryRun, projectId, profile, stageNumber, language }
       );
 
+      // Each task uses one generation call. Persist local validation only;
+      // neither the router's LLM judge nor automatic revisions run here.
       const qualityResult = await runQualityLoop(
         projectId, stageNumber, execResult.artefact, clientForStage, {
           dryRun,
           profile,
           taskRouter,
+          localOnly: true,
+          maxIterations: 1,
           onIteration: (e) => emit({
             type: e.escalated ? 'quality_escalate' : 'quality_iteration',
             ...e,
@@ -118,6 +161,19 @@ export async function runPipeline(projectId, options = {}) {
 
       artefacts[stageKey] = qualityResult.finalArtefact;
       stagesCompleted.push(stageKey);
+
+      // Bridge to the canonical STAGE_NN_*.md deliverable + journal so a full
+      // stage deliverable produced by --orchestrate can actually be approved
+      // via `babok approve` (previously only artifacts/<stageKey>/artefact.md
+      // was written, which the Two-Key gate never looks at).
+      if (execResult.isFullStageDeliverable && !dryRun) {
+        const fileName = getStageFileNames(profile)[stageNumber];
+        fs.writeFileSync(path.join(getProjectDir(projectId), fileName), qualityResult.finalArtefact, 'utf-8');
+        recordFullStageDeliverable(projectId, stageNumber, fileName, {
+          generation_batches_used: execResult.generation?.batches ?? null,
+          final_pass_mode: execResult.generation?.finalPass?.mode ?? null,
+        });
+      }
 
       emit({ type: 'stage_completed', stage: stageKey });
       return qualityResult.finalArtefact;

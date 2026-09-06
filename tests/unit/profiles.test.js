@@ -117,6 +117,29 @@ for (const id of listProfileIds()) {
       }
     });
 
+    it('every scorable stage has hand-authored generation_batches covering every required section', () => {
+      const rubric = JSON.parse(fs.readFileSync(resolveProfilePath(p, 'rubric'), 'utf-8'));
+      for (const n of p.scoring.scorable_stages) {
+        const stageRubric = rubric.stages[`stage${n}`];
+        const batches = stageRubric.generation_batches;
+        assert.ok(Array.isArray(batches) && batches.length > 0, `stage${n} generation_batches missing/empty`);
+
+        const covered = batches.flatMap(b => {
+          assert.ok(b.id && b.title && Array.isArray(b.sections) && b.sections.length > 0 && b.instruction,
+            `stage${n} batch is missing id/title/sections/instruction`);
+          return b.sections;
+        });
+
+        // Same case-insensitive substring match as checkCompleteness's sectionPresent().
+        for (const required of stageRubric.required_sections) {
+          const found = covered.some(s =>
+            s.toLowerCase().includes(required.toLowerCase()) || required.toLowerCase().includes(s.toLowerCase())
+          );
+          assert.ok(found, `stage${n} required section "${required}" is not covered by any generation_batches entry`);
+        }
+      }
+    });
+
     it('every scorable stage skeleton passes the completeness check against its rubric', () => {
       for (const n of p.scoring.scorable_stages) {
         const { text, requiredSections } = loadTemplatesForStage(n, { includeModules: false, profile: p });

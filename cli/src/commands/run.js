@@ -11,21 +11,18 @@ import {
   getApiKey,
   initializeProvider,
   createLlmClient,
-  startChatSession,
-  sendMessageStream,
-  loadStagePrompt,
-  loadMainSystemPrompt,
+  getRateLimitRetryDelayMs,
   PROVIDERS,
   promptForProvider,
   listStoredProviders,
 } from '../llm.js';
-import { runDebate, markDebateInJournal } from '../reasoning/debate.js';
-import { runCoVe } from '../reasoning/verify.js';
-import { generateProcessDiagram } from '../reasoning/process-mapper.js';
 import { runPipeline } from '../orchestrator/engine.js';
 import { writeContext } from '../orchestrator/context-manager.js';
-import { loadTemplatesForStage } from '../templates.js';
+import { createJournal } from '../journal.js';
+import { loadRubric } from '../templates.js';
 import { createTaskRouter } from '../router.js';
+import { generateStagedDeliverable } from '../generation/staged-generator.js';
+import { buildStageSystemPromptBase } from '../generation/prompt-builder.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -199,12 +196,9 @@ async function fillContextInteractively(contextPath, context) {
   return context;
 }
 
-function loadStageTemplateText(stageNum, projectContext = null, profile = null) {
-  return loadTemplatesForStage(stageNum, { includeModules: true, projectContext, profile }).text;
-}
-
-function createRunJournal(projectId, projectName, language, projectDir, profile) {
+function createRunJournal(projectId, projectName, language, projectDir, profile, stagesToRun) {
   const now = new Date().toISOString();
+  const firstStage = stagesToRun[0];
   const journal = {
     project_id: projectId,
     project_name: projectName,
@@ -212,14 +206,14 @@ function createRunJournal(projectId, projectName, language, projectDir, profile)
     language,
     created_at: now,
     last_updated: now,
-    current_stage: 1,
+    current_stage: firstStage,
     current_status: 'in_progress',
     run_mode: 'automated',
-    stages: profile.stages.map((s, i) => ({
+    stages: profile.stages.map(s => ({
       stage: s.stage,
       name: s.name,
-      status: i === 0 ? 'in_progress' : 'not_started',
-      started_at: i === 0 ? now : null,
+      status: s.stage === firstStage ? 'in_progress' : 'not_started',
+      started_at: s.stage === firstStage ? now : null,
       completed_at: null,
       approved_at: null,
       approved_by: null,
@@ -235,7 +229,7 @@ function createRunJournal(projectId, projectName, language, projectDir, profile)
   return journal;
 }
 
-function updateJournalStage(journal, stageNum, projectDir, fileName) {
+function updateJournalStage(journal, stageNum, projectDir, fileName, extra = {}) {
   const now = new Date().toISOString();
   const stage = journal.stages.find(s => s.stage === stageNum);
   if (stage) {
@@ -244,6 +238,7 @@ function updateJournalStage(journal, stageNum, projectDir, fileName) {
     stage.approved_at = now;
     stage.approved_by = 'auto-run';
     stage.deliverable_file = fileName;
+    Object.assign(stage, extra);
   }
   const nextStage = journal.stages.find(s => s.stage === stageNum + 1);
   if (nextStage && nextStage.status === 'not_started') {
@@ -259,46 +254,13 @@ function updateJournalStage(journal, stageNum, projectDir, fileName) {
   fs.writeFileSync(journalPath, JSON.stringify(journal, null, 2), 'utf-8');
 }
 
-async function buildPreviousOutputsContext(previousOutputs, summarizeContext, profile) {
+export function buildPreviousOutputsContext(previousOutputs, profile) {
   if (Object.keys(previousOutputs).length === 0) return '';
-
-  const parts = [];
-  for (const [n, content] of Object.entries(previousOutputs)) {
-    const meta = profile.stages.find(s => s.stage === parseInt(n));
-    let preview = content;
-    if (typeof summarizeContext === 'function') {
-      try {
-        preview = await summarizeContext(content);
-      } catch {
-        preview = content.length > 2000 ? content.substring(0, 2000) + '\n...[truncated]' : content;
-      }
-    } else {
-      preview = content.length > 2000 ? content.substring(0, 2000) + '\n...[truncated]' : content;
-    }
-    parts.push(`--- Stage ${n}: ${meta?.name} ---\n${preview}`);
-  }
-
-  return `\n\n=== PREVIOUS STAGE OUTPUTS (use as context) ===\n${parts.join('\n\n')}\n=== END PREVIOUS OUTPUTS ===`;
-}
-
-function buildStageSystemPrompt(mainPrompt, stagePrompt, context, language, prevContext, stageNum, profile) {
-  const langInstruction = language === 'PL'
-    ? 'LANGUAGE REQUIREMENT: You MUST respond ENTIRELY in Polish language.'
-    : 'LANGUAGE REQUIREMENT: Respond in English language.';
-
-  const templates = loadStageTemplateText(stageNum, context, profile);
-  const contextJson = JSON.stringify(context, null, 2);
-
-  return `${mainPrompt}\n\n${stagePrompt}\n\n=== PROJECT CONTEXT ===\n${contextJson}\n=== END PROJECT CONTEXT ===${prevContext}${templates}\n\n=== AUTO-RUN MODE ===
-This is AUTOMATED ANALYSIS MODE. You are running as part of an automated pipeline.
-CRITICAL RULES:
-1. DO NOT ask any questions. Generate the COMPLETE deliverable document immediately.
-2. Use the project context above to populate ALL required information.
-3. Where specific data is missing, make reasonable professional assumptions and state them clearly.
-4. Generate a comprehensive, professional business analysis document following BABOK v3 standards.
-5. Structure the output as a complete standalone document with all sections.
-6. ${langInstruction}
-=== END AUTO-RUN MODE ===\n`;
+  const parts = Object.entries(previousOutputs).map(([n, content]) => {
+    const meta = profile.stages.find(stage => stage.stage === Number(n));
+    return `--- Stage ${n}: ${meta?.name} ---\n${content}`;
+  });
+  return `\n\n=== PREVIOUS STAGE OUTPUTS (source context) ===\n${parts.join('\n\n')}\n=== END PREVIOUS OUTPUTS ===`;
 }
 
 function buildFinalDocument(projectName, projectId, outputs, language, profile) {
@@ -329,21 +291,16 @@ function line(char = '─', len = 52) {
   return char.repeat(len);
 }
 
-const STAGE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes per stage
-
-function sendWithTimeout(userMessage, onChunk) {
-  return Promise.race([
-    sendMessageStream(userMessage, onChunk),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(
-        `Timeout: no response from AI after ${STAGE_TIMEOUT_MS / 60000} minutes.\n` +
-        `  Tip: try a smaller/faster model with --model, e.g.:\n` +
-        `    babok run --provider gemini --model gemini-2.0-flash\n` +
-        `    babok run --provider openai  --model gpt-5.6-luna`
-      )), STAGE_TIMEOUT_MS)
-    ),
-  ]);
+function formatLlmError(error) {
+  const details = [error?.message];
+  let cause = error?.cause;
+  while (cause) {
+    details.push(cause.message || cause.code);
+    cause = cause.cause;
+  }
+  return [...new Set(details.filter(Boolean))].join(' -> ');
 }
+
 
 // ──────────────────────────────────────────────
 //  Main command
@@ -383,6 +340,10 @@ export async function runAnalysis(options) {
     const projectDir = getProjectDir(projectId);
     fs.mkdirSync(projectDir, { recursive: true });
     writeContext(projectId, { projectName, profile: profile.id, startedAt: new Date().toISOString() });
+    // A real Two-Key-gated journal is required so orchestrator output can later be
+    // approved via `babok approve` — without this, stages had nowhere to record
+    // status/deliverable_file and could never be approved.
+    createJournal(projectId, projectName, options.lang || options.language || 'EN', profile.id);
 
     console.log('');
     console.log(chalk.bold.blue('╔═════════════════════════════════════╗'));
@@ -533,7 +494,7 @@ export async function runAnalysis(options) {
   const projectDir = path.join(outputDir, projectId);
   fs.mkdirSync(projectDir, { recursive: true });
 
-  const journal = createRunJournal(projectId, projectName, language, projectDir, profile);
+  const journal = createRunJournal(projectId, projectName, language, projectDir, profile, stagesToRun);
 
   // ── 4. Print header ──
   console.log('');
@@ -561,8 +522,8 @@ export async function runAnalysis(options) {
   console.log(chalk.dim(line()));
   console.log('');
 
-  // ── 5. Load main system prompt once ──
-  const mainPrompt = loadMainSystemPrompt(profile);
+  // ── 5. Load the rubric once (per-stage generation_batches / weights) ──
+  const rubric = loadRubric(profile);
   const previousOutputs = {};
 
   // ── 6. Interactive readline (used when not --auto) ──
@@ -581,7 +542,9 @@ export async function runAnalysis(options) {
   for (const stageNum of stagesToRun) {
     const stageMeta = profile.stages.find(s => s.stage === stageNum);
     const fileName = STAGE_FILE_NAMES[stageNum];
-    const stagePromptContent = loadStagePrompt(stageNum, profile);
+    const stageRubric = rubric.stages[`stage${stageNum}`];
+    const isDeepStage = profile.orchestrator.deep_analysis_stages.includes(stageNum);
+    const stageClient = taskRouter.getStageClient(stageNum);
 
     // Acquire stage lock (prevents concurrent edits in shared dirs)
     const lockResult = acquireLock(projectId, stageNum, projectDir);
@@ -606,47 +569,108 @@ export async function runAnalysis(options) {
       console.log(chalk.cyan(`  [${stageNum}/8] ${stageMeta.name}`));
     }
 
-    // ── 7b. Build system prompt and generate ──
-    const buildUserMessage = (extra) => {
-      let msg = language === 'PL'
-        ? `Wygeneruj kompletny dokument dostarczany dla Etapu ${stageNum}: "${stageMeta.name}". ` +
-          `Użyj dostarczonego kontekstu projektu i wygeneruj profesjonalny, kompleksowy dokument analizy biznesowej zgodny ze standardem BABOK v3.`
-        : `Generate the complete deliverable document for Stage ${stageNum}: "${stageMeta.name}". ` +
-          `Use the provided project context and generate a professional, comprehensive business analysis document following BABOK v3 standards.`;
-      if (extra) {
-        msg += language === 'PL'
-          ? `\n\nDodatkowe informacje od analityka biznesowego:\n${extra}`
-          : `\n\nAdditional input from the business analyst:\n${extra}`;
-      }
-      return msg;
-    };
+    // Build the complete prompt and generate the document in one request.
+    const userMessageIntro = language === 'PL'
+      ? `Wygeneruj kompletny dokument dostarczany dla Etapu ${stageNum}: "${stageMeta.name}". ` +
+        `Użyj dostarczonego kontekstu projektu i wygeneruj profesjonalny, kompleksowy dokument analizy biznesowej zgodny ze standardem BABOK v3.`
+      : `Generate the complete deliverable document for Stage ${stageNum}: "${stageMeta.name}". ` +
+        `Use the provided project context and generate a professional, comprehensive business analysis document following BABOK v3 standards.`;
+
+    // One complete generation request, including any requested diagram.
+    const stageTimeoutMinutes = 10;
+    const stageTimeoutMs = stageTimeoutMinutes * 60 * 1000;
 
     const runGeneration = async (extra) => {
-      const prevContext = await buildPreviousOutputsContext(previousOutputs, taskRouter.summarizeContext, profile);
-      const systemPrompt = buildStageSystemPrompt(
-        mainPrompt, stagePromptContent, context, language, prevContext, stageNum, profile
-      );
-      startChatSession(systemPrompt, []);
+      process.stdout.write(chalk.dim('\n  Preparing stage context...'));
+      const prevContext = buildPreviousOutputsContext(previousOutputs, profile);
+      const systemPromptBase = buildStageSystemPromptBase(profile, stageNum, context, language, { prevContext });
+      let userMessageWithExtra = extra
+        ? `${userMessageIntro}\n\n${language === 'PL' ? 'Dodatkowe informacje od analityka biznesowego:' : 'Additional input from the business analyst:'}\n${extra}`
+        : userMessageIntro;
+      if (options.diagram && (stageNum === 2 || stageNum === 5)) {
+        userMessageWithExtra += '\nInclude a process diagram in a fenced mermaid block, grounded in the same document.';
+      }
+
       process.stdout.write(chalk.dim('  Generating'));
-      let dotCount = 0;
+      let lastChunkPrint = 0;
+      let stageTimer;
+      let rateLimitRetried = false;
+      const startedAt = Date.now();
+      const heartbeat = setInterval(() => {
+        process.stdout.write(chalk.dim(` [${Math.round((Date.now() - startedAt) / 1000)}s]`));
+      }, 15000);
+      heartbeat.unref();
       try {
-        const resp = await sendWithTimeout(buildUserMessage(extra), (_chunk) => {
-          if (++dotCount % 15 === 0) process.stdout.write('.');
-        });
-        return { resp, systemPrompt };
+        const generation = await Promise.race([
+          generateStagedDeliverable({
+            stageNumber: stageNum,
+            profile,
+            llmClient: stageClient,
+            systemPromptBase,
+            userMessageIntro: userMessageWithExtra,
+            context,
+            rubric,
+            stageRubric,
+            batchGroups: stageRubric.generation_batches,
+            isDeepStage,
+            projectDir,
+            options: {
+              model: stageClient.modelName,
+              classifyVerdict: taskRouter.classifyVerdict,
+              onProgress: (event) => {
+                if (event.type === 'draft_started') {
+                  process.stdout.write(chalk.dim(' document... '));
+                } else if (event.type === 'local_scoring') {
+                  process.stdout.write(chalk.dim(' -> local validation'));
+                } else if (event.type === 'chunk') {
+                  const now = Date.now();
+                  if (now - lastChunkPrint > 400) {
+                    process.stdout.write(chalk.dim('.'));
+                    lastChunkPrint = now;
+                  }
+                } else if (event.type === 'generation_complete') {
+                  process.stdout.write(chalk.dim(` -> score ${event.score}`));
+                  if (!event.passed) process.stdout.write(chalk.yellow(' (requires review)'));
+                }
+              },
+            },
+          }),
+          new Promise((_, reject) => {
+            stageTimer = setTimeout(() => reject(new Error(
+              `Timeout: Stage ${stageNum} did not complete after ${stageTimeoutMinutes} minutes.\n` +
+              `  Tip: try a smaller/faster model with --model, e.g.:\n` +
+              `    babok run --provider gemini --model gemini-2.0-flash\n` +
+              `    babok run --provider openai --model gpt-5.4-mini`
+            )), stageTimeoutMs);
+          }),
+        ]);
+        return { resp: generation.finalDocument, generation };
       } catch (err) {
-        console.error(chalk.red(`\n\n  Error in Stage ${stageNum}: ${err.message}`));
+        const retryDelayMs = getRateLimitRetryDelayMs(err);
+        if (retryDelayMs !== null && !rateLimitRetried) {
+          rateLimitRetried = true;
+          console.error(chalk.yellow(
+            `\n\n  Limit TPM dostawcy. Ponawiam etap za ${(retryDelayMs / 1000).toFixed(1)} s...`
+          ));
+          await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+          continue;
+        }
+        console.error(chalk.red(`\n\n  Error in Stage ${stageNum}: ${formatLlmError(err)}`));
         if (/401|Unauthorized|CREDENTIALS_MISSING|API key not valid/i.test(err.message)) {
           console.error(chalk.yellow('\n  Wskazówka: klucz API jest nieprawidłowy lub wygasł.'));
           console.error(chalk.dim('  Uruchom ponownie i przy pytaniu "Uzyc zapisanego klucza?" wpisz n'));
           console.error(chalk.dim('  Nowy klucz Gemini: https://aistudio.google.com/app/apikey'));
         }
+        releaseLock(projectId, stageNum, projectDir);
         stageRl?.close();
         process.exit(1);
+      } finally {
+        clearTimeout(stageTimer);
+        clearInterval(heartbeat);
       }
     };
 
-    let { resp: response } = await runGeneration(extraInput);
+    let { resp: response, generation } = await runGeneration(extraInput);
 
     // ── 7c. Interactive: preview + approval loop ──
     if (stageAsk) {
@@ -676,6 +700,7 @@ export async function runAnalysis(options) {
           console.log(chalk.green('  ✓ Etap zatwierdzony\n'));
           approved = true;
         } else if (ans.toLowerCase() === 'q') {
+          releaseLock(projectId, stageNum, projectDir);
           stageRl.close();
           console.log(chalk.yellow('\n  Przerwano przez użytkownika.'));
           process.exit(0);
@@ -685,6 +710,7 @@ export async function runAnalysis(options) {
           console.log('');
           const result = await runGeneration(currentExtra);
           response = result.resp;
+          generation = result.generation;
         }
       }
     } else {
@@ -693,68 +719,24 @@ export async function runAnalysis(options) {
 
     const filePath = path.join(projectDir, fileName);
 
-    // ── 7b-debate: Multi-perspective debate (--debate flag, deep stages only) ──
-    if (options.debate) {
-      const llmClient = {
-        chat: async (systemPrompt, userMessage) => {
-          startChatSession(systemPrompt, []);
-          return sendWithTimeout(userMessage, null);
-        },
-      };
-      const debateResult = await runDebate(stageNum, context, llmClient, { model: modelName });
-      if (debateResult) {
-        console.log(chalk.magenta(`  [debate] Stage ${stageNum} debate complete (${debateResult.metadata.latencyMs}ms)`));
-        response = debateResult.synthesis;
-        markDebateInJournal(journal, stageNum, debateResult.metadata, projectDir);
-      }
-    }
-
-    // ── 7b-verify: Chain-of-Verification (--verify flag, all stages) ──
-    if (options.verify) {
-      const llmClient = {
-        chat: async (systemPrompt, userMessage) => {
-          startChatSession(systemPrompt, []);
-          return sendWithTimeout(userMessage, null);
-        },
-      };
-      const { corrected, verificationReport } = await runCoVe(
-        stageNum, response, context, llmClient, {
-          projectDir,
-          classifyVerdict: taskRouter.classifyVerdict,
-        }
-      );
-      console.log(chalk.blue(
-        `  [verify] Stage ${stageNum}: ${verificationReport.questionsTotal} checks, ` +
-        `${verificationReport.refutedCount} refuted`
-      ));
-      response = corrected;
-    }
-
-    // ── diagram: Mermaid process diagram (--diagram flag, stages 2 and 5) ──
-    if (options.diagram && (stageNum === 2 || stageNum === 5)) {
-      try {
-        const diagramLlm = {
-          chat: async (systemPrompt, userMessage) => {
-            startChatSession(systemPrompt, []);
-            return sendWithTimeout(userMessage, null);
-          },
-        };
-        const diagramResult = await generateProcessDiagram(response, diagramLlm, {});
-        if (diagramResult && diagramResult.mermaidSyntax) {
-          response += `\n\n## Process Diagram\n\n\`\`\`mermaid\n${diagramResult.mermaidSyntax}\n\`\`\`\n`;
-          console.log(chalk.cyan(`  [diagram] Stage ${stageNum} ${diagramResult.diagramType} diagram generated`));
-          if (diagramResult.warnings.length > 0) {
-            diagramResult.warnings.forEach(w => console.log(chalk.yellow(`  [diagram] Warning: ${w}`)));
-          }
-        }
-      } catch (err) {
-        console.log(chalk.yellow(`  [diagram] Skipped: ${err.message}`));
-      }
+    if (options.debate || options.verify) {
+      console.log(chalk.dim('  --debate/--verify: drafting uses one request with local validation.'));
     }
 
     fs.writeFileSync(filePath, response, 'utf-8');
     previousOutputs[stageNum] = response;
-    updateJournalStage(journal, stageNum, projectDir, fileName);
+    updateJournalStage(journal, stageNum, projectDir, fileName, {
+      generation_batches_used: generation.batches,
+      final_pass_mode: generation.finalPass.mode,
+      ...(generation.finalPass.mode === 'debate_verify' ? {
+        debate_used: !!generation.finalPass.debateMetadata,
+        debate_metadata: generation.finalPass.debateMetadata,
+        verification_report_summary: generation.finalPass.verificationReport ? {
+          questionsTotal: generation.finalPass.verificationReport.questionsTotal,
+          refutedCount: generation.finalPass.verificationReport.refutedCount,
+        } : null,
+      } : {}),
+    });
 
     // Release lock for this stage
     releaseLock(projectId, stageNum, projectDir);
