@@ -14,7 +14,7 @@ import chalk from 'chalk';
 import readline from 'readline';
 import os from 'os';
 import { setLanguage } from '../language.js';
-import { PROVIDERS, storeKey, getApiKey, initializeProvider, sendMessageStream } from '../llm.js';
+import { PROVIDERS, discoverProviderModels, storeKey, getApiKey, initializeProvider, sendMessageStream } from '../llm.js';
 import { generateProjectId, getProjectDir } from '../project.js';
 import { createJournal } from '../journal.js';
 import { printProjectCreated } from '../display.js';
@@ -197,7 +197,17 @@ async function enterAndSaveKey(rl, providerKey, providerInfo, isPL) {
   // Quick connectivity test
   console.log(chalk.dim(isPL ? '  Testowanie połączenia...' : '  Testing connection...'));
   try {
-    await initializeProvider(providerKey, apiKey, providerInfo.defaultModel);
+    const discovery = await discoverProviderModels(providerKey, apiKey);
+    if (discovery.source === 'api') {
+      console.log(chalk.dim(isPL ? '  Modele dostępne dla tego klucza:' : '  Models available for this key:'));
+      discovery.models.forEach(model => console.log(chalk.dim(`    - ${model}`)));
+    } else if (discovery.error) {
+      throw discovery.error;
+    }
+    const testModel = discovery.models.includes(providerInfo.defaultModel)
+      ? providerInfo.defaultModel
+      : discovery.models[0];
+    await initializeProvider(providerKey, apiKey, testModel);
     let reply = '';
     await sendMessageStream('Reply with exactly: OK', chunk => { reply += chunk; });
     if (reply.trim().toUpperCase().includes('OK')) {

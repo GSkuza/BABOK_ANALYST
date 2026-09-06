@@ -41,7 +41,7 @@ Wniosek: routing "provider per etap" (jak sugerował `--deep-model` dziś, `run.
 | Provider | Mocny model (generacja / deep stages) | Tani/szybki model (klasyfikacja, ocena) | Unikalna zdolność w tym planie |
 |---|---|---|---|
 | **OpenAI** | `gpt-4.1` | `gpt-4.1-nano` / `gpt-4o-mini` | Structured Outputs / `response_format: json_schema` — najbardziej niezawodny provider do wymuszenia JSON-a w `quality-loop.js` (koniec z `parseScoreResponse()` łapiącym markdown-fence regexem, `quality-loop.js:27-41`) |
-| **Anthropic** | `claude-3-7-sonnet-20250219` | `claude-3-5-haiku-latest` | Haiku jest wystarczająco dobry i tani do zadań klasyfikacyjnych/CoVe przy zachowaniu tego samego dostawcy co model deep — mniej kluczy/kont do zarządzania, jeśli firma jest już na Anthropic |
+| **Anthropic** | `claude-sonnet-5` | `claude-haiku-4-5` | Haiku jest wystarczająco dobry i tani do zadań klasyfikacyjnych/CoVe przy zachowaniu tego samego dostawcy co model deep — mniej kluczy/kont do zarządzania, jeśli firma jest już na Anthropic |
 | **Google (Gemini)** | `gemini-2.5-pro-exp-03-25` (przez Vertex) / `gemini-2.0-flash` | `gemini-2.0-flash-lite` | Najniższy koszt/token w całej macierzy — dobry domyślny provider dla wolumenowych zadań klasyfikacyjnych (CoVe robi N wywołań na etap × 8 etapów) |
 | **HuggingFace** | (opcjonalnie, jako fallback czatu — `Qwen2.5-72B`, `Bielik-11B`) | **task-specific endpoints, nie chat** | Patrz §3 — to jest właściwe miejsce dla zero-shot classification, ekstrakcji encji, embeddingów |
 
@@ -104,7 +104,7 @@ Nowy plik `router_config.json` (albo sekcja w `agent_config.json` — do decyzji
   "tasks": {
     "generate_deliverable": {
       "standard": { "provider": "gemini", "model": "gemini-2.0-flash" },
-      "deep":     { "provider": "anthropic", "model": "claude-3-7-sonnet-20250219" }
+      "deep":     { "provider": "anthropic", "model": "claude-sonnet-5" }
     },
     "classify": {
       "provider": "huggingface", "task": "zero-shot-classification", "model": "facebook/bart-large-mnli"

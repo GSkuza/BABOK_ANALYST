@@ -8,7 +8,7 @@ const DEFAULT_ROUTING = {
   tasks: {
     generate_deliverable: {
       standard: { provider: 'gemini', model: 'gemini-2.0-flash' },
-      deep: { provider: 'anthropic', model: 'claude-3-7-sonnet-20250219' },
+      deep: { provider: 'anthropic', model: 'claude-sonnet-5' },
     },
     classify: {
       provider: 'huggingface',
@@ -17,7 +17,7 @@ const DEFAULT_ROUTING = {
     },
     score_quality: {
       provider: 'openai',
-      model: 'gpt-4o-mini',
+      model: 'gpt-5.6-luna',
     },
     verify_claim: {
       provider: 'huggingface',

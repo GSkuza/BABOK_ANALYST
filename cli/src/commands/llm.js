@@ -1,30 +1,31 @@
 import chalk from 'chalk';
 import readline from 'readline';
-import { PROVIDERS, getApiKey, storeKey, listStoredProviders } from '../llm.js';
+import { PROVIDERS, discoverProviderModels, getApiKey, storeKey } from '../llm.js';
 import { getCurrentLanguage } from '../language.js';
 
 /**
  * List all available LLM models and providers
  */
-export function listModels() {
+export async function listModels() {
   const lang = getCurrentLanguage();
   console.log('');
   console.log(chalk.bold.blue('🤖 Dostępne Modele LLM / Available LLM Models:'));
   console.log(chalk.dim('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
 
-  const stored = listStoredProviders();
-
-  Object.entries(PROVIDERS).forEach(([key, info]) => {
-    const hasKey = stored.includes(key);
-    const status = hasKey ? chalk.green('✓ KLUCZ OK') : chalk.yellow('⚠ BRAK KLUCZA');
+  for (const [key, info] of Object.entries(PROVIDERS)) {
+    const hasKey = Boolean(getApiKey(key));
+    const status = hasKey ? chalk.green('✓ KLUCZ USTAWIONY') : chalk.yellow('⚠ BRAK KLUCZA');
+    const discovery = await discoverProviderModels(key, getApiKey(key));
     
     console.log(`${chalk.bold(info.name)} [${key}] - ${status}`);
-    info.models.forEach(model => {
+    if (discovery.source === 'api') console.log(chalk.dim('  Modele dostępne dla tego klucza API:'));
+    if (discovery.error) console.log(chalk.yellow(`  Nie udało się pobrać modeli z API: ${discovery.error.message}`));
+    discovery.models.forEach(model => {
       const isDefault = model === info.defaultModel ? chalk.cyan(' (default)') : '';
       console.log(`  └─ ${model}${isDefault}`);
     });
     console.log('');
-  });
+  }
 }
 
 /**
@@ -51,22 +52,39 @@ export async function changeModel() {
   }
 
   const [providerKey, info] = providers[idx];
+
+  let apiKey = getApiKey(providerKey);
+  if (!apiKey) {
+    console.log(chalk.yellow(`\n  Klucz API dla ${info.name} nie został znaleziony.`));
+    apiKey = (await new Promise(resolve => rl.question('  Podaj klucz API: ', resolve))).trim();
+    if (!apiKey) {
+      console.log(chalk.red('  Błąd: Klucz jest wymagany.'));
+      rl.close();
+      return;
+    }
+    storeKey(providerKey, apiKey);
+  }
+
+  const discovery = await discoverProviderModels(providerKey, apiKey);
+  const availableModels = discovery.models;
   
   console.log(`\n  📝 Wybierz model dla ${info.name}:`);
-  info.models.forEach((m, i) => {
+  if (discovery.source === 'api') console.log(chalk.dim('     Modele dostępne dla podanego klucza API:'));
+  if (discovery.error) console.log(chalk.yellow(`     Lista awaryjna: ${discovery.error.message}`));
+  availableModels.forEach((m, i) => {
     console.log(`     ${i + 1}. ${m}`);
   });
 
   const mNum = await new Promise(resolve => rl.question('\n  Wybierz numer: ', resolve));
   const mIdx = parseInt(mNum) - 1;
 
-  if (isNaN(mIdx) || mIdx < 0 || mIdx >= info.models.length) {
+  if (isNaN(mIdx) || mIdx < 0 || mIdx >= availableModels.length) {
     console.log(chalk.red('\n  Błąd: Nieprawidłowy wybór modelu.'));
     rl.close();
     return;
   }
 
-  const selectedModel = info.models[mIdx];
+  const selectedModel = availableModels[mIdx];
   rl.close();
 
   // We don't store the "active" model globally in a config file yet, 

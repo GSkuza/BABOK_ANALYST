@@ -29,28 +29,24 @@ export const PROVIDERS = {
   openai: {
     name: 'OpenAI',
     envKey: 'OPENAI_API_KEY',
-    defaultModel: 'gpt-4.1',
+    defaultModel: 'gpt-5.6-terra',
     models: [
-      'gpt-4.1',
-      'gpt-4.1-mini',
-      'gpt-4.1-nano',
-      'gpt-4o',
-      'gpt-4o-mini',
-      'o3',
-      'o4-mini',
-      'o3-mini',
+      'gpt-6-astra',
+      'gpt-5.6',
+      'gpt-5.6-terra',
+      'gpt-5.6-luna',
     ],
     keyUrl: 'https://platform.openai.com/api-keys',
   },
   anthropic: {
     name: 'Anthropic Claude',
     envKey: 'ANTHROPIC_API_KEY',
-    defaultModel: 'claude-3-5-sonnet-latest',
+    defaultModel: 'claude-sonnet-5',
     models: [
-      'claude-3-7-sonnet-20250219',
-      'claude-3-5-sonnet-latest', 
-      'claude-3-5-haiku-latest', 
-      'claude-3-opus-latest'
+      'claude-fable-5-1',
+      'claude-opus-5',
+      'claude-sonnet-5',
+      'claude-haiku-4-5',
     ],
     keyUrl: 'https://console.anthropic.com/settings/keys',
   },
@@ -89,6 +85,51 @@ export const PROVIDERS = {
     keyUrl: 'http://localhost:30000/v1',
   },
 };
+
+const OPENAI_MODEL_EXCLUSIONS = [
+  'audio', 'realtime', 'transcribe', 'tts', 'image', 'embedding',
+  'moderation', 'search', 'instruct', 'whisper', 'dall-e', 'codex',
+  'cyber', 'daybreak',
+];
+
+function isOpenAITextModel(modelId) {
+  const id = modelId.toLowerCase();
+  const isTextFamily = id.startsWith('gpt-') || /^o\d(?:-|$)/.test(id) || id.startsWith('chatgpt-');
+  return isTextFamily && !OPENAI_MODEL_EXCLUSIONS.some(part => id.includes(part));
+}
+
+/**
+ * Return models available to the supplied account. OpenAI is discovered from
+ * the API; other providers continue to use their registry lists.
+ */
+export async function discoverProviderModels(provider, apiKey, options = {}) {
+  const info = PROVIDERS[provider];
+  if (!info) throw new Error(`Unknown provider: ${provider}`);
+  if (!['openai', 'anthropic'].includes(provider) || !apiKey) {
+    return { models: [...info.models], source: 'registry', error: null };
+  }
+
+  try {
+    const client = options.client || (provider === 'openai'
+      ? new OpenAI({ apiKey })
+      : new Anthropic({ apiKey }));
+    const page = await client.models.list(provider === 'anthropic' ? { limit: 1000 } : undefined);
+    const preferredOrder = new Map(info.models.map((model, index) => [model, index]));
+    const models = [...new Set(page.data
+      .map(model => model.id)
+      .filter(model => provider === 'anthropic' ? model.startsWith('claude-') : isOpenAITextModel(model)))]
+      .sort((left, right) => {
+        const leftRank = preferredOrder.get(left) ?? Number.MAX_SAFE_INTEGER;
+        const rightRank = preferredOrder.get(right) ?? Number.MAX_SAFE_INTEGER;
+        return leftRank - rightRank || left.localeCompare(right, undefined, { numeric: true });
+      });
+
+    if (models.length === 0) throw new Error(`${info.name} API returned no compatible text models.`);
+    return { models, source: 'api', error: null };
+  } catch (error) {
+    return { models: [...info.models], source: 'fallback', error };
+  }
+}
 
 // Active provider state
 let activeProvider = null;   // 'gemini' | 'openai' | 'anthropic' | 'huggingface'
@@ -254,20 +295,7 @@ export async function promptForProvider() {
     }
     const [providerKey, info] = providerList[provIdx];
 
-    // ── Krok 2: Wybor modelu ──
-    process.stdout.write('\n');
-    process.stdout.write(`  Modele ${info.name}:\n\n`);
-    info.models.forEach((m, i) => {
-      const def = m === info.defaultModel ? chalk_green('  <domyslny>') : '';
-      process.stdout.write(`    ${i + 1}. ${m}${def}\n`);
-    });
-    process.stdout.write('\n');
-
-    const modelNum = await ask('  Numer modelu [1]: ');
-    const modelIdx = modelNum === '' ? 0 : parseInt(modelNum) - 1;
-    const selectedModel = info.models[modelIdx >= 0 && modelIdx < info.models.length ? modelIdx : 0];
-
-    // ── Krok 3: Klucz API ──
+    // ── Krok 2: Klucz API ──
     let apiKey = getApiKey(providerKey);
     if (apiKey) {
       const ans = await ask(`  Uzyc zapisanego klucza ${info.name}? (T/n): `);
@@ -277,6 +305,30 @@ export async function promptForProvider() {
     } else {
       apiKey = await _askForKeyAsync(ask, providerKey, info);
     }
+
+    // ── Krok 3: Wybor modelu ──
+    const discovery = await discoverProviderModels(providerKey, apiKey);
+    const availableModels = discovery.models;
+    process.stdout.write('\n');
+    process.stdout.write(`  Modele ${info.name}:\n\n`);
+    if (discovery.source === 'api') {
+      process.stdout.write('  Modele dostepne dla podanego klucza API:\n\n');
+    } else if (discovery.error) {
+      process.stdout.write(`  Nie udalo sie pobrac listy z API (${discovery.error.message}). Uzywam listy awaryjnej.\n\n`);
+    }
+    availableModels.forEach((m, i) => {
+      const def = m === info.defaultModel ? chalk_green('  <domyslny>') : '';
+      process.stdout.write(`    ${i + 1}. ${m}${def}\n`);
+    });
+    process.stdout.write('\n');
+
+    const defaultModelIdx = Math.max(0, availableModels.indexOf(info.defaultModel));
+    const modelNum = await ask(`  Numer modelu [${defaultModelIdx + 1}]: `);
+    const requestedModelIdx = modelNum === '' ? defaultModelIdx : parseInt(modelNum) - 1;
+    const modelIdx = requestedModelIdx >= 0 && requestedModelIdx < availableModels.length
+      ? requestedModelIdx
+      : defaultModelIdx;
+    const selectedModel = availableModels[modelIdx];
 
     rl.close();
     return { provider: providerKey, apiKey, model: selectedModel };
@@ -443,6 +495,57 @@ export async function initializeProvider(provider, apiKey, modelName) {
   activeModel = model;
 }
 
+export async function createOpenAITextResponse(client, model, messages) {
+  const response = await client.responses.create({
+    model,
+    input: messages,
+    max_output_tokens: 8192,
+  });
+  return response.output_text || '';
+}
+
+export async function streamOpenAITextResponse(client, model, messages, onChunk) {
+  const stream = await client.responses.create({
+    model,
+    input: messages,
+    max_output_tokens: 8192,
+    stream: true,
+  });
+  let fullResponse = '';
+  for await (const event of stream) {
+    if (event.type !== 'response.output_text.delta' || !event.delta) continue;
+    fullResponse += event.delta;
+    if (onChunk) onChunk(event.delta);
+  }
+  return fullResponse;
+}
+
+export async function createAnthropicTextResponse(client, model, systemPrompt, messages) {
+  const response = await client.messages.create({
+    model,
+    system: systemPrompt,
+    messages,
+    max_tokens: 8192,
+  });
+  return response.content?.find(block => block.type === 'text')?.text || '';
+}
+
+export async function streamAnthropicTextResponse(client, model, systemPrompt, messages, onChunk) {
+  const stream = client.messages.stream({
+    model,
+    system: systemPrompt,
+    messages,
+    max_tokens: 8192,
+  });
+  let fullResponse = '';
+  for await (const event of stream) {
+    if (event.type !== 'content_block_delta' || !event.delta?.text) continue;
+    fullResponse += event.delta.text;
+    if (onChunk) onChunk(event.delta.text);
+  }
+  return fullResponse;
+}
+
 /**
  * Create a stateless, reusable LLM client without touching global state.
  * Each chat() call is a single-turn, non-streaming request.
@@ -495,8 +598,15 @@ export function createLlmClient(provider, apiKey, modelName) {
           ? (model?.startsWith('http') ? model : 'http://localhost:30000/v1')
           : undefined;
         const client = new OpenAI({ apiKey: apiKey || 'not-needed', ...(baseURL ? { baseURL } : {}) });
+        const selectedModel = provider === 'local' ? info.defaultModel : model;
+        if (provider === 'openai') {
+          return createOpenAITextResponse(client, selectedModel, [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage },
+          ]);
+        }
         const resp = await client.chat.completions.create({
-          model: provider === 'local' ? info.defaultModel : model,
+          model: selectedModel,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage },
@@ -508,13 +618,12 @@ export function createLlmClient(provider, apiKey, modelName) {
       }
       case 'anthropic': {
         const client = new Anthropic({ apiKey });
-        const resp = await client.messages.create({
+        return createAnthropicTextResponse(
+          client,
           model,
-          system: systemPrompt,
-          messages: [{ role: 'user', content: userMessage }],
-          max_tokens: 8192,
-        });
-        return resp.content?.[0]?.text || '';
+          systemPrompt,
+          [{ role: 'user', content: userMessage }],
+        );
       }
       case 'huggingface': {
         const hf = new HfInference(apiKey);
@@ -603,18 +712,7 @@ export async function sendMessageStream(message, onChunk) {
           content: m.parts[0].text,
         })),
       ];
-      const stream = await activeClient.chat.completions.create({
-        model: activeModel,
-        messages,
-        stream: true,
-        max_tokens: 8192,
-        temperature: 0.7,
-      });
-      for await (const chunk of stream) {
-        const text = chunk.choices?.[0]?.delta?.content || '';
-        fullResponse += text;
-        if (onChunk && text) onChunk(text);
-      }
+      fullResponse = await streamOpenAITextResponse(activeClient, activeModel, messages, onChunk);
       break;
     }
 
@@ -623,19 +721,13 @@ export async function sendMessageStream(message, onChunk) {
         role: m.role === 'model' ? 'assistant' : m.role,
         content: m.parts[0].text,
       }));
-      const stream = activeClient.messages.stream({
-        model: activeModel,
-        system: systemPromptCache,
+      fullResponse = await streamAnthropicTextResponse(
+        activeClient,
+        activeModel,
+        systemPromptCache,
         messages,
-        max_tokens: 8192,
-        temperature: 0.7,
-      });
-      for await (const event of stream) {
-        if (event.type === 'content_block_delta' && event.delta?.text) {
-          fullResponse += event.delta.text;
-          if (onChunk) onChunk(event.delta.text);
-        }
-      }
+        onChunk,
+      );
       break;
     }
 

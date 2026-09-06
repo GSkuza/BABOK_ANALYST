@@ -339,7 +339,7 @@ function sendWithTimeout(userMessage, onChunk) {
         `Timeout: no response from AI after ${STAGE_TIMEOUT_MS / 60000} minutes.\n` +
         `  Tip: try a smaller/faster model with --model, e.g.:\n` +
         `    babok run --provider gemini --model gemini-2.0-flash\n` +
-        `    babok run --provider openai  --model gpt-4o-mini`
+        `    babok run --provider openai  --model gpt-5.6-luna`
       )), STAGE_TIMEOUT_MS)
     ),
   ]);

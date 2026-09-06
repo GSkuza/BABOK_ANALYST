@@ -16,6 +16,7 @@ import {
   getApiKey,
   promptForProvider,
   clearStoredKey,
+  discoverProviderModels,
   listStoredProviders,
 } from '../llm.js';
 import fs from 'fs';
@@ -375,20 +376,6 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
       }
 
       const [pKey, pInfo] = providers[idx];
-      console.log(`\n  📝 Wybierz model dla ${pInfo.name}:`);
-      pInfo.models.forEach((m, ii) => console.log(`     ${ii + 1}. ${m}`));
-
-      const mNum = await new Promise(resolve => rl.question('\n  Numer: ', resolve));
-      const mIdx = parseInt(mNum) - 1;
-
-      if (isNaN(mIdx) || mIdx < 0 || mIdx >= pInfo.models.length) {
-        console.log(chalk.red('\n  Błąd: Nieprawidłowy wybór modelu.'));
-        return 'handled';
-      }
-
-      const newModel = pInfo.models[mIdx];
-
-      // Get API Key
       let key = getApiKey(pKey);
       if (!key) {
         console.log(chalk.yellow(`\n  Klucz API dla ${pInfo.name} nie został znaleziony.`));
@@ -399,9 +386,26 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
         }
       }
 
+      const discovery = await discoverProviderModels(pKey, key);
+      const availableModels = discovery.models;
+      console.log(`\n  📝 Wybierz model dla ${pInfo.name}:`);
+      if (discovery.source === 'api') console.log(chalk.dim('     Modele dostępne dla podanego klucza API:'));
+      if (discovery.error) console.log(chalk.yellow(`     Lista awaryjna: ${discovery.error.message}`));
+      availableModels.forEach((m, ii) => console.log(`     ${ii + 1}. ${m}`));
+
+      const mNum = await new Promise(resolve => rl.question('\n  Numer: ', resolve));
+      const mIdx = parseInt(mNum) - 1;
+
+      if (isNaN(mIdx) || mIdx < 0 || mIdx >= availableModels.length) {
+        console.log(chalk.red('\n  Błąd: Nieprawidłowy wybór modelu.'));
+        return 'handled';
+      }
+
+      const newModel = availableModels[mIdx];
+
       // Re-initialize
       try {
-        initializeProvider(pKey, key, newModel);
+        await initializeProvider(pKey, key, newModel);
         console.log(chalk.green(`\n✓ Model zmieniony na: ${pInfo.name} - ${newModel}`));
       } catch (err) {
         console.error(chalk.red(`\nBłąd: ${err.message}`));

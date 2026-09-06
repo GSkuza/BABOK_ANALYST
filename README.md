@@ -762,8 +762,8 @@ The `babok chat` command starts an interactive AI conversation in the terminal, 
 | Provider | Models | Get API Key |
 |----------|--------|-------------|
 | **Google Gemini** | `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-1.5-flash` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| **OpenAI** | `gpt-4.1`, `gpt-4.1-mini`, `gpt-4o`, `gpt-4o-mini`, `o3-mini` | [platform.openai.com](https://platform.openai.com/api-keys) |
-| **Anthropic Claude** | `claude-3-7-sonnet`, `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus` | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+| **OpenAI** | Models available to your API key (current fallback: `gpt-6-astra`, `gpt-5.6`, `gpt-5.6-terra`, `gpt-5.6-luna`) | [platform.openai.com](https://platform.openai.com/api-keys) |
+| **Anthropic Claude** | Models available to your API key (current fallback: `claude-fable-5-1`, `claude-opus-5`, `claude-sonnet-5`, `claude-haiku-4-5`) | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
 | **Hugging Face** | `Qwen2.5-72B`, `Llama-3.3-70B`, `DeepSeek-R1`, `Bielik-11B` | [huggingface.co](https://huggingface.co/settings/tokens) |
 | **Google Vertex AI** | `gemini-2.5-pro-exp`, `gemini-2.0-flash` | [cloud.google.com](https://cloud.google.com/vertex-ai) |
 
@@ -777,7 +777,7 @@ babok chat K7M3
 babok chat K7M3 --provider openai --stage 3
 
 # Specify custom model
-babok chat K7M3 --provider anthropic --model claude-3-7-sonnet-20250219
+babok chat K7M3 --provider anthropic --model claude-sonnet-5
 
 # Use Hugging Face
 babok chat K7M3 -p huggingface -m "Qwen/Qwen2.5-72B-Instruct"
