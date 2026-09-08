@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { Worker } from 'worker_threads';
 import { runParallel } from './parallel-runner.js';
 import { readContext, mergeStageOutput } from './context-manager.js';
 import { executeStage } from './stage-executor.js';
@@ -8,6 +9,46 @@ import { getProjectDir } from '../project.js';
 import { getProjectProfile, readJournal, writeJournal } from '../journal.js';
 import { DEFAULT_PROFILE_ID, getStageFileNames, loadProfile, resolveProfilePath } from '../profiles.js';
 import { createMessageBus } from './message-bus.js';
+
+const activeStageWorkers = new Set();
+
+export function cancelStageWorkers() {
+  const workers = [...activeStageWorkers];
+  activeStageWorkers.clear();
+  for (const worker of workers) {
+    try {
+      worker.terminate();
+    } catch {
+      // ignore
+    }
+  }
+  return workers.length;
+}
+
+function runStageInWorker(payload) {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL('./stage-worker.js', import.meta.url), { workerData: payload });
+    activeStageWorkers.add(worker);
+    let settled = false;
+    const cleanup = () => activeStageWorkers.delete(worker);
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      fn(value);
+    };
+    worker.once('message', (message) => {
+      if (message?.ok) finish(resolve, message.result);
+      else finish(reject, new Error(message?.error || 'Stage worker failed.'));
+    });
+    worker.once('error', (error) => {
+      finish(reject, error);
+    });
+    worker.once('exit', (code) => {
+      if (code !== 0) finish(reject, new Error(`Stage worker exited with code ${code}.`));
+    });
+  });
+}
 
 /**
  * Persist a full-stage deliverable's journal bookkeeping (status, deliverable
@@ -78,6 +119,7 @@ export async function runPipeline(projectId, options = {}) {
     llmClient: providedClient,
     deepAnalysisClient: providedDeepClient,
     taskRouter,
+    llmRuntime,
   } = options;
 
   const profile = resolveProfile(projectId, options);
@@ -101,6 +143,7 @@ export async function runPipeline(projectId, options = {}) {
   // Falls back to llmClient when no separate deep-analysis client is configured
   const deepAnalysisClient = providedDeepClient ?? llmClient;
   const messageBus = createMessageBus(projectId);
+  const canUseWorkerIsolation = !dryRun && !!llmRuntime && !providedClient && !providedDeepClient;
 
   // Best-effort — a journal may not exist yet (e.g. dryRun tests against a
   // scratch projectId), in which case English is a safe default.
@@ -128,32 +171,52 @@ export async function runPipeline(projectId, options = {}) {
     const stageNumber = stageNumberFromKey(stageKey);
     const stageConfig = stageConfigs[`stage${stageNumber}`] ?? {};
     const isDeepStage = deepAnalysisStages.has(stageNumber);
-    const clientForStage = taskRouter?.getStageClient
+    const clientForStage = canUseWorkerIsolation ? null : (taskRouter?.getStageClient
       ? taskRouter.getStageClient(stageNumber)
-      : (isDeepStage ? deepAnalysisClient : llmClient);
+      : (isDeepStage ? deepAnalysisClient : llmClient));
 
     emit({ type: 'stage_started', stage: stageKey, mode: isDeepStage ? 'deep_analysis' : 'standard' });
 
     try {
-      const execResult = await executeStage(
-        stageKey, stageConfig, context, clientForStage, { dryRun, projectId, profile, stageNumber, language }
-      );
-
-      // Each task uses one generation call. Persist local validation only;
-      // neither the router's LLM judge nor automatic revisions run here.
-      const qualityResult = await runQualityLoop(
-        projectId, stageNumber, execResult.artefact, clientForStage, {
-          dryRun,
+      const stageResult = canUseWorkerIsolation
+        ? await runStageInWorker({
+          stageKey,
+          stageConfig,
+          context,
+          projectId,
           profile,
-          taskRouter,
-          localOnly: true,
-          maxIterations: 1,
-          onIteration: (e) => emit({
-            type: e.escalated ? 'quality_escalate' : 'quality_iteration',
-            ...e,
-          }),
-        }
-      );
+          stageNumber,
+          language,
+          llmRuntime,
+        })
+        : await (async () => {
+          const execResult = await executeStage(
+            stageKey, stageConfig, context, clientForStage, {
+              dryRun,
+              projectId,
+              profile,
+              stageNumber,
+              language,
+              onProgress: event => emit({ type: 'stage_progress', ...event }),
+            }
+          );
+
+          const qualityResult = await runQualityLoop(
+            projectId, stageNumber, execResult.artefact, clientForStage, {
+              dryRun,
+              profile,
+              taskRouter,
+              localOnly: true,
+              maxIterations: 1,
+              onIteration: (e) => emit({
+                type: e.escalated ? 'quality_escalate' : 'quality_iteration',
+                ...e,
+              }),
+            }
+          );
+          return { execResult, qualityResult };
+        })();
+      const { execResult, qualityResult } = stageResult;
 
       await mergeStageOutput(projectId, stageKey, qualityResult.finalArtefact);
       // Refresh context so later stages see the new output

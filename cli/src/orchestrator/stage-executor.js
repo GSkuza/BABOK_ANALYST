@@ -17,7 +17,7 @@ import { generateStagedDeliverable } from '../generation/staged-generator.js';
  * }>}
  */
 export async function executeStage(stageKey, stageConfig, context, llmClient, options = {}) {
-  const { dryRun = false, projectId, profile, stageNumber, language = 'EN' } = options;
+  const { dryRun = false, projectId, profile, stageNumber, language = 'EN', onProgress } = options;
 
   if (dryRun) {
     return {
@@ -72,6 +72,7 @@ export async function executeStage(stageKey, stageConfig, context, llmClient, op
       options: {
         model: llmClient.modelName,
         classifyVerdict: llmClient.classifyVerdict,
+        onProgress: event => onProgress?.({ stage: stageKey, ...event }),
       },
     });
     artefact = generation.finalDocument;

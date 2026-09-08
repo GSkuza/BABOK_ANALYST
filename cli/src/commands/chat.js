@@ -7,6 +7,7 @@ import { getMaxStage, getStageFileNames, loadProfile } from '../profiles.js';
 import { loadRubric } from '../templates.js';
 import { header, keyValue, line } from '../display.js';
 import { 
+  cancelActiveLlmRequests,
   PROVIDERS,
   initializeProvider, 
   startChatSession, 
@@ -23,10 +24,11 @@ import {
 } from '../llm.js';
 import fs from 'fs';
 import path from 'path';
-import { acquireLock, releaseLock, formatLockInfo } from '../lock.js';
+import { withStageLock } from '../lock.js';
 import { runDebate } from '../reasoning/debate.js';
 import { generateStagedDeliverable } from '../generation/staged-generator.js';
 import { buildStageSystemPromptBase } from '../generation/prompt-builder.js';
+import { summarizeConversationHistory } from '../context-window.js';
 
 /**
  * Interactive chat command for BABOK stages
@@ -61,7 +63,8 @@ export async function chatCommand(partialId, options) {
     process.exit(1);
   }
 
-  const stageName = journal.stages.find(s => s.stage === stageNumber)?.name || `Stage ${stageNumber}`;
+  let currentStage = stageNumber;
+  const getStageName = (stage) => journal.stages.find(s => s.stage === stage)?.name || `Stage ${stage}`;
 
   // ── Provider & API Key selection ──
   let provider = options.provider || null;
@@ -113,7 +116,7 @@ export async function chatCommand(partialId, options) {
   console.log(chalk.bold.blue('🤖 BABOK Agent Chat'));
   console.log(chalk.dim(line()));
   keyValue('Project:', chalk.bold(projectId));
-  keyValue('Stage:', chalk.cyan(`${stageNumber} - ${stageName}`));
+  keyValue('Stage:', chalk.cyan(`${currentStage} - ${getStageName(currentStage)}`));
   keyValue('Provider:', chalk.magenta(PROVIDERS[provider]?.name || provider));
   keyValue('Model:', chalk.dim(modelName));
   keyValue('API Key:', chalk.dim('●●●●●●●●' + apiKey.slice(-4)));
@@ -130,44 +133,23 @@ export async function chatCommand(partialId, options) {
   console.log(chalk.dim(line()));
   console.log('');
 
-  // Acquire stage lock before doing any AI work
-  const lockResult = acquireLock(projectId, stageNumber);
-  if (!lockResult.acquired) {
-    console.error(chalk.red(
-      `\n⛔ Stage ${stageNumber} is currently locked by another user:\n` +
-      `   ${formatLockInfo(lockResult.lock)}\n\n` +
-      `   Wait for them to finish, or if the lock is stale (> 2 h), delete:\n` +
-      `   ${getProjectDir(projectId)}/.stage_${stageNumber}.lock`
-    ));
-    process.exit(1);
-  }
-
-  // Ensure lock is released on any exit
-  const releaseStageLock = () => releaseLock(projectId, stageNumber);
-  process.on('exit', releaseStageLock);
-  process.on('SIGINT', () => { releaseStageLock(); process.exit(0); });
-  process.on('SIGTERM', () => { releaseStageLock(); process.exit(0); });
-
   // Initialize provider
   try {
     await initializeProvider(provider, apiKey, modelName);
   } catch (err) {
-    releaseStageLock();
     console.error(chalk.red(`Error initializing ${PROVIDERS[provider]?.name}: ${err.message}`));
     process.exit(1);
   }
 
   // Build context prompt
-  const systemPrompt = buildContextPrompt(journal, stageNumber);
-  
-  // Load previous conversation history if exists
-  const conversationHistory = loadConversationHistory(projectId, stageNumber);
+  const conversationState = loadConversationState(projectId, currentStage);
+  const systemPrompt = buildContextPrompt(journal, currentStage, conversationState.summary);
   
   // Start chat session
-  startChatSession(systemPrompt, conversationHistory);
+  startChatSession(systemPrompt, conversationState.recentMessages);
 
   // Track messages for saving
-  const messages = [...conversationHistory];
+  const messages = [...conversationState.allMessages];
   let messageCount = 0;
 
   // Create readline interface
@@ -175,6 +157,22 @@ export async function chatCommand(partialId, options) {
     input: process.stdin,
     output: process.stdout,
   });
+
+  let isShuttingDown = false;
+  let interrupted = false;
+  const signalHandler = () => {
+    const cancelled = cancelActiveLlmRequests();
+    if (cancelled > 0 && !interrupted) {
+      interrupted = true;
+      console.log(chalk.yellow('\n⏹  Cancelled active LLM request. Press Ctrl+C again to exit chat.'));
+      return;
+    }
+    isShuttingDown = true;
+    persistConversationState(projectId, currentStage, messages)
+      .finally(() => process.exit(130));
+  };
+  process.on('SIGINT', signalHandler);
+  process.on('SIGTERM', signalHandler);
 
   // Set up prompt
   const prompt = () => {
@@ -188,20 +186,17 @@ export async function chatCommand(partialId, options) {
 
       // Handle commands
       if (trimmed.startsWith('/')) {
-        const handled = await handleCommand(trimmed, rl, projectId, stageNumber, messages, journal);
-        if (handled === 'exit') {
+        const handled = await handleCommand(trimmed, rl, projectId, currentStage, messages, journal);
+        if (handled?.type === 'exit') {
           return;
         }
-        if (handled === 'stage_changed') {
-          // Reinitialize with new stage
-          const newStage = parseInt(trimmed.split(' ')[1]);
-          if (!isNaN(newStage) && newStage >= 1 && newStage <= 8) {
-            stageNumber = newStage;
-            const newPrompt = buildContextPrompt(journal, stageNumber);
-            startChatSession(newPrompt, []);
-            messages.length = 0;
-            console.log(chalk.green(`\n✓ Switched to Stage ${stageNumber}`));
-          }
+        if (handled?.type === 'stage_changed') {
+          const nextStage = await switchChatStage(projectId, journal, currentStage, handled.stageNumber, messages);
+          currentStage = nextStage.stageNumber;
+          startChatSession(nextStage.systemPrompt, nextStage.recentMessages);
+          messages.length = 0;
+          messages.push(...nextStage.messages);
+          console.log(chalk.green(`\n✓ Switched to Stage ${currentStage}`));
         }
         prompt();
         return;
@@ -212,21 +207,23 @@ export async function chatCommand(partialId, options) {
       console.log(chalk.blue(`\n🤖 BABOK Agent (${providerName}): `));
       
       try {
+        interrupted = false;
         let response = await sendMessageStream(trimmed, (chunk) => {
           process.stdout.write(chunk);
-        });
+        }, { requestLabel: `Chat stage ${currentStage}` });
         console.log(''); // New line after response
 
         // ── Debate pass (--debate flag, deep-analysis stages only) ──
         if (options.debate) {
+          console.log(chalk.magenta('\n[debate] analyst → critic → synthesiser...'));
           const llmClientForDebate = {
             chat: async (systemPrompt, userMessage) => {
               startChatSession(systemPrompt, []);
-              return sendMessageStream(userMessage, null);
+              return sendMessageStream(userMessage, null, { requestLabel: `Debate stage ${currentStage}` });
             },
           };
-          const contextForDebate = { stage: stageNumber, journal_summary: journal.project_name };
-          const debateResult = await runDebate(stageNumber, contextForDebate, llmClientForDebate, {});
+          const contextForDebate = { stage: currentStage, journal_summary: journal.project_name };
+          const debateResult = await runDebate(currentStage, contextForDebate, llmClientForDebate, {});
           if (debateResult) {
             console.log(chalk.magenta('\n[debate] Synthesised response:'));
             console.log(debateResult.synthesis);
@@ -241,7 +238,7 @@ export async function chatCommand(partialId, options) {
 
         // Auto-save every 5 messages
         if (messageCount % 5 === 0) {
-          saveConversationHistory(projectId, stageNumber, messages);
+          await persistConversationState(projectId, currentStage, messages);
           console.log(chalk.dim('  [auto-saved]'));
         }
 
@@ -255,11 +252,25 @@ export async function chatCommand(partialId, options) {
 
   // Handle readline close
   rl.on('close', () => {
+    if (isShuttingDown) {
+      process.off('SIGINT', signalHandler);
+      process.off('SIGTERM', signalHandler);
+      process.exit(0);
+    }
     console.log(chalk.yellow('\n\n📁 Saving conversation...'));
-    saveConversationHistory(projectId, stageNumber, messages);
-    updateJournalWithChat(projectId, stageNumber, messages.length);
-    console.log(chalk.green('✓ Conversation saved. Goodbye!'));
-    process.exit(0);
+    persistConversationState(projectId, currentStage, messages)
+      .then(() => {
+        console.log(chalk.green('✓ Conversation saved. Goodbye!'));
+        process.off('SIGINT', signalHandler);
+        process.off('SIGTERM', signalHandler);
+        process.exit(0);
+      })
+      .catch((err) => {
+        console.error(chalk.red(`Could not save conversation: ${err.message}`));
+        process.off('SIGINT', signalHandler);
+        process.off('SIGTERM', signalHandler);
+        process.exit(1);
+      });
   });
 
   // Start prompting
@@ -270,7 +281,7 @@ export async function chatCommand(partialId, options) {
 /**
  * Build context prompt with project info
  */
-function buildContextPrompt(journal, stageNumber) {
+function buildContextPrompt(journal, stageNumber, historySummary = '') {
   const profile = loadProfile(journal.profile);
   const mainPrompt = loadMainSystemPrompt(profile);
   const stagePrompt = loadStagePrompt(stageNumber, profile);
@@ -301,6 +312,7 @@ ${journal.assumptions.map(a => `  - ${a}`).join('\n') || '  (none yet)'}
 Open Questions:
 ${journal.open_questions.map(q => `  - ${q}`).join('\n') || '  (none yet)'}
 
+${historySummary ? `Earlier Conversation Summary:\n${historySummary}\n\n` : ''}
 LANGUAGE INSTRUCTION: You MUST respond in ${journal.language === 'PL' ? 'POLISH' : 'ENGLISH'} language throughout this entire conversation.
 ======================
 
@@ -314,37 +326,37 @@ LANGUAGE INSTRUCTION: You MUST respond in ${journal.language === 'PL' ? 'POLISH'
  */
 async function handleCommand(command, rl, projectId, stageNumber, messages, journal) {
   const [cmd, ...args] = command.toLowerCase().split(' ');
+  const maxStage = getMaxStage(loadProfile(journal.profile));
   
   switch (cmd) {
     case '/exit':
     case '/quit':
     case '/q':
       console.log(chalk.yellow('\n📁 Saving conversation...'));
-      saveConversationHistory(projectId, stageNumber, messages);
-      updateJournalWithChat(projectId, stageNumber, messages.length);
-      releaseLock(projectId, stageNumber);
+      await persistConversationState(projectId, stageNumber, messages);
       console.log(chalk.green('✓ Conversation saved. Goodbye!'));
+      isShuttingDown = true;
       rl.close();
-      return 'exit';
+      return { type: 'exit' };
 
     case '/save':
       saveConversationHistory(projectId, stageNumber, messages);
       console.log(chalk.green('\n✓ Conversation saved to project.'));
-      return 'handled';
+      return { type: 'handled' };
 
     case '/clear':
       messages.length = 0;
       clearChatHistory();
       console.log(chalk.yellow('\n✓ Conversation history cleared.'));
-      return 'handled';
+      return { type: 'handled' };
 
     case '/stage':
       const newStage = parseInt(args[0]);
-      if (isNaN(newStage) || newStage < 1 || newStage > 8) {
-        console.log(chalk.red('\nUsage: /stage <1-8>'));
-        return 'handled';
+      if (isNaN(newStage) || newStage < 1 || newStage > maxStage) {
+        console.log(chalk.red(`\nUsage: /stage <1-${maxStage}>`));
+        return { type: 'handled' };
       }
-      return 'stage_changed';
+      return { type: 'stage_changed', stageNumber: newStage };
 
     case '/generate':
       return await handleGenerate(projectId, stageNumber, journal);
@@ -356,14 +368,14 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
       console.log(chalk.dim('  /save             - Save conversation to project'));
       console.log(chalk.dim('  /clear            - Clear conversation history'));
       console.log(chalk.dim('  /generate         - Generate the complete stage deliverable in one request, validate locally and save it'));
-      console.log(chalk.dim('  /stage N          - Switch to stage N (1-8)'));
+      console.log(chalk.dim(`  /stage N          - Switch to stage N (1-${maxStage})`));
       console.log(chalk.dim('  /status           - Show project status'));
       console.log(chalk.dim('  /provider         - Show current provider info'));
       console.log(chalk.dim('  /llm              - Change LLM model/provider in current session'));
       console.log(chalk.dim('  /key              - Change API key'));
       console.log(chalk.dim('  /key clear [name] - Remove stored API key(s)'));
       console.log(chalk.dim('  /help, /?         - Show this help'));
-      return 'handled';
+      return { type: 'handled' };
 
     case '/llm':
       console.log(chalk.yellow('\n  🔄 Zmiana modelu w trakcie sesji...'));
@@ -380,7 +392,7 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
 
       if (isNaN(idx) || idx < 0 || idx >= providers.length) {
         console.log(chalk.red('\n  Błąd: Nieprawidłowy wybór.'));
-        return 'handled';
+        return { type: 'handled' };
       }
 
       const [pKey, pInfo] = providers[idx];
@@ -390,7 +402,7 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
         key = await new Promise(resolve => rl.question('  Podaj klucz API: ', resolve));
         if (!key.trim()) {
           console.log(chalk.red('  Błąd: Klucz jest wymagany.'));
-          return 'handled';
+          return { type: 'handled' };
         }
       }
 
@@ -406,7 +418,7 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
 
       if (isNaN(mIdx) || mIdx < 0 || mIdx >= availableModels.length) {
         console.log(chalk.red('\n  Błąd: Nieprawidłowy wybór modelu.'));
-        return 'handled';
+        return { type: 'handled' };
       }
 
       const newModel = availableModels[mIdx];
@@ -418,7 +430,7 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
       } catch (err) {
         console.error(chalk.red(`\nBłąd: ${err.message}`));
       }
-      return 'handled';
+      return { type: 'handled' };
 
     case '/key':
       if (args[0] === 'clear') {
@@ -435,7 +447,7 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
           console.log(chalk.dim(`\n  Saved keys: ${stored.join(', ')}`));
         }
       }
-      return 'handled';
+      return { type: 'handled' };
 
     case '/provider':
       const info = getActiveProviderInfo();
@@ -445,7 +457,7 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
       if (savedProviders.length > 0) {
         console.log(chalk.dim(`  Saved keys: ${savedProviders.join(', ')}`));
       }
-      return 'handled';
+      return { type: 'handled' };
 
     case '/status':
       console.log(chalk.dim('\nProject Status:'));
@@ -456,11 +468,11 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
         const current = s.stage === stageNumber ? chalk.cyan(' ← current') : '';
         console.log(`  ${status} Stage ${s.stage}: ${s.name}${current}`);
       });
-      return 'handled';
+      return { type: 'handled' };
 
     default:
       console.log(chalk.red(`\nUnknown command: ${cmd}. Type /help for available commands.`));
-      return 'handled';
+      return { type: 'handled' };
   }
 }
 
@@ -474,14 +486,14 @@ async function handleGenerate(projectId, stageNumber, journal) {
   const stage = journal.stages.find(s => s.stage === stageNumber);
   if (!stage) {
     console.log(chalk.red(`\n  Error: stage ${stageNumber} not found in journal.`));
-    return 'handled';
+    return { type: 'handled' };
   }
 
   try {
     guardSaveDeliverable(stage);
   } catch (err) {
     console.log(chalk.red(`\n  Error: ${err.message}`));
-    return 'handled';
+    return { type: 'handled' };
   }
 
   const profile = loadProfile(journal.profile);
@@ -489,12 +501,13 @@ async function handleGenerate(projectId, stageNumber, journal) {
   const stageRubric = rubric.stages[`stage${stageNumber}`];
   if (!stageRubric) {
     console.log(chalk.red(`\n  Error: no rubric entry for stage ${stageNumber} (profile ${profile.id}).`));
-    return 'handled';
+    return { type: 'handled' };
   }
   const isDeepStage = profile.orchestrator.deep_analysis_stages.includes(stageNumber);
   const stageMeta = profile.stages.find(s => s.stage === stageNumber);
   const language = journal.language === 'PL' ? 'PL' : 'EN';
 
+  const conversationState = loadConversationState(projectId, stageNumber);
   const projectContext = {
     project_id: journal.project_id,
     project_name: journal.project_name,
@@ -502,7 +515,8 @@ async function handleGenerate(projectId, stageNumber, journal) {
     decisions: journal.decisions,
     assumptions: journal.assumptions,
     open_questions: journal.open_questions,
-    conversation: loadConversationHistory(projectId, stageNumber),
+    conversation_summary: conversationState.summary,
+    conversation: conversationState.recentMessages,
   };
 
   const systemPromptBase = buildStageSystemPromptBase(profile, stageNumber, projectContext, language);
@@ -516,7 +530,7 @@ async function handleGenerate(projectId, stageNumber, journal) {
   const generationLlmClient = {
     chat: async (systemPrompt, userMessage, onChunk) => {
       startChatSession(systemPrompt, []);
-      return sendMessageStream(userMessage, onChunk);
+      return sendMessageStream(userMessage, onChunk, { requestLabel: `Generate stage ${stageNumber}` });
     },
   };
 
@@ -540,6 +554,8 @@ async function handleGenerate(projectId, stageNumber, journal) {
         onProgress: event => {
           if (event.type === 'draft_started') {
             process.stdout.write('\n  Drafting...');
+          } else if (event.type === 'chunk') {
+            process.stdout.write('.');
           } else if (event.type === 'local_scoring') {
             process.stdout.write(' -> local validation...');
           } else if (event.type === 'generation_complete') {
@@ -551,19 +567,21 @@ async function handleGenerate(projectId, stageNumber, journal) {
 
     const fileName = getStageFileNames(profile)[stageNumber];
     const filePath = path.join(getProjectDir(projectId), fileName);
-    fs.writeFileSync(filePath, generation.finalDocument, 'utf-8');
+    await withStageLock(projectId, stageNumber, async () => {
+      fs.writeFileSync(filePath, generation.finalDocument, 'utf-8');
 
-    const sha = sha256Content(generation.finalDocument);
-    stage.deliverable_file = fileName;
-    if (stage.status === 'in_progress' || stage.revision_open) {
-      stage.status = 'completed';
-      stage.revision_open = false;
-    }
-    if (!stage.completed_at) stage.completed_at = new Date().toISOString();
-    stage.generation_batches_used = generation.batches;
-    stage.final_pass_mode = generation.finalPass.mode;
-    writeJournal(projectId, journal);
-    submitForReview(projectId, stageNumber, sha);
+      const sha = sha256Content(generation.finalDocument);
+      stage.deliverable_file = fileName;
+      if (stage.status === 'in_progress' || stage.revision_open) {
+        stage.status = 'completed';
+        stage.revision_open = false;
+      }
+      if (!stage.completed_at) stage.completed_at = new Date().toISOString();
+      stage.generation_batches_used = generation.batches;
+      stage.final_pass_mode = generation.finalPass.mode;
+      writeJournal(projectId, journal);
+      submitForReview(projectId, stageNumber, sha);
+    });
 
     console.log(chalk.green(`\n  ✓ Deliverable generated and saved: ${fileName}`));
     console.log(chalk.dim(`    LLM requests: 1; local validation: ${generation.finalPass.finalScore}`));
@@ -572,7 +590,7 @@ async function handleGenerate(projectId, stageNumber, journal) {
     console.log(chalk.red(`\n  Error generating deliverable: ${err.message}`));
   }
 
-  return 'handled';
+  return { type: 'handled' };
 }
 
 /**
@@ -590,6 +608,12 @@ function loadConversationHistory(projectId, stageNumber) {
     }
   }
   return [];
+}
+
+function loadConversationState(projectId, stageNumber) {
+  const allMessages = loadConversationHistory(projectId, stageNumber);
+  const { recentMessages, summary } = summarizeConversationHistory(allMessages);
+  return { allMessages, recentMessages, summary };
 }
 
 /**
@@ -614,6 +638,24 @@ function saveConversationHistory(projectId, stageNumber, messages) {
   fs.writeFileSync(historyPath, JSON.stringify(data, null, 2), 'utf-8');
 }
 
+async function persistConversationState(projectId, stageNumber, messages) {
+  return withStageLock(projectId, stageNumber, async () => {
+    saveConversationHistory(projectId, stageNumber, messages);
+    updateJournalWithChat(projectId, stageNumber, messages.length);
+  });
+}
+
+export async function switchChatStage(projectId, journal, fromStage, toStage, messages) {
+  await persistConversationState(projectId, fromStage, messages);
+  const nextState = loadConversationState(projectId, toStage);
+  return {
+    stageNumber: toStage,
+    messages: nextState.allMessages,
+    recentMessages: nextState.recentMessages,
+    systemPrompt: buildContextPrompt(journal, toStage, nextState.summary),
+  };
+}
+
 /**
  * Update journal with chat activity
  */
@@ -624,7 +666,7 @@ function updateJournalWithChat(projectId, stageNumber, messageCount) {
     
     if (stage) {
       stage.last_chat_at = new Date().toISOString();
-      stage.chat_message_count = (stage.chat_message_count || 0) + messageCount;
+      stage.chat_message_count = messageCount;
     }
     
     writeJournal(projectId, journal);

@@ -12,6 +12,7 @@
 
 import { loadMainSystemPrompt, loadStagePrompt } from '../llm.js';
 import { loadTemplatesForStage } from '../templates.js';
+import { limitProjectContext } from '../context-window.js';
 
 /**
  * @param {object} profile
@@ -28,7 +29,7 @@ export function buildStageSystemPromptBase(profile, stageNumber, projectContext,
   const mainPrompt = loadMainSystemPrompt(profile);
   const stagePrompt = loadStagePrompt(stageNumber, profile);
   const templates = loadTemplatesForStage(stageNumber, { includeModules: true, projectContext, profile }).text;
-  const contextJson = JSON.stringify(projectContext, null, 2);
+  const contextJson = JSON.stringify(limitProjectContext(projectContext), null, 2);
 
   const langInstruction = language === 'PL'
     ? 'LANGUAGE REQUIREMENT: You MUST respond ENTIRELY in Polish language.'

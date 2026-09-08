@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {
   PROVIDERS,
   LLM_REQUEST_TIMEOUT_MS,
+  LlmRequestAbortError,
+  LlmRequestTimeoutError,
+  cancelActiveLlmRequests,
   createAnthropicTextResponse,
   createLlmClient,
   createOpenAITextResponse,
@@ -61,6 +64,31 @@ describe('draft progress through the provider SDKs', () => {
     assert.equal(await client.chat('System', 'Draft', chunk => chunks.push(chunk)), 'Live draft');
     assert.equal(request.stream, true);
     assert.deepEqual(chunks, ['Live draft']);
+  });
+});
+
+describe('request control', () => {
+  for (const provider of ['gemini', 'openai', 'anthropic', 'local', 'huggingface']) {
+    it(`${provider} times out with a controlled error`, async t => {
+      t.mock.method(globalThis, 'fetch', async () => await new Promise(() => {}));
+      const client = createLlmClient(provider, provider === 'huggingface' ? 'hf_test_key' : 'test-key');
+      await assert.rejects(
+        client.chat('System', 'Draft', { timeoutMs: 5, requestLabel: `${provider} timeout` }),
+        error => error instanceof LlmRequestTimeoutError && error.code === 'LLM_TIMEOUT',
+      );
+    });
+  }
+
+  it('cancels active requests on demand', async t => {
+    t.mock.method(globalThis, 'fetch', async () => await new Promise(() => {}));
+    const client = createLlmClient('openai', 'test-key');
+    const pending = client.chat('System', 'Draft', { timeoutMs: 1000, requestLabel: 'cancel me' });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    cancelActiveLlmRequests('Cancelled from test');
+    await assert.rejects(
+      pending,
+      error => error instanceof LlmRequestAbortError && error.code === 'LLM_ABORTED',
+    );
   });
 });
 
@@ -310,6 +338,8 @@ describe('OpenAI Responses API', () => {
     assert.equal(request.stream, true);
     assert.equal(request.model, 'gpt-6-astra');
     assert.equal('temperature' in request, false);
-    assert.deepEqual(requestOptions, { timeout: LLM_REQUEST_TIMEOUT_MS, maxRetries: 0 });
+    assert.equal(requestOptions.timeout, LLM_REQUEST_TIMEOUT_MS);
+    assert.equal(requestOptions.maxRetries, 0);
+    assert.ok(requestOptions.signal instanceof AbortSignal);
   });
 });
