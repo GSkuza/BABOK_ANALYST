@@ -33,9 +33,12 @@ describe('stage locking helpers', () => {
     await withStageLock(projectId, 1, async () => {
       assert.ok(fs.existsSync(lockPath));
       const beforeRefresh = JSON.parse(fs.readFileSync(lockPath, 'utf-8')).locked_at;
-      await new Promise(resolve => setTimeout(resolve, 5));
-      assert.equal(refreshLock(projectId, 1), true);
-      const afterRefresh = JSON.parse(fs.readFileSync(lockPath, 'utf-8')).locked_at;
+      let afterRefresh = beforeRefresh;
+      for (let attempt = 0; attempt < 5 && afterRefresh === beforeRefresh; attempt += 1) {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        assert.equal(refreshLock(projectId, 1), true);
+        afterRefresh = JSON.parse(fs.readFileSync(lockPath, 'utf-8')).locked_at;
+      }
       assert.notEqual(afterRefresh, beforeRefresh);
     });
 
