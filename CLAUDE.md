@@ -73,7 +73,7 @@ babok make docx|pdf|all <id>      # generate documents from stage files
 All state lives under `projects/<project_id>/` (canonical — used by MCP, CLI, and plugin installs). `BABOK_Analysis/` is a legacy path, only produced by `babok run -o BABOK_Analysis`.
 - `PROJECT_JOURNAL_<id>.json` — authoritative state machine (stage status, timestamps, decisions, assumptions, open questions, agent submissions, human attestations)
 - `STAGE_0N_<name>.md` — per-stage deliverable markdown files
-- `.stage_N.lock` — file lock for team collaboration (stale threshold: 2 hours)
+- `.stage_N.lock` — file lock for team collaboration (stale threshold: 15 minutes)
 
 **Project ID format**: `<PREFIX>-YYYYMMDD-XXXX` where the prefix comes from the project's profile (`BABOK-` for the default profile, `BC-` for consulting). Partial IDs resolve by prefix matching in `cli/src/project.js`.
 

@@ -11,6 +11,114 @@ import { DEFAULT_PROFILE_ID, getStage, loadProfile, resolveProfilePath } from '.
 
 export const LLM_REQUEST_TIMEOUT_MS = 10 * 60 * 1000;
 const LLM_REQUEST_OPTIONS = { timeout: LLM_REQUEST_TIMEOUT_MS, maxRetries: 0 };
+const activeRequestControllers = new Set();
+
+export class LlmRequestTimeoutError extends Error {
+  constructor(message, timeoutMs) {
+    super(message);
+    this.name = 'LlmRequestTimeoutError';
+    this.code = 'LLM_TIMEOUT';
+    this.timeoutMs = timeoutMs;
+  }
+}
+
+export class LlmRequestAbortError extends Error {
+  constructor(message = 'LLM request cancelled.') {
+    super(message);
+    this.name = 'LlmRequestAbortError';
+    this.code = 'LLM_ABORTED';
+  }
+}
+
+function createAbortError(signal, fallbackMessage) {
+  const reason = signal?.reason;
+  if (reason instanceof Error) return reason;
+  return new LlmRequestAbortError(typeof reason === 'string' ? reason : fallbackMessage);
+}
+
+function registerActiveRequest(controller) {
+  activeRequestControllers.add(controller);
+  return () => activeRequestControllers.delete(controller);
+}
+
+export function cancelActiveLlmRequests(reason = 'LLM request cancelled by user.') {
+  const controllers = [...activeRequestControllers];
+  for (const controller of controllers) {
+    try {
+      controller.abort(new LlmRequestAbortError(reason));
+    } catch {
+      // ignore
+    }
+  }
+  return controllers.length;
+}
+
+function controlledStreamAbortError(label) {
+  return new LlmRequestAbortError(`${label} cancelled.`);
+}
+
+async function withControlledRequest(run, options = {}) {
+  const {
+    timeoutMs = LLM_REQUEST_TIMEOUT_MS,
+    signal,
+    requestLabel = 'LLM request',
+  } = options;
+
+  const controller = new AbortController();
+  const unregister = registerActiveRequest(controller);
+  let timeoutId;
+  let externalAbortHandler = null;
+
+  if (signal?.aborted) {
+    unregister();
+    throw createAbortError(signal, `${requestLabel} cancelled.`);
+  }
+
+  const forwardAbort = () => {
+    if (!controller.signal.aborted) controller.abort(createAbortError(signal, `${requestLabel} cancelled.`));
+  };
+
+  if (signal) {
+    externalAbortHandler = forwardAbort;
+    signal.addEventListener('abort', externalAbortHandler, { once: true });
+  }
+
+  const requestPromise = (async () => run(controller.signal))();
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      if (!controller.signal.aborted) controller.abort(new LlmRequestTimeoutError(
+        `${requestLabel} timed out after ${Math.round(timeoutMs / 1000)}s.`,
+        timeoutMs,
+      ));
+      reject(controller.signal.reason);
+    }, timeoutMs);
+  });
+
+  const abortPromise = new Promise((_, reject) => {
+    controller.signal.addEventListener('abort', () => reject(controller.signal.reason || controlledStreamAbortError(requestLabel)), { once: true });
+  });
+
+  try {
+    return await Promise.race([requestPromise, timeoutPromise, abortPromise]);
+  } catch (error) {
+    if (controller.signal.aborted) throw controller.signal.reason || error;
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+    unregister();
+    if (signal && externalAbortHandler) signal.removeEventListener('abort', externalAbortHandler);
+  }
+}
+
+function normalizeChatInvocation(arg3, arg4) {
+  const options = typeof arg3 === 'function' ? { ...(arg4 || {}), onChunk: arg3 } : { ...(arg3 || {}) };
+  return {
+    onChunk: typeof options.onChunk === 'function' ? options.onChunk : null,
+    signal: options.signal,
+    timeoutMs: options.timeoutMs,
+    requestLabel: options.requestLabel,
+  };
+}
 
 /**
  * Return the provider-suggested delay for a rate-limit error, or null when the
@@ -504,7 +612,7 @@ export async function initializeProvider(provider, apiKey, modelName) {
         apiKey: apiKey || 'not-needed',
         baseURL: baseURL
       });
-      activeProvider = 'openai'; // Reuse OpenAI logic for sendMessageStream
+      activeProvider = 'local';
       activeModel = modelName || info.defaultModel;
       return;
     }
@@ -523,60 +631,70 @@ export async function initializeProvider(provider, apiKey, modelName) {
 }
 
 export async function createOpenAITextResponse(client, model, messages) {
-  const response = await client.responses.create({
-    model,
-    input: messages,
-    max_output_tokens: 8192,
-  }, LLM_REQUEST_OPTIONS);
-  return response.output_text || '';
+  return withControlledRequest(async () => {
+    const response = await client.responses.create({
+      model,
+      input: messages,
+      max_output_tokens: 8192,
+    }, LLM_REQUEST_OPTIONS);
+    return response.output_text || '';
+  }, { requestLabel: `OpenAI ${model} request` });
 }
 
-export async function streamOpenAITextResponse(client, model, messages, onChunk) {
-  const stream = await client.responses.create({
-    model,
-    input: messages,
-    max_output_tokens: 8192,
-    stream: true,
-  }, LLM_REQUEST_OPTIONS);
-  let fullResponse = '';
-  for await (const event of stream) {
-    if (event.type === 'error' || event.type === 'response.failed') {
-      throw new Error(event.message || event.response?.error?.message || 'LLM response failed');
+export async function streamOpenAITextResponse(client, model, messages, onChunk, options = {}) {
+  return withControlledRequest(async (signal) => {
+    const stream = await client.responses.create({
+      model,
+      input: messages,
+      max_output_tokens: 8192,
+      stream: true,
+    }, { ...LLM_REQUEST_OPTIONS, signal });
+    let fullResponse = '';
+    for await (const event of stream) {
+      if (signal.aborted) throw createAbortError(signal, `OpenAI ${model} stream cancelled.`);
+      if (event.type === 'error' || event.type === 'response.failed') {
+        throw new Error(event.message || event.response?.error?.message || 'LLM response failed');
+      }
+      if (event.type === 'response.incomplete') {
+        throw new Error(`LLM response incomplete: ${event.response?.incomplete_details?.reason || 'unknown reason'}`);
+      }
+      if (event.type !== 'response.output_text.delta' || !event.delta) continue;
+      fullResponse += event.delta;
+      if (onChunk) onChunk(event.delta);
     }
-    if (event.type === 'response.incomplete') {
-      throw new Error(`LLM response incomplete: ${event.response?.incomplete_details?.reason || 'unknown reason'}`);
+    return fullResponse;
+  }, { ...options, requestLabel: options.requestLabel || `OpenAI ${model} stream` });
+}
+
+export async function createAnthropicTextResponse(client, model, systemPrompt, messages, options = {}) {
+  return withControlledRequest(async () => {
+    const response = await client.messages.create({
+      model,
+      system: systemPrompt,
+      messages,
+      max_tokens: 8192,
+    });
+    return response.content?.find(block => block.type === 'text')?.text || '';
+  }, { ...options, requestLabel: options.requestLabel || `Anthropic ${model} request` });
+}
+
+export async function streamAnthropicTextResponse(client, model, systemPrompt, messages, onChunk, options = {}) {
+  return withControlledRequest(async (signal) => {
+    const stream = client.messages.stream({
+      model,
+      system: systemPrompt,
+      messages,
+      max_tokens: 8192,
+    });
+    let fullResponse = '';
+    for await (const event of stream) {
+      if (signal.aborted) throw createAbortError(signal, `Anthropic ${model} stream cancelled.`);
+      if (event.type !== 'content_block_delta' || !event.delta?.text) continue;
+      fullResponse += event.delta.text;
+      if (onChunk) onChunk(event.delta.text);
     }
-    if (event.type !== 'response.output_text.delta' || !event.delta) continue;
-    fullResponse += event.delta;
-    if (onChunk) onChunk(event.delta);
-  }
-  return fullResponse;
-}
-
-export async function createAnthropicTextResponse(client, model, systemPrompt, messages) {
-  const response = await client.messages.create({
-    model,
-    system: systemPrompt,
-    messages,
-    max_tokens: 8192,
-  });
-  return response.content?.find(block => block.type === 'text')?.text || '';
-}
-
-export async function streamAnthropicTextResponse(client, model, systemPrompt, messages, onChunk) {
-  const stream = client.messages.stream({
-    model,
-    system: systemPrompt,
-    messages,
-    max_tokens: 8192,
-  });
-  let fullResponse = '';
-  for await (const event of stream) {
-    if (event.type !== 'content_block_delta' || !event.delta?.text) continue;
-    fullResponse += event.delta.text;
-    if (onChunk) onChunk(event.delta.text);
-  }
-  return fullResponse;
+    return fullResponse;
+  }, { ...options, requestLabel: options.requestLabel || `Anthropic ${model} stream` });
 }
 
 /**
@@ -596,46 +714,69 @@ export function createLlmClient(provider, apiKey, modelName) {
   // Reuse the SDK instance across drafts, judges and revisions.
   let sdkClient;
 
-  const chat = async (systemPrompt, userMessage, onChunk) => {
+  const chat = async (systemPrompt, userMessage, arg3, arg4) => {
+    const { onChunk, signal, timeoutMs, requestLabel } = normalizeChatInvocation(arg3, arg4);
+    const requestOptions = { signal, timeoutMs, requestLabel: requestLabel || `${info.name} ${model}` };
     switch (provider) {
       case 'gemini': {
-        const genAI = sdkClient ??= new GoogleGenerativeAI(apiKey);
-        const genModel = genAI.getGenerativeModel({
-          model,
-          systemInstruction: systemPrompt,
-          generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
-        });
-        if (onChunk) {
-          const result = await genModel.generateContentStream(userMessage);
-          let text = '';
-          for await (const chunk of result.stream) {
-            const delta = chunk.text();
-            text += delta;
-            onChunk(delta);
+        return withControlledRequest(async (requestSignal) => {
+          const genAI = sdkClient ??= new GoogleGenerativeAI(apiKey);
+          const genModel = genAI.getGenerativeModel({
+            model,
+            systemInstruction: systemPrompt,
+            generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
+          });
+          if (onChunk) {
+            const result = await genModel.generateContentStream(userMessage);
+            let text = '';
+            for await (const chunk of result.stream) {
+              if (requestSignal.aborted) throw createAbortError(requestSignal, `Gemini ${model} stream cancelled.`);
+              const delta = chunk.text();
+              text += delta;
+              onChunk(delta);
+            }
+            return text;
           }
-          return text;
-        }
-        const result = await genModel.generateContent(userMessage);
-        return result.response.text();
+          const result = await genModel.generateContent(userMessage);
+          if (requestSignal.aborted) throw createAbortError(requestSignal, `Gemini ${model} request cancelled.`);
+          return result.response.text();
+        }, requestOptions);
       }
       case 'vertex': {
-        const { VertexAI } = await import('@google-cloud/vertexai');
-        let cfg = {};
-        try { cfg = JSON.parse(apiKey); } catch { cfg = { project_id: apiKey }; }
-        const vertexOptions = {
-          project: cfg.project_id,
-          location: cfg.location || 'us-central1',
-        };
-        if (cfg.credentials_file) {
-          vertexOptions.googleAuthOptions = { keyFilename: cfg.credentials_file };
-        }
-        const vertexAI = new VertexAI(vertexOptions);
-        const genModel = vertexAI.getGenerativeModel({ model });
-        const result = await genModel.generateContent({
-          contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-        });
-        return result.response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        return withControlledRequest(async (requestSignal) => {
+          const { VertexAI } = await import('@google-cloud/vertexai');
+          let cfg = {};
+          try { cfg = JSON.parse(apiKey); } catch { cfg = { project_id: apiKey }; }
+          const vertexOptions = {
+            project: cfg.project_id,
+            location: cfg.location || 'us-central1',
+          };
+          if (cfg.credentials_file) {
+            vertexOptions.googleAuthOptions = { keyFilename: cfg.credentials_file };
+          }
+          const vertexAI = new VertexAI(vertexOptions);
+          const genModel = vertexAI.getGenerativeModel({ model });
+          if (onChunk) {
+            const result = await genModel.generateContentStream({
+              contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+              systemInstruction: { parts: [{ text: systemPrompt }] },
+            });
+            let text = '';
+            for await (const chunk of result.stream) {
+              if (requestSignal.aborted) throw createAbortError(requestSignal, `Vertex ${model} stream cancelled.`);
+              const delta = chunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              text += delta;
+              if (delta) onChunk(delta);
+            }
+            return text;
+          }
+          const result = await genModel.generateContent({
+            contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+          });
+          if (requestSignal.aborted) throw createAbortError(requestSignal, `Vertex ${model} request cancelled.`);
+          return result.response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }, requestOptions);
       }
       case 'openai':
       case 'local': {
@@ -648,43 +789,49 @@ export function createLlmClient(provider, apiKey, modelName) {
           return streamOpenAITextResponse(client, selectedModel, [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage },
-          ], onChunk);
+          ], onChunk, requestOptions);
         }
-        const resp = await client.chat.completions.create({
-          model: selectedModel,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          max_tokens: 8192,
-          temperature: 0.7,
-        });
-        return resp.choices?.[0]?.message?.content || '';
+        return withControlledRequest(async (requestSignal) => {
+          const resp = await client.chat.completions.create({
+            model: selectedModel,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userMessage },
+            ],
+            max_tokens: 8192,
+            temperature: 0.7,
+          }, { ...LLM_REQUEST_OPTIONS, signal: requestSignal });
+          return resp.choices?.[0]?.message?.content || '';
+        }, { ...requestOptions, requestLabel: requestLabel || `Local ${selectedModel} request` });
       }
       case 'anthropic': {
         const client = sdkClient ??= new Anthropic({ apiKey, maxRetries: 0 });
         if (onChunk) {
           return streamAnthropicTextResponse(client, model, systemPrompt,
-            [{ role: 'user', content: userMessage }], onChunk);
+            [{ role: 'user', content: userMessage }], onChunk, requestOptions);
         }
         return createAnthropicTextResponse(
           client,
           model,
           systemPrompt,
           [{ role: 'user', content: userMessage }],
+          requestOptions,
         );
       }
       case 'huggingface': {
-        const hf = sdkClient ??= new HfInference(apiKey);
-        const resp = await hf.chatCompletion({
-          model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          max_tokens: 8192,
-        });
-        return resp.choices?.[0]?.message?.content || '';
+        return withControlledRequest(async (requestSignal) => {
+          const hf = sdkClient ??= new HfInference(apiKey);
+          const resp = await hf.chatCompletion({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userMessage },
+            ],
+            max_tokens: 8192,
+          });
+          if (requestSignal.aborted) throw createAbortError(requestSignal, `Hugging Face ${model} request cancelled.`);
+          return resp.choices?.[0]?.message?.content || '';
+        }, requestOptions);
       }
       default:
         throw new Error(`createLlmClient: unsupported provider "${provider}"`);
@@ -712,115 +859,137 @@ export function clearChatHistory() {
 /**
  * Send message and stream response (provider-agnostic).
  */
-export async function sendMessageStream(message, onChunk) {
+export async function sendMessageStream(message, onChunk, options = {}) {
   conversationMessages.push({ role: 'user', parts: [{ text: message }] });
 
-  let fullResponse = '';
+  try {
+    const fullResponse = await withControlledRequest(async (signal) => {
+      let responseText = '';
 
-  switch (activeProvider) {
-    case 'gemini': {
-      const chat = activeClient.startChat({
-        history: conversationMessages.slice(0, -1),
-        systemInstruction: { parts: [{ text: systemPromptCache }] },
-        generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
-      });
-      const result = await chat.sendMessageStream(message);
-      for await (const chunk of result.stream) {
-        const text = chunk.text();
-        fullResponse += text;
-        if (onChunk) onChunk(text);
+      switch (activeProvider) {
+        case 'gemini': {
+          const chat = activeClient.startChat({
+            history: conversationMessages.slice(0, -1),
+            systemInstruction: { parts: [{ text: systemPromptCache }] },
+            generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
+          });
+          const result = await chat.sendMessageStream(message);
+          for await (const chunk of result.stream) {
+            if (signal.aborted) throw createAbortError(signal, `Gemini ${activeModel} stream cancelled.`);
+            const text = chunk.text();
+            responseText += text;
+            if (onChunk) onChunk(text);
+          }
+          break;
+        }
+
+        case 'vertex': {
+          const chat = activeClient.startChat({
+            history: conversationMessages.slice(0, -1).map(m => ({
+              role: m.role === 'model' ? 'model' : 'user',
+              parts: m.parts,
+            })),
+            systemInstruction: { parts: [{ text: systemPromptCache }] },
+            generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
+          });
+          const result = await chat.sendMessageStream(message);
+          for await (const chunk of result.stream) {
+            if (signal.aborted) throw createAbortError(signal, `Vertex ${activeModel} stream cancelled.`);
+            const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            responseText += text;
+            if (onChunk && text) onChunk(text);
+          }
+          break;
+        }
+
+        case 'openai':
+        case 'local': {
+          const selectedModel = activeProvider === 'local' && activeModel?.startsWith('http')
+            ? PROVIDERS.local.defaultModel
+            : activeModel;
+          const messages = [
+            { role: 'system', content: systemPromptCache },
+            ...conversationMessages.map(m => ({
+              role: m.role === 'model' ? 'assistant' : m.role,
+              content: m.parts[0].text,
+            })),
+          ];
+          responseText = await streamOpenAITextResponse(activeClient, selectedModel, messages, onChunk, {
+            signal,
+            timeoutMs: options.timeoutMs,
+            requestLabel: options.requestLabel || `${PROVIDERS[activeProvider]?.name || activeProvider} ${selectedModel} chat`,
+          });
+          break;
+        }
+
+        case 'anthropic': {
+          const messages = conversationMessages.map(m => ({
+            role: m.role === 'model' ? 'assistant' : m.role,
+            content: m.parts[0].text,
+          }));
+          responseText = await streamAnthropicTextResponse(
+            activeClient,
+            activeModel,
+            systemPromptCache,
+            messages,
+            onChunk,
+            {
+              signal,
+              timeoutMs: options.timeoutMs,
+              requestLabel: options.requestLabel || `Anthropic ${activeModel} chat`,
+            },
+          );
+          break;
+        }
+
+        case 'huggingface': {
+          const messages = [
+            { role: 'system', content: systemPromptCache },
+            ...conversationMessages.map(m => ({
+              role: m.role === 'model' ? 'assistant' : m.role,
+              content: m.parts[0].text,
+            })),
+          ];
+          const isEndpoint = activeModel.startsWith('http') || activeModel.includes('.endpoints.huggingface.cloud');
+          const streamOptions = {
+            messages,
+            max_tokens: 8192,
+            temperature: 0.7,
+            provider: 'auto',
+          };
+          if (!isEndpoint) {
+            streamOptions.model = activeModel;
+          }
+
+          const client = isEndpoint ? activeClient.endpoint(activeModel) : activeClient;
+          const stream = client.chatCompletionStream(streamOptions);
+
+          for await (const chunk of stream) {
+            if (signal.aborted) throw createAbortError(signal, `Hugging Face ${activeModel} stream cancelled.`);
+            const text = chunk.choices?.[0]?.delta?.content || '';
+            responseText += text;
+            if (onChunk && text) onChunk(text);
+          }
+          break;
+        }
+
+        default:
+          throw new Error(`Provider ${activeProvider} not initialized`);
       }
-      break;
-    }
 
-    case 'vertex': {
-      // Vertex AI SDK — same startChat API but chunk.text() not available;
-      // extract text from candidates array instead.
-      const chat = activeClient.startChat({
-        history: conversationMessages.slice(0, -1).map(m => ({
-          role: m.role === 'model' ? 'model' : 'user',
-          parts: m.parts,
-        })),
-        systemInstruction: { parts: [{ text: systemPromptCache }] },
-        generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
-      });
-      const result = await chat.sendMessageStream(message);
-      for await (const chunk of result.stream) {
-        const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        fullResponse += text;
-        if (onChunk && text) onChunk(text);
-      }
-      break;
-    }
+      return responseText;
+    }, {
+      signal: options.signal,
+      timeoutMs: options.timeoutMs,
+      requestLabel: options.requestLabel || `${PROVIDERS[activeProvider]?.name || activeProvider} ${activeModel} chat`,
+    });
 
-    case 'openai': {
-      const messages = [
-        { role: 'system', content: systemPromptCache },
-        ...conversationMessages.map(m => ({
-          role: m.role === 'model' ? 'assistant' : m.role,
-          content: m.parts[0].text,
-        })),
-      ];
-      fullResponse = await streamOpenAITextResponse(activeClient, activeModel, messages, onChunk);
-      break;
-    }
-
-    case 'anthropic': {
-      const messages = conversationMessages.map(m => ({
-        role: m.role === 'model' ? 'assistant' : m.role,
-        content: m.parts[0].text,
-      }));
-      fullResponse = await streamAnthropicTextResponse(
-        activeClient,
-        activeModel,
-        systemPromptCache,
-        messages,
-        onChunk,
-      );
-      break;
-    }
-
-    case 'huggingface': {
-      const messages = [
-        { role: 'system', content: systemPromptCache },
-        ...conversationMessages.map(m => ({
-          role: m.role === 'model' ? 'assistant' : m.role,
-          content: m.parts[0].text,
-        })),
-      ];
-      
-      // Better detection for direct endpoint URLs
-      const isEndpoint = activeModel.startsWith('http') || activeModel.includes('.endpoints.huggingface.cloud');
-      
-      const options = {
-        messages,
-        max_tokens: 8192,
-        temperature: 0.7,
-        provider: 'auto',
-      };
-
-      // When using a dedicated endpoint, we SHOULD NOT pass the 'model' property
-      if (!isEndpoint) {
-        options.model = activeModel;
-      }
-
-      const client = isEndpoint ? activeClient.endpoint(activeModel) : activeClient;
-      const stream = client.chatCompletionStream(options);
-
-      for await (const chunk of stream) {
-        const text = chunk.choices?.[0]?.delta?.content || '';
-        fullResponse += text;
-        if (onChunk && text) onChunk(text);
-      }
-      break;
-    }
-
-    default:
-      throw new Error(`Provider ${activeProvider} not initialized`);
+    conversationMessages.push({ role: 'model', parts: [{ text: fullResponse }] });
+    return fullResponse;
+  } catch (error) {
+    conversationMessages.pop();
+    throw error;
   }
-
-  conversationMessages.push({ role: 'model', parts: [{ text: fullResponse }] });
-  return fullResponse;
 }
 
 /**

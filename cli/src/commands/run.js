@@ -6,8 +6,9 @@ import { fileURLToPath } from 'url';
 import { generateProjectId } from '../project.js';
 import { getProjectDir } from '../project.js';
 import { DEFAULT_PROFILE_ID, getStageFileNames, listProfileIds, loadProfile } from '../profiles.js';
-import { acquireLock, releaseLock, formatLockInfo } from '../lock.js';
+import { withStageLock } from '../lock.js';
 import {
+  cancelActiveLlmRequests,
   getApiKey,
   initializeProvider,
   createLlmClient,
@@ -16,13 +17,14 @@ import {
   promptForProvider,
   listStoredProviders,
 } from '../llm.js';
-import { runPipeline } from '../orchestrator/engine.js';
+import { cancelStageWorkers, runPipeline } from '../orchestrator/engine.js';
 import { writeContext } from '../orchestrator/context-manager.js';
 import { createJournal } from '../journal.js';
 import { loadRubric } from '../templates.js';
 import { createTaskRouter } from '../router.js';
 import { generateStagedDeliverable } from '../generation/staged-generator.js';
 import { buildStageSystemPromptBase } from '../generation/prompt-builder.js';
+import { summarizeStageOutputs } from '../context-window.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -255,12 +257,7 @@ function updateJournalStage(journal, stageNum, projectDir, fileName, extra = {})
 }
 
 export function buildPreviousOutputsContext(previousOutputs, profile) {
-  if (Object.keys(previousOutputs).length === 0) return '';
-  const parts = Object.entries(previousOutputs).map(([n, content]) => {
-    const meta = profile.stages.find(stage => stage.stage === Number(n));
-    return `--- Stage ${n}: ${meta?.name} ---\n${content}`;
-  });
-  return `\n\n=== PREVIOUS STAGE OUTPUTS (source context) ===\n${parts.join('\n\n')}\n=== END PREVIOUS OUTPUTS ===`;
+  return summarizeStageOutputs(previousOutputs, profile);
 }
 
 function buildFinalDocument(projectName, projectId, outputs, language, profile) {
@@ -301,12 +298,41 @@ function formatLlmError(error) {
   return [...new Set(details.filter(Boolean))].join(' -> ');
 }
 
+function installInterruptHandler({ onAbort, onForceExit } = {}) {
+  let interrupted = false;
+  const handler = async () => {
+    if (!interrupted) {
+      interrupted = true;
+      const cancelledRequests = cancelActiveLlmRequests();
+      const cancelledWorkers = cancelStageWorkers();
+      process.stderr.write(`\n⏹  Przerwano aktywne żądania LLM (${cancelledRequests}) i workery (${cancelledWorkers}).\n`);
+      await onAbort?.();
+      return;
+    }
+    await onForceExit?.();
+    process.exit(130);
+  };
+  process.on('SIGINT', handler);
+  process.on('SIGTERM', handler);
+  return () => {
+    process.off('SIGINT', handler);
+    process.off('SIGTERM', handler);
+  };
+}
+
 
 // ──────────────────────────────────────────────
 //  Main command
 // ──────────────────────────────────────────────
 
 export async function runAnalysis(options) {
+  let stageRl = null;
+  const removeInterruptHandler = installInterruptHandler({
+    onForceExit: async () => {
+      stageRl?.close();
+    },
+  });
+
   // ── 0. Load project context early so the profile prompt can remember the last choice ──
   const ctxPath = path.resolve(options.context || 'my_project_context.json');
   let context = {};
@@ -404,9 +430,15 @@ export async function runAnalysis(options) {
     const result = await runPipeline(projectId, {
       dryRun: false,
       profile,
-      llmClient,
-      deepAnalysisClient,
       taskRouter,
+      llmRuntime: {
+        primaryProvider: orchProvider,
+        primaryApiKey: orchApiKey,
+        primaryModel: orchModel,
+        deepProvider: orchProvider,
+        deepApiKey: orchApiKey,
+        deepModel: options.deepModel || orchModel,
+      },
       onProgress: (e) => {
         const modeTag = e.mode === 'deep_analysis' ? chalk.magenta(' [DEEP]') : '';
         console.log(chalk.cyan('  [orchestrator]'), e.type, e.stage || '', modeTag);
@@ -416,6 +448,7 @@ export async function runAnalysis(options) {
     if (result.stagesFailed.length > 0) {
       console.log(chalk.yellow('  ⚠️  Failed stages:'), result.stagesFailed.join(', '));
     }
+    removeInterruptHandler();
     return;
   }
 
@@ -527,7 +560,6 @@ export async function runAnalysis(options) {
   const previousOutputs = {};
 
   // ── 6. Interactive readline (used when not --auto) ──
-  let stageRl = null;
   let stageAsk = null;
   if (!isAuto) {
     stageRl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -545,17 +577,6 @@ export async function runAnalysis(options) {
     const stageRubric = rubric.stages[`stage${stageNum}`];
     const isDeepStage = profile.orchestrator.deep_analysis_stages.includes(stageNum);
     const stageClient = taskRouter.getStageClient(stageNum);
-
-    // Acquire stage lock (prevents concurrent edits in shared dirs)
-    const lockResult = acquireLock(projectId, stageNum, projectDir);
-    if (!lockResult.acquired) {
-      console.error(chalk.red(
-        `\n⛔ Stage ${stageNum} is locked by another user: ${formatLockInfo(lockResult.lock)}`
-      ));
-      console.error(chalk.dim(`   Lock file: ${projectDir}/.stage_${stageNum}.lock`));
-      stageRl?.close();
-      process.exit(1);
-    }
 
     // ── 7a. Ask user for additional input (interactive mode) ──
     let extraInput = '';
@@ -581,92 +602,93 @@ export async function runAnalysis(options) {
     const stageTimeoutMs = stageTimeoutMinutes * 60 * 1000;
 
     const runGeneration = async (extra) => {
-      process.stdout.write(chalk.dim('\n  Preparing stage context...'));
-      const prevContext = buildPreviousOutputsContext(previousOutputs, profile);
-      const systemPromptBase = buildStageSystemPromptBase(profile, stageNum, context, language, { prevContext });
-      let userMessageWithExtra = extra
-        ? `${userMessageIntro}\n\n${language === 'PL' ? 'Dodatkowe informacje od analityka biznesowego:' : 'Additional input from the business analyst:'}\n${extra}`
-        : userMessageIntro;
-      if (options.diagram && (stageNum === 2 || stageNum === 5)) {
-        userMessageWithExtra += '\nInclude a process diagram in a fenced mermaid block, grounded in the same document.';
-      }
-
-      process.stdout.write(chalk.dim('  Generating'));
-      let lastChunkPrint = 0;
-      let stageTimer;
       let rateLimitRetried = false;
-      const startedAt = Date.now();
-      const heartbeat = setInterval(() => {
-        process.stdout.write(chalk.dim(` [${Math.round((Date.now() - startedAt) / 1000)}s]`));
-      }, 15000);
-      heartbeat.unref();
-      try {
-        const generation = await Promise.race([
-          generateStagedDeliverable({
-            stageNumber: stageNum,
-            profile,
-            llmClient: stageClient,
-            systemPromptBase,
-            userMessageIntro: userMessageWithExtra,
-            context,
-            rubric,
-            stageRubric,
-            batchGroups: stageRubric.generation_batches,
-            isDeepStage,
-            projectDir,
-            options: {
-              model: stageClient.modelName,
-              classifyVerdict: taskRouter.classifyVerdict,
-              onProgress: (event) => {
-                if (event.type === 'draft_started') {
-                  process.stdout.write(chalk.dim(' document... '));
-                } else if (event.type === 'local_scoring') {
-                  process.stdout.write(chalk.dim(' -> local validation'));
-                } else if (event.type === 'chunk') {
-                  const now = Date.now();
-                  if (now - lastChunkPrint > 400) {
-                    process.stdout.write(chalk.dim('.'));
-                    lastChunkPrint = now;
+      for (;;) {
+        process.stdout.write(chalk.dim('\n  Preparing stage context...'));
+        const prevContext = buildPreviousOutputsContext(previousOutputs, profile);
+        const systemPromptBase = buildStageSystemPromptBase(profile, stageNum, context, language, { prevContext });
+        let userMessageWithExtra = extra
+          ? `${userMessageIntro}\n\n${language === 'PL' ? 'Dodatkowe informacje od analityka biznesowego:' : 'Additional input from the business analyst:'}\n${extra}`
+          : userMessageIntro;
+        if (options.diagram && (stageNum === 2 || stageNum === 5)) {
+          userMessageWithExtra += '\nInclude a process diagram in a fenced mermaid block, grounded in the same document.';
+        }
+
+        process.stdout.write(chalk.dim('  Generating'));
+        let lastChunkPrint = 0;
+        let stageTimer;
+        const startedAt = Date.now();
+        const heartbeat = setInterval(() => {
+          process.stdout.write(chalk.dim(` [${Math.round((Date.now() - startedAt) / 1000)}s]`));
+        }, 15000);
+        heartbeat.unref();
+        try {
+          const generation = await Promise.race([
+            generateStagedDeliverable({
+              stageNumber: stageNum,
+              profile,
+              llmClient: stageClient,
+              systemPromptBase,
+              userMessageIntro: userMessageWithExtra,
+              context,
+              rubric,
+              stageRubric,
+              batchGroups: stageRubric.generation_batches,
+              isDeepStage,
+              projectDir,
+              options: {
+                model: stageClient.modelName,
+                classifyVerdict: taskRouter.classifyVerdict,
+                onProgress: (event) => {
+                  if (event.type === 'draft_started') {
+                    process.stdout.write(chalk.dim(' document... '));
+                  } else if (event.type === 'local_scoring') {
+                    process.stdout.write(chalk.dim(' -> local validation'));
+                  } else if (event.type === 'chunk') {
+                    const now = Date.now();
+                    if (now - lastChunkPrint > 400) {
+                      process.stdout.write(chalk.dim('.'));
+                      lastChunkPrint = now;
+                    }
+                  } else if (event.type === 'generation_complete') {
+                    process.stdout.write(chalk.dim(` -> score ${event.score}`));
+                    if (!event.passed) process.stdout.write(chalk.yellow(' (requires review)'));
                   }
-                } else if (event.type === 'generation_complete') {
-                  process.stdout.write(chalk.dim(` -> score ${event.score}`));
-                  if (!event.passed) process.stdout.write(chalk.yellow(' (requires review)'));
-                }
+                },
               },
-            },
-          }),
-          new Promise((_, reject) => {
-            stageTimer = setTimeout(() => reject(new Error(
-              `Timeout: Stage ${stageNum} did not complete after ${stageTimeoutMinutes} minutes.\n` +
-              `  Tip: try a smaller/faster model with --model, e.g.:\n` +
-              `    babok run --provider gemini --model gemini-2.0-flash\n` +
-              `    babok run --provider openai --model gpt-5.4-mini`
-            )), stageTimeoutMs);
-          }),
-        ]);
-        return { resp: generation.finalDocument, generation };
-      } catch (err) {
-        const retryDelayMs = getRateLimitRetryDelayMs(err);
-        if (retryDelayMs !== null && !rateLimitRetried) {
-          rateLimitRetried = true;
-          console.error(chalk.yellow(
-            `\n\n  Limit TPM dostawcy. Ponawiam etap za ${(retryDelayMs / 1000).toFixed(1)} s...`
-          ));
-          await new Promise(resolve => setTimeout(resolve, retryDelayMs));
-          continue;
+            }),
+            new Promise((_, reject) => {
+              stageTimer = setTimeout(() => reject(new Error(
+                `Timeout: Stage ${stageNum} did not complete after ${stageTimeoutMinutes} minutes.\n` +
+                `  Tip: try a smaller/faster model with --model, e.g.:\n` +
+                `    babok run --provider gemini --model gemini-2.0-flash\n` +
+                `    babok run --provider openai --model gpt-5.4-mini`
+              )), stageTimeoutMs);
+            }),
+          ]);
+          return { resp: generation.finalDocument, generation };
+        } catch (err) {
+          const retryDelayMs = getRateLimitRetryDelayMs(err);
+          if (retryDelayMs !== null && !rateLimitRetried) {
+            rateLimitRetried = true;
+            console.error(chalk.yellow(
+              `\n\n  Limit TPM dostawcy. Ponawiam etap za ${(retryDelayMs / 1000).toFixed(1)} s...`
+            ));
+            await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+            continue;
+          }
+          console.error(chalk.red(`\n\n  Error in Stage ${stageNum}: ${formatLlmError(err)}`));
+          if (/401|Unauthorized|CREDENTIALS_MISSING|API key not valid/i.test(err.message)) {
+            console.error(chalk.yellow('\n  Wskazówka: klucz API jest nieprawidłowy lub wygasł.'));
+            console.error(chalk.dim('  Uruchom ponownie i przy pytaniu "Uzyc zapisanego klucza?" wpisz n'));
+            console.error(chalk.dim('  Nowy klucz Gemini: https://aistudio.google.com/app/apikey'));
+          }
+          stageRl?.close();
+          process.exit(1);
+        } finally {
+          clearTimeout(stageTimer);
+          clearInterval(heartbeat);
         }
-        console.error(chalk.red(`\n\n  Error in Stage ${stageNum}: ${formatLlmError(err)}`));
-        if (/401|Unauthorized|CREDENTIALS_MISSING|API key not valid/i.test(err.message)) {
-          console.error(chalk.yellow('\n  Wskazówka: klucz API jest nieprawidłowy lub wygasł.'));
-          console.error(chalk.dim('  Uruchom ponownie i przy pytaniu "Uzyc zapisanego klucza?" wpisz n'));
-          console.error(chalk.dim('  Nowy klucz Gemini: https://aistudio.google.com/app/apikey'));
-        }
-        releaseLock(projectId, stageNum, projectDir);
-        stageRl?.close();
-        process.exit(1);
-      } finally {
-        clearTimeout(stageTimer);
-        clearInterval(heartbeat);
       }
     };
 
@@ -700,7 +722,6 @@ export async function runAnalysis(options) {
           console.log(chalk.green('  ✓ Etap zatwierdzony\n'));
           approved = true;
         } else if (ans.toLowerCase() === 'q') {
-          releaseLock(projectId, stageNum, projectDir);
           stageRl.close();
           console.log(chalk.yellow('\n  Przerwano przez użytkownika.'));
           process.exit(0);
@@ -723,23 +744,28 @@ export async function runAnalysis(options) {
       console.log(chalk.dim('  --debate/--verify: drafting uses one request with local validation.'));
     }
 
-    fs.writeFileSync(filePath, response, 'utf-8');
-    previousOutputs[stageNum] = response;
-    updateJournalStage(journal, stageNum, projectDir, fileName, {
-      generation_batches_used: generation.batches,
-      final_pass_mode: generation.finalPass.mode,
-      ...(generation.finalPass.mode === 'debate_verify' ? {
-        debate_used: !!generation.finalPass.debateMetadata,
-        debate_metadata: generation.finalPass.debateMetadata,
-        verification_report_summary: generation.finalPass.verificationReport ? {
-          questionsTotal: generation.finalPass.verificationReport.questionsTotal,
-          refutedCount: generation.finalPass.verificationReport.refutedCount,
-        } : null,
-      } : {}),
-    });
-
-    // Release lock for this stage
-    releaseLock(projectId, stageNum, projectDir);
+    try {
+      await withStageLock(projectId, stageNum, projectDir, async () => {
+        fs.writeFileSync(filePath, response, 'utf-8');
+        previousOutputs[stageNum] = response;
+        updateJournalStage(journal, stageNum, projectDir, fileName, {
+          generation_batches_used: generation.batches,
+          final_pass_mode: generation.finalPass.mode,
+          ...(generation.finalPass.mode === 'debate_verify' ? {
+            debate_used: !!generation.finalPass.debateMetadata,
+            debate_metadata: generation.finalPass.debateMetadata,
+            verification_report_summary: generation.finalPass.verificationReport ? {
+              questionsTotal: generation.finalPass.verificationReport.questionsTotal,
+              refutedCount: generation.finalPass.verificationReport.refutedCount,
+            } : null,
+          } : {}),
+        });
+      });
+    } catch (err) {
+      console.error(chalk.red(`\n⛔ ${err.message}`));
+      stageRl?.close();
+      process.exit(1);
+    }
   }
 
   stageRl?.close();
@@ -776,4 +802,5 @@ export async function runAnalysis(options) {
   console.log(chalk.dim(`    babok make pdf  ${projectId}   → export PDF`));
   console.log(chalk.dim(`    babok status    ${projectId}   → view status`));
   console.log('');
+  removeInterruptHandler();
 }

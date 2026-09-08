@@ -5,7 +5,7 @@
  * Lock file: <projectDir>/.stage_N.lock
  * Format:    { locked_by, hostname, pid, locked_at }
  *
- * Staleness: locks older than STALE_MINUTES are considered stale and auto-released.
+ * Staleness: locks older than LOCK_STALE_MINUTES are considered stale and auto-released.
  */
 
 import fs from 'fs';
@@ -13,18 +13,13 @@ import path from 'path';
 import os from 'os';
 import { getProjectDir } from './project.js';
 
-const STALE_MINUTES = 120; // 2 hours
+export const LOCK_STALE_MINUTES = 15;
+const LOCK_REFRESH_MS = 60 * 1000;
 
 function lockFilePath(projectId, stageNumber, dir) {
   return path.join(dir || getProjectDir(projectId), `.stage_${stageNumber}.lock`);
 }
 
-/**
- * Read lock metadata (or null if not locked / stale).
- * @param {string} projectId
- * @param {number} stageNumber
- * @param {string} [dir] - Optional override for the project directory
- */
 export function checkLock(projectId, stageNumber, dir) {
   const lockPath = lockFilePath(projectId, stageNumber, dir);
   if (!fs.existsSync(lockPath)) return null;
@@ -33,32 +28,21 @@ export function checkLock(projectId, stageNumber, dir) {
   try {
     lock = JSON.parse(fs.readFileSync(lockPath, 'utf-8'));
   } catch {
-    return null; // corrupt file → treat as unlocked
+    return null;
   }
 
-  // Check staleness
   const ageMs = Date.now() - new Date(lock.locked_at).getTime();
-  if (ageMs > STALE_MINUTES * 60 * 1000) {
-    // Silently remove stale lock
-    try { fs.unlinkSync(lockPath); } catch { /* ignore */ }
+  if (ageMs > LOCK_STALE_MINUTES * 60 * 1000) {
+    try { fs.unlinkSync(lockPath); } catch {}
     return null;
   }
 
   return lock;
 }
 
-/**
- * Try to acquire a lock for (projectId, stageNumber).
- * Returns { acquired: true } on success.
- * Returns { acquired: false, lock } when already locked by someone else.
- * @param {string} projectId
- * @param {number} stageNumber
- * @param {string} [dir] - Optional override for the project directory
- */
 export function acquireLock(projectId, stageNumber, dir) {
   const existing = checkLock(projectId, stageNumber, dir);
   if (existing) {
-    // Allow re-entry from same process
     if (existing.pid === process.pid && existing.hostname === os.hostname()) {
       return { acquired: true };
     }
@@ -74,11 +58,9 @@ export function acquireLock(projectId, stageNumber, dir) {
 
   const lockPath = lockFilePath(projectId, stageNumber, dir);
   try {
-    // wx flag = fail if file already exists (atomic on most FS)
     fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2), { flag: 'wx' });
   } catch (err) {
     if (err.code === 'EEXIST') {
-      // Race condition — someone grabbed it between checkLock and writeFile
       const concurrent = checkLock(projectId, stageNumber, dir);
       return { acquired: false, lock: concurrent };
     }
@@ -88,13 +70,27 @@ export function acquireLock(projectId, stageNumber, dir) {
   return { acquired: true };
 }
 
-/**
- * Release a lock previously acquired by this process.
- * No-op if lock does not exist or belongs to a different process.
- * @param {string} projectId
- * @param {number} stageNumber
- * @param {string} [dir] - Optional override for the project directory
- */
+export function refreshLock(projectId, stageNumber, dir) {
+  const lockPath = lockFilePath(projectId, stageNumber, dir);
+  if (!fs.existsSync(lockPath)) return false;
+
+  let lock;
+  try {
+    lock = JSON.parse(fs.readFileSync(lockPath, 'utf-8'));
+  } catch {
+    return false;
+  }
+
+  if (lock.pid !== process.pid || lock.hostname !== os.hostname()) return false;
+  lock.locked_at = new Date().toISOString();
+  try {
+    fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2), 'utf-8');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function releaseLock(projectId, stageNumber, dir) {
   const lockPath = lockFilePath(projectId, stageNumber, dir);
   if (!fs.existsSync(lockPath)) return;
@@ -106,15 +102,37 @@ export function releaseLock(projectId, stageNumber, dir) {
     return;
   }
 
-  // Only release if this process owns the lock
   if (lock.pid === process.pid && lock.hostname === os.hostname()) {
-    try { fs.unlinkSync(lockPath); } catch { /* ignore */ }
+    try { fs.unlinkSync(lockPath); } catch {}
   }
 }
 
-/**
- * Format a human-readable lock description for error messages.
- */
+export async function withStageLock(projectId, stageNumber, dirOrFn, maybeFn) {
+  const dir = typeof dirOrFn === 'function' ? undefined : dirOrFn;
+  const fn = typeof dirOrFn === 'function' ? dirOrFn : maybeFn;
+  if (typeof fn !== 'function') throw new Error('withStageLock requires a callback.');
+
+  const lockResult = acquireLock(projectId, stageNumber, dir);
+  if (!lockResult.acquired) {
+    const err = new Error(`Stage ${stageNumber} is locked by another user: ${formatLockInfo(lockResult.lock)}`);
+    err.code = 'STAGE_LOCKED';
+    err.lock = lockResult.lock;
+    throw err;
+  }
+
+  const refreshTimer = setInterval(() => {
+    refreshLock(projectId, stageNumber, dir);
+  }, LOCK_REFRESH_MS);
+  refreshTimer.unref?.();
+
+  try {
+    return await fn();
+  } finally {
+    clearInterval(refreshTimer);
+    releaseLock(projectId, stageNumber, dir);
+  }
+}
+
 export function formatLockInfo(lock) {
   if (!lock) return '(unknown)';
   const age = Math.round((Date.now() - new Date(lock.locked_at).getTime()) / 60000);

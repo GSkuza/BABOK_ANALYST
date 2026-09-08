@@ -828,23 +828,55 @@ function getAgentConfigDir(profile) {
   return fs.existsSync(dir) ? dir : null;
 }
 
+const LLM_REQUEST_TIMEOUT_MS = 10 * 60 * 1000;
+
+class LlmTimeoutError extends Error {
+  constructor(message, timeoutMs) {
+    super(message);
+    this.name = 'LlmTimeoutError';
+    this.code = 'LLM_TIMEOUT';
+    this.timeoutMs = timeoutMs;
+  }
+}
+
+async function withControlledLlmRequest(run, options = {}) {
+  const { timeoutMs = LLM_REQUEST_TIMEOUT_MS, label = 'LLM request' } = options;
+  const controller = new AbortController();
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      controller.abort(new LlmTimeoutError(`${label} timed out after ${Math.round(timeoutMs / 1000)}s.`, timeoutMs));
+      reject(controller.signal.reason);
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([run(controller.signal), timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 /**
  * Call Gemini generateContent (non-streaming) with a single user turn.
  * Returns the response text or throws.
  */
 async function callGemini(systemPrompt, userMessage, model = 'gemini-2.0-flash', temperature = 0.3) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set');
+  return withControlledLlmRequest(async (signal) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set');
 
-  const { GoogleGenerativeAI } = await import('@google/generative-ai');
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const geminiModel = genAI.getGenerativeModel({
-    model,
-    systemInstruction: systemPrompt,
-    generationConfig: { temperature, maxOutputTokens: 8192 },
-  });
-  const result = await geminiModel.generateContent(userMessage);
-  return result.response.text();
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const geminiModel = genAI.getGenerativeModel({
+      model,
+      systemInstruction: systemPrompt,
+      generationConfig: { temperature, maxOutputTokens: 8192 },
+    });
+    const result = await geminiModel.generateContent(userMessage);
+    if (signal.aborted) throw signal.reason;
+    return result.response.text();
+  }, { label: `Gemini ${model} quality check` });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
