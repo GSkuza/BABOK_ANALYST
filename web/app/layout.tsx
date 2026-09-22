@@ -4,7 +4,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { DarkModeToggle } from '@/components/DarkModeToggle';
 import { Providers } from '@/components/Providers';
-import { Brain, FolderKanban, PlusCircle } from 'lucide-react';
+import { Brain, FolderKanban, PlusCircle, Settings } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'BABOK Analyst',
@@ -34,6 +34,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <FolderKanban className="h-4 w-4" />
                     Dashboard
                   </Link>
+                  <Link href="/settings/ai" className="nav-link">
+                    <Settings className="h-4 w-4" />
+                    AI Settings
+                  </Link>
                   <Link href="/projects/new" className="nav-link nav-link-primary">
                     <PlusCircle className="h-4 w-4" />
                     New Project
@@ -41,6 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </nav>
 
                 <div className="flex items-center gap-3 shrink-0">
+                  <Link href="/settings/ai" aria-label="AI Settings" className="nav-link px-3 md:hidden">
+                    <Settings className="h-4 w-4" />
+                  </Link>
                   <DarkModeToggle />
                 </div>
               </div>

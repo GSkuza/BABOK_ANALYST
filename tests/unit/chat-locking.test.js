@@ -102,5 +102,7 @@ describe('chat stage switching', () => {
     assert.equal(result.messages.length, 10);
     assert.equal(result.recentMessages.length, 8);
     assert.match(result.systemPrompt, /Earlier Conversation Summary:/);
+    assert.match(result.systemPrompt, /Analytical Elicitation Policy/);
+    assert.match(result.systemPrompt, /Never ask for information already supplied/);
   });
 });
