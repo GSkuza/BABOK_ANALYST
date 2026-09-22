@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **BABOK Agent system prompt:** Replaced the legacy monolithic prompt with a decision-first analytical protocol covering evidence classification, competing hypotheses, causal reasoning, uncertainty, conditional deep market analysis, cross-stage traceability, the Depth Gate, and the current Stage 0–8 Two-Key lifecycle. Removed obsolete paths, model-specific instructions, speculative benchmarks, and placeholder stage content.
 - **BABOK_Agent_LLM_Prompt.md (v2.3.0):** Synchronized with stage-first `templates/` architecture — deliverable skeletons, `babok_get_stage_template`, Two-Key Journal workflow, industry packs, project context schema, and chat-only H2 fallback from quality rubric.
 
 ## [2.3.0] - 2026-09-03
