@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CalendarClock, ChevronLeft, ChevronRight, FileText, ShieldCheck, Sparkles } from 'lucide-react';
 import { DeliverableViewer } from '@/components/DeliverableViewer';
 import { QualityScoreCard } from '@/components/QualityScoreCard';
+import { StageContentEditor } from '@/components/StageContentEditor';
 import { StageReviewPanel } from '@/components/StageReviewPanel';
 import { getProject, getStage, STAGE_LABELS } from '@/lib/project-store';
 
@@ -85,7 +86,13 @@ export default async function StagePage({
             </div>
           </div>
 
-          <DeliverableViewer content={stage.deliverable ?? '*No deliverable yet.*'} />
+          <StageContentEditor
+            projectId={id}
+            stageNumber={stageNumber}
+            initialContent={stage.deliverable ?? ''}
+            locked={stage.status === 'approved' && !stage.revision_open}
+          />
+          {stage.deliverable ? <DeliverableViewer content={stage.deliverable} /> : null}
         </div>
 
         <aside className="space-y-4 xl:sticky xl:top-28 xl:self-start">

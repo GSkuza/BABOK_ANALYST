@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { getProjectsDir, getStage, isValidProjectId } from '@/lib/project-store';
 import { StageActionError, runStageAction } from '@/lib/stage-actions';
+import { saveStageDraft, StageContentError } from '@/lib/stage-content';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string; n: string }> }) {
   const { id, n } = await params;
@@ -44,4 +45,29 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   revalidatePath(`/projects/${id}`);
   revalidatePath(`/projects/${id}/stages/${n}`);
   return NextResponse.json({ ok: true });
+}
+
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string; n: string }> }) {
+  const { id, n } = await params;
+  const stageNum = Number.parseInt(n, 10);
+  if (!isValidProjectId(id) || Number.isNaN(stageNum)) {
+    return NextResponse.json({ error: 'Invalid project or stage' }, { status: 400 });
+  }
+
+  try {
+    const body = (await req.json()) as { content?: unknown };
+    if (typeof body.content !== 'string') {
+      return NextResponse.json({ error: 'Content must be a string' }, { status: 400 });
+    }
+    const result = saveStageDraft(id, stageNum, body.content);
+    revalidatePath('/');
+    revalidatePath(`/projects/${id}`);
+    revalidatePath(`/projects/${id}/stages/${n}`);
+    return NextResponse.json({ ok: true, ...result });
+  } catch (err) {
+    if (err instanceof StageContentError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Stage save failed' }, { status: 500 });
+  }
 }
