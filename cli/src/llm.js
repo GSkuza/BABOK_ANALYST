@@ -1047,8 +1047,20 @@ export function loadMainSystemPrompt(profile = loadProfile(DEFAULT_PROFILE_ID)) 
 }
 
 export function loadElicitationPolicy() {
+  return loadSharedPolicy('elicitation-policy.md');
+}
+
+export function loadAnalysisPolicy() {
+  return loadSharedPolicy('analysis-policy.md');
+}
+
+/**
+ * Read a profile-neutral policy file that lives next to the default system prompt.
+ * @param {string} fileName
+ */
+function loadSharedPolicy(fileName) {
   const defaultSystemPrompt = resolveProfilePath(loadProfile(DEFAULT_PROFILE_ID), 'system_prompt');
-  const policyPath = path.join(path.dirname(defaultSystemPrompt), 'elicitation-policy.md');
+  const policyPath = path.join(path.dirname(defaultSystemPrompt), fileName);
   return fs.existsSync(policyPath) ? fs.readFileSync(policyPath, 'utf-8') : '';
 }
 

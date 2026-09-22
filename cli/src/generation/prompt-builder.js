@@ -10,7 +10,7 @@
  * one complete-document request.
  */
 
-import { loadMainSystemPrompt, loadStagePrompt } from '../llm.js';
+import { loadMainSystemPrompt, loadStagePrompt, loadAnalysisPolicy } from '../llm.js';
 import { loadTemplatesForStage } from '../templates.js';
 import { limitProjectContext } from '../context-window.js';
 
@@ -28,6 +28,7 @@ export function buildStageSystemPromptBase(profile, stageNumber, projectContext,
 
   const mainPrompt = loadMainSystemPrompt(profile);
   const stagePrompt = loadStagePrompt(stageNumber, profile);
+  const analysisPolicy = loadAnalysisPolicy();
   const templates = loadTemplatesForStage(stageNumber, { includeModules: true, projectContext, profile }).text;
   const contextJson = JSON.stringify(limitProjectContext(projectContext), null, 2);
 
@@ -35,7 +36,7 @@ export function buildStageSystemPromptBase(profile, stageNumber, projectContext,
     ? 'LANGUAGE REQUIREMENT: You MUST respond ENTIRELY in Polish language.'
     : 'LANGUAGE REQUIREMENT: Respond in English language.';
 
-  return `${mainPrompt}\n\n${stagePrompt}\n\n=== PROJECT CONTEXT ===\n${contextJson}\n=== END PROJECT CONTEXT ===${prevContext}${templates}\n\n=== GENERATION MODE ===
+  return `${mainPrompt}\n\n${stagePrompt}\n\n${analysisPolicy}\n\n=== PROJECT CONTEXT ===\n${contextJson}\n=== END PROJECT CONTEXT ===${prevContext}${templates}\n\n=== GENERATION MODE ===
 You are producing a complete, professional BABOK v3 stage deliverable directly in this mode (no back-and-forth
 questions here). Ground every claim in the project context above. Where specific data is genuinely missing,
 state a clearly-labeled assumption ("Assumption: ...") instead of inventing a precise-sounding number or date

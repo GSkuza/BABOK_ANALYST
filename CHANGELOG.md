@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Shared analysis policy (`BABOK_AGENT/analysis-policy.md`):** one profile-neutral analytical contract — decision-first reasoning, evidence labels, the `Evidence → Interpretation → Implication → Recommendation` chain, competing hypotheses, data-gap classification, conditional Deep Market Analysis, traceability, Depth Gate and recommendation format. Injected at runtime by the Web interview (`web/lib/stage-chat.ts`), CLI chat (`cli/src/commands/chat.js`), deliverable generation and `babok run` (`cli/src/generation/prompt-builder.js`), and MCP `babok_get_stage` (`babok-mcp/src/lib/project.js`), and referenced by both profile system prompts plus the plugin instruction surfaces. Editing one file now changes every interface.
+
 ### Changed
-- **BABOK Agent system prompt:** Replaced the legacy monolithic prompt with a decision-first analytical protocol covering evidence classification, competing hypotheses, causal reasoning, uncertainty, conditional deep market analysis, cross-stage traceability, the Depth Gate, and the current Stage 0–8 Two-Key lifecycle. Removed obsolete paths, model-specific instructions, speculative benchmarks, and placeholder stage content.
+- **BABOK Agent system prompt:** Replaced the legacy monolithic prompt with a decision-first analytical protocol covering evidence classification, competing hypotheses, causal reasoning, uncertainty, conditional deep market analysis, cross-stage traceability, the Depth Gate, and the current Stage 0–8 Two-Key lifecycle. Removed obsolete paths, model-specific instructions, speculative benchmarks, and placeholder stage content. The shared analytical core now lives in `analysis-policy.md`; the profile prompt keeps only profile-specific lifecycle, stage outcomes and deliverable rules.
+- **Consulting system prompt:** delegates to the shared analysis and elicitation policies, and no longer instructs the agent to number questions with a fixed `Question N/M` counter.
 - **BABOK_Agent_LLM_Prompt.md (v2.3.0):** Synchronized with stage-first `templates/` architecture — deliverable skeletons, `babok_get_stage_template`, Two-Key Journal workflow, industry packs, project context schema, and chat-only H2 fallback from quality rubric.
 
 ## [2.3.0] - 2026-09-03

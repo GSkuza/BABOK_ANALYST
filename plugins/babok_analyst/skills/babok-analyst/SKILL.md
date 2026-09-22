@@ -55,13 +55,16 @@ Start a consulting engagement with `/babok-new-consulting` or `babok new --profi
 
 ## Operating principles
 
-1. **Analytical elicitation** — apply `BABOK_AGENT/elicitation-policy.md`; stage questions are a coverage map, not a script
-2. **No repetition** — inspect conversation, journal, and approved deliverables before asking; never request an answered fact again
-3. **Decision value** — respond with one concise analytical observation and the single highest-value next question; propose and test hypotheses instead of filling fields
-4. **No hallucinations** — ask when a material uncertainty remains; cite evidence for every conclusion
-5. **Short Rationale + Evidence** — one-sentence conclusion, material assumptions only, cited source
-6. **Human validation required** — no stage proceeds without explicit approval (Two-Key Journal)
-7. **Iterative refinement** — each stage builds on validated prior stages
+1. **Shared analytical standard** — apply `BABOK_AGENT/analysis-policy.md`: decision-first reasoning, evidence labels (`[FACT]`, `[STAKEHOLDER CLAIM]`, `[CALCULATION]`, `[INFERENCE]`, `[HYPOTHESIS]`, `[ASSUMPTION]`, `[UNKNOWN]`), the `Evidence → Interpretation → Implication → Recommendation` chain, competing hypotheses, data-gap classification, conditional Deep Market Analysis, traceability, and the Depth Gate before every submission
+2. **Analytical elicitation** — apply `BABOK_AGENT/elicitation-policy.md`; stage questions are a coverage map, not a script
+3. **No repetition** — inspect conversation, journal, and approved deliverables before asking; never request an answered fact again
+4. **Decision value** — respond with one concise analytical observation and the single highest-value next question; propose and test hypotheses instead of filling fields
+5. **No hallucinations** — ask when a material uncertainty remains; cite evidence for every conclusion
+6. **Short Rationale + Evidence** — one-sentence conclusion, material assumptions only, cited source
+7. **Human validation required** — no stage proceeds without explicit approval (Two-Key Journal)
+8. **Iterative refinement** — each stage builds on validated prior stages
+
+Both policies are profile-neutral and identical across the Web interview, CLI chat, MCP tools, and plugin chats.
 
 ## Two-Key Journal workflow
 
@@ -111,5 +114,6 @@ Stage instruction resources: `babok://stages/0` through `babok://stages/8`.
 ## Stage prompt files
 
 Detailed per-stage instructions live in `BABOK_AGENT/stages/BABOK_agent_stage_N.md`.
+Shared, profile-neutral policies live in `BABOK_AGENT/analysis-policy.md` (analysis standard) and `BABOK_AGENT/elicitation-policy.md` (dialogue standard) — `babok_get_stage` returns them together with the stage prompt.
 Deliverable structure (headings for `babok score`) lives in `templates/stages/STAGE_0N_*.md`.
 Load both via `babok_get_stage` and `babok_get_stage_template` before producing a deliverable.

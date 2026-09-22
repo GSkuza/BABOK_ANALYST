@@ -164,10 +164,14 @@ function readPromptContext(journal: Journal, stageNumber: number, options: Stage
 
   const systemPromptPath = path.join(repositoryRoot, profile.paths.system_prompt);
   const stagePromptPath = path.join(repositoryRoot, profile.paths.stages_dir, profileStage.prompt_file);
+  const analysisPolicyPath = path.join(repositoryRoot, 'BABOK_AGENT', 'analysis-policy.md');
   const elicitationPolicyPath = path.join(repositoryRoot, 'BABOK_AGENT', 'elicitation-policy.md');
   return {
     mainPrompt: fs.readFileSync(/* turbopackIgnore: true */ systemPromptPath, 'utf-8'),
     stagePrompt: fs.readFileSync(/* turbopackIgnore: true */ stagePromptPath, 'utf-8'),
+    analysisPolicy: fs.existsSync(/* turbopackIgnore: true */ analysisPolicyPath)
+      ? fs.readFileSync(/* turbopackIgnore: true */ analysisPolicyPath, 'utf-8')
+      : '',
     elicitationPolicy: fs.existsSync(/* turbopackIgnore: true */ elicitationPolicyPath)
       ? fs.readFileSync(/* turbopackIgnore: true */ elicitationPolicyPath, 'utf-8')
       : '',
@@ -239,6 +243,7 @@ function createAgentContext(
   const systemPrompt = [
     prompts.mainPrompt,
     prompts.stagePrompt,
+    prompts.analysisPolicy,
     prompts.elicitationPolicy,
     '=== WEB INTERVIEW CONTEXT ===',
     `Project: ${journal.project_name} (${journal.project_id})`,

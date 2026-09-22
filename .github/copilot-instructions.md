@@ -104,7 +104,14 @@ Stages are loaded from `BABOK_AGENT/stages/BABOK_agent_stage_N.md` at runtime �
 
 ### Analytical elicitation
 
-Apply `BABOK_AGENT/elicitation-policy.md` on every conversational surface. Stage questionnaires are coverage maps, not scripts. Before asking anything, use the conversation, journal, and approved deliverables to avoid repetition. Each turn should contain at most one concise analytical observation or implication and the single highest-value question. Challenge contradictions once, propose evidence-based hypotheses, accept the human's resolution, and stop eliciting when remaining gaps are not decision-critical.
+Two profile-neutral policies govern every conversational surface — Web interview, CLI chat, MCP, and plugin chats:
+
+- `BABOK_AGENT/analysis-policy.md` — the analysis standard: decision-first reasoning, evidence labels (`[FACT]`, `[STAKEHOLDER CLAIM]`, `[CALCULATION]`, `[INFERENCE]`, `[HYPOTHESIS]`, `[ASSUMPTION]`, `[UNKNOWN]`), the `Evidence → Interpretation → Implication → Recommendation` chain, competing hypotheses and disconfirming evidence, blocking/material/optional data-gap classification, conditional Deep Market Analysis, cross-stage traceability, and the Depth Gate that must be met before `babok_save_deliverable`.
+- `BABOK_AGENT/elicitation-policy.md` — the dialogue standard.
+
+Stage questionnaires are coverage maps, not scripts. Before asking anything, use the conversation, journal, and approved deliverables to avoid repetition. Each turn should contain at most one concise analytical observation or implication and the single highest-value question. Challenge contradictions once, propose evidence-based hypotheses, accept the human's resolution, and stop eliciting when remaining gaps are not decision-critical.
+
+Both policies are injected at runtime by `web/lib/stage-chat.ts`, `cli/src/commands/chat.js`, `cli/src/generation/prompt-builder.js`, and `babok-mcp/src/lib/project.js`. Changing a policy file changes every interface at once — no rebuild.
 
 ### Two-Key Journal: Agent/Human Separation of Duties
 

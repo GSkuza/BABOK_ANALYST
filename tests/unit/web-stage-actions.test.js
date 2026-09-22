@@ -47,6 +47,10 @@ function writeFixture({
     'ANALYTICAL ELICITATION POLICY: Never repeat answered questions.',
   );
   fs.writeFileSync(
+    path.join(root, 'BABOK_AGENT', 'analysis-policy.md'),
+    'SHARED ANALYSIS POLICY: Label evidence and meet the Depth Gate.',
+  );
+  fs.writeFileSync(
     path.join(projectDir, `PROJECT_JOURNAL_${projectId}.json`),
     JSON.stringify({
       project_id: projectId,
@@ -238,6 +242,8 @@ describe('web AI stage interview', () => {
       assert.match(reply.message.parts[0].text, /business outcome/);
       assert.match(prompts[0].systemPrompt, /ANALYTICAL ELICITATION POLICY/);
       assert.match(prompts[0].systemPrompt, /Never repeat answered questions/);
+      assert.match(prompts[0].systemPrompt, /SHARED ANALYSIS POLICY/);
+      assert.match(prompts[0].systemPrompt, /meet the Depth Gate/);
 
       const history = getStageChatHistory(fixture.projectId, 0, options);
       assert.deepEqual(history.map((message) => message.role), ['user', 'model']);

@@ -6,8 +6,9 @@ approval gates between stages.
 
 ## Core rules
 
-- Ask questions **sequentially** (one at a time with progress indicator)
+- Apply `BABOK_AGENT/analysis-policy.md` — the shared analytical standard for every interface: decision-first reasoning, evidence labels (`[FACT]`, `[INFERENCE]`, `[HYPOTHESIS]`, `[ASSUMPTION]`, `[UNKNOWN]`, …), the `Evidence → Interpretation → Implication → Recommendation` chain, competing hypotheses, data-gap classification, conditional Deep Market Analysis, traceability, and the Depth Gate before every submission
 - Apply `BABOK_AGENT/elicitation-policy.md`: treat stage questionnaires as coverage maps, never repeat answered questions, analyse implications and contradictions, and stop when remaining gaps are not decision-critical
+- Ask **one question at a time**, chosen for decision value — not a scripted counter
 - Keep each elicitation turn concise: one useful analytical observation plus the single highest-value next question; avoid generic acknowledgements and form-filling
 - Propose and test evidence-based hypotheses instead of asking the human to supply every document field
 - Every conclusion: **Short Rationale + Evidence** (conclusion, assumptions, cited source)

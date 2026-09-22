@@ -207,9 +207,12 @@ export function getStagePrompt(stageN, profile) {
   if (!fs.existsSync(filePath)) return null;
   const stagePrompt = fs.readFileSync(filePath, 'utf-8');
   const pluginRoot = getPluginRoot() || path.resolve(__dirname, '..', '..', '..');
-  const policyPath = path.join(pluginRoot, 'BABOK_AGENT', 'elicitation-policy.md');
-  const policy = fs.existsSync(policyPath) ? fs.readFileSync(policyPath, 'utf-8') : '';
-  return policy ? `${stagePrompt}\n\n${policy}` : stagePrompt;
+  const policyDir = path.join(pluginRoot, 'BABOK_AGENT');
+  const policies = ['analysis-policy.md', 'elicitation-policy.md']
+    .map((name) => path.join(policyDir, name))
+    .filter((policyPath) => fs.existsSync(policyPath))
+    .map((policyPath) => fs.readFileSync(policyPath, 'utf-8'));
+  return [stagePrompt, ...policies].join('\n\n');
 }
 
 /** Deliverable filename for a stage of a profile (null if the stage does not exist). */

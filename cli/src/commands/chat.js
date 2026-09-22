@@ -17,6 +17,7 @@ import {
   loadStagePrompt,
   loadMainSystemPrompt,
   loadElicitationPolicy,
+  loadAnalysisPolicy,
   getApiKey,
   promptForProvider,
   clearStoredKey,
@@ -286,6 +287,7 @@ export function buildContextPrompt(journal, stageNumber, historySummary = '') {
   const profile = loadProfile(journal.profile);
   const mainPrompt = loadMainSystemPrompt(profile);
   const stagePrompt = loadStagePrompt(stageNumber, profile);
+  const analysisPolicy = loadAnalysisPolicy();
   const elicitationPolicy = loadElicitationPolicy();
   
   const stageName = journal.stages.find(s => s.stage === stageNumber)?.name || `Stage ${stageNumber}`;
@@ -320,7 +322,7 @@ LANGUAGE INSTRUCTION: You MUST respond in ${journal.language === 'PL' ? 'POLISH'
 
 `;
 
-  return mainPrompt + '\n\n' + stagePrompt + '\n\n' + elicitationPolicy + '\n\n' + contextBlock;
+  return mainPrompt + '\n\n' + stagePrompt + '\n\n' + analysisPolicy + '\n\n' + elicitationPolicy + '\n\n' + contextBlock;
 }
 
 /**

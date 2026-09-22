@@ -112,7 +112,9 @@ const { sha256Content } = await import('../lib/two-key-gate.js');
   const stagePrompt = getStagePrompt(0);
   assert.match(stagePrompt, /Analytical Elicitation Policy/);
   assert.match(stagePrompt, /Never ask for information already supplied/);
-  console.log('✅ Test 10b passed: stage prompts include analytical elicitation policy');
+  assert.match(stagePrompt, /Shared Analysis Policy/);
+  assert.match(stagePrompt, /Depth Gate/);
+  console.log('✅ Test 10b passed: stage prompts include shared analysis + elicitation policies');
 }
 
 // ── Profile-aware project creation ───────────────────────────────────────
