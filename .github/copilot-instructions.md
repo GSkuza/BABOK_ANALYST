@@ -70,7 +70,7 @@ BABOK Analyst ships as four independent interfaces that all read/write the same 
 
 | Interface | Purpose | Entry Point | Storage Access |
 |-----------|---------|------------|-----------------|
-| **CLI** | Terminal-based workflows | `cli/bin/bakok.js` | Direct file I/O + journal management |
+| **CLI** | Terminal-based workflows | `cli/bin/babok.js` | Direct file I/O + journal management |
 | **MCP Server** | Model Context Protocol for Claude/GPT | `babok-mcp/src/server.js` | 19 tools + 9 stage resources |
 | **Web UI** | Dashboard & project browser | `web/app/` (Next.js App Router) | REST API + server-side readers |
 | **Plugin** | VS Code / Claude Code / Copilot integration | `commands/*.md` + `hooks/*.cjs` | Delegates to CLI or MCP |

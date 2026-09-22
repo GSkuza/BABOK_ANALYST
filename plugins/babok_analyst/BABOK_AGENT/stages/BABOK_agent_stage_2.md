@@ -197,6 +197,27 @@ Load before writing the deliverable:
 - CLI/file: read `templates/stages/STAGE_02_Current_State_Analysis.md`
 
 **Critical:** Keep all H2 headings from the template unchanged so `babok score` completeness checks pass.
+
+---
+
+## Single-Request Generation Procedure (MANDATORY)
+
+Generate the complete deliverable in exactly one LLM request. Treat the groups below as the required section
+order inside that response. Perform consistency and quality checks internally before returning the final
+Markdown; do not make separate LLM calls for scoring, critique, revision, or summarisation.
+
+1. **Batch "core"** — Executive Summary, AS-IS Process Map or BPMN description, Pain Points Analysis.
+   Describe the actual current process implied by Stage 1's scope, not a generic process template. Every
+   pain point should be traceable to something in scope.
+2. **Batch "metrics"** — Baseline Metrics, System Inventory, Bottleneck Identification. Use the process
+   map above. Baseline metrics need real units/time periods, not vague qualitative descriptions. Each
+   bottleneck must cite a measurable impact tied to a step in the process map.
+3. **Batch "closing"** — Quality Checklist, Approval Section. Use the complete document above as context.
+
+Before returning the response, check the entire document once — are baseline metrics genuinely numeric
+with units, does every pain point trace to a real Stage 1 item, does every bottleneck cite a measurable
+impact? Fix anything that reads as generic filler before saving and submitting it for human review.
+
 ---
 
 ## Quality Checklist for Stage 2

@@ -658,7 +658,7 @@ When multiple analysts work on the **same project directory** (e.g. on a shared 
   ⛔ Stage 3 is currently locked by another user:
      anna@WORKSTATION-02 (PID 14872), locked 12 min ago
   ```
-- Locks older than **15 minutes** are automatically treated as stale and removed
+- Locks older than **2 hours** are automatically treated as stale and removed
 - Lock files are excluded from git (`.gitignore`)
 
 > **Recommendation:** Store the `projects/` directory on a shared network drive or sync folder for team use. Each analyst works on separate stages to avoid contention.

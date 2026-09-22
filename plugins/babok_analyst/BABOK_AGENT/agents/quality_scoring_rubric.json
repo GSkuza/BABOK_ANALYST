@@ -70,6 +70,38 @@
           "source": "Stage 1 internal"
         }
       ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Scope & context",
+          "sections": ["Executive Summary", "Project Scope — In Scope", "Project Scope — Out of Scope"],
+          "instruction": "Define what this project actually covers and excludes, in terms specific to the stated industry and systems — not a generic scope boilerplate."
+        },
+        {
+          "id": "landscape_stakeholders",
+          "title": "Systems & stakeholders",
+          "sections": ["System Landscape", "Stakeholder Register", "RACI Matrix"],
+          "instruction": "Use the scope from the core batch above. Name real systems and real stakeholder roles implied by that scope; the RACI must reference the same roles listed in the Stakeholder Register, not generic placeholders."
+        },
+        {
+          "id": "success_criteria",
+          "title": "Success criteria & communication",
+          "sections": ["Success Criteria — Quantitative KPIs", "Success Criteria — ROI Targets", "Communication Plan"],
+          "instruction": "KPIs must have real numeric baseline/target values grounded in the project context, not placeholder numbers. Communication plan should name the stakeholder groups already established above."
+        },
+        {
+          "id": "constraints_compliance",
+          "title": "Constraints & regulatory",
+          "sections": ["Regulatory Requirements", "Project Constraints", "Assumptions & Dependencies"],
+          "instruction": "Regulatory requirements must be consistent with the scope items from the core batch (only flag regulations actually implicated by what's in scope)."
+        },
+        {
+          "id": "closing",
+          "title": "Open questions & sign-off",
+          "sections": ["Open Questions", "Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context. Open questions should surface real gaps left by earlier batches, not generic filler questions."
+        }
+      ],
       "weights": {
         "completeness": 0.40,
         "consistency": 0.30,
@@ -117,6 +149,26 @@
           "source": "stage1"
         }
       ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Process & pain points",
+          "sections": ["Executive Summary", "AS-IS Process Map or BPMN description", "Pain Points Analysis"],
+          "instruction": "Describe the actual current process implied by Stage 1's scope, not a generic process template. Every pain point should be traceable to something in scope."
+        },
+        {
+          "id": "metrics",
+          "title": "Baseline metrics & bottlenecks",
+          "sections": ["Baseline Metrics", "System Inventory", "Bottleneck Identification"],
+          "instruction": "Use the process map above. Baseline metrics need real units/time periods, not vague qualitative descriptions. Each bottleneck must cite a measurable impact tied to a step in the process map."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
       "weights": {
         "completeness": 0.40,
         "consistency": 0.30,
@@ -161,6 +213,26 @@
           "id": "S3-C2",
           "description": "Compliance-related problems are ranked high priority (consistent with Stage 1 regulatory requirements)",
           "source": "stage1"
+        }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Root causes & problem statements",
+          "sections": ["Executive Summary", "Root Cause Analysis (5 Whys or Ishikawa)", "Problem Statements"],
+          "instruction": "Trace every root cause to a specific pain point or bottleneck from Stage 1/2 — go at least 3 levels deep (3 Whys minimum), not a single surface-level cause. Problem statements must be measurable, not vague complaints."
+        },
+        {
+          "id": "prioritisation",
+          "title": "Prioritisation & impact",
+          "sections": ["Problem Prioritisation Matrix", "Impact Assessment"],
+          "instruction": "Use the problem statements above. Prioritise using two quantifiable dimensions (e.g. Impact x Likelihood), and rank any compliance-related problem high priority if Stage 1 identified applicable regulations."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
         }
       ],
       "weights": {
@@ -223,6 +295,26 @@
           "source": "stage3"
         }
       ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Core requirements",
+          "sections": ["Executive Summary", "Functional Requirements (FR-NNN)", "Non-Functional Requirements (NFR-NNN)"],
+          "instruction": "Produce these sections only. Every FR must trace to a problem from Stage 3 — do not invent requirements addressing problems not identified there. NFRs need real numeric thresholds (e.g. response time < 2s), not vague adjectives like 'fast' or 'secure'. Do not reference RTM/Change Control/Compliance yet."
+        },
+        {
+          "id": "derived",
+          "title": "Derived cross-references",
+          "sections": ["User Stories with Acceptance Criteria", "Requirements Traceability Matrix (RTM)", "Change Control Process"],
+          "instruction": "Build on the FR/NFR already in the document above. Every FR-NNN must appear in the RTM with no gaps. Acceptance criteria must each produce an observable, testable outcome."
+        },
+        {
+          "id": "closing",
+          "title": "Compliance & sign-off",
+          "sections": ["Regulatory Compliance Requirements", "Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context. Only include regulatory requirements Stage 1 actually identified as applicable."
+        }
+      ],
       "weights": {
         "completeness": 0.40,
         "consistency": 0.30,
@@ -273,6 +365,26 @@
           "id": "S5-C3",
           "description": "No new scope items introduced without explicit change request reference",
           "source": "stage1"
+        }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "TO-BE process & key decisions",
+          "sections": ["Executive Summary", "TO-BE Process Map or Description", "Key Design Decisions with Rationale"],
+          "instruction": "Every must-have FR from Stage 4 needs a corresponding TO-BE design element addressing it. Each design decision must document alternatives considered and why this one was chosen, not just a bare conclusion."
+        },
+        {
+          "id": "architecture",
+          "title": "Architecture & UX impact",
+          "sections": ["Technology Stack / Solution Architecture", "Integration Points", "User Experience Improvements"],
+          "instruction": "Use the TO-BE process and decisions above. Integration points must match systems from Stage 2's system inventory. Quantify projected improvements against the Stage 1 KPI targets, don't just describe them qualitatively."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
         }
       ],
       "weights": {
@@ -327,6 +439,26 @@
           "source": "stage1"
         }
       ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Gaps & phasing",
+          "sections": ["Executive Summary", "Gap Analysis Table (AS-IS vs TO-BE)", "Implementation Phases"],
+          "instruction": "Every gap must trace to a specific requirement from Stage 4 — not a generic AS-IS/TO-BE delta. Phase the work with real trade-off reasoning (why this phasing, not another), each phase with an effort estimate in person-days/months."
+        },
+        {
+          "id": "planning",
+          "title": "Resources & timeline",
+          "sections": ["Resource Plan", "Key Milestones", "Critical Path"],
+          "instruction": "Use the phasing above. Resource plan total cost must fit within Stage 1's budget constraints. Milestones need specific calendar dates and a measurable completion criterion. Critical path must explicitly name the longest dependency chain, and the roadmap end date must not exceed Stage 1's target date."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
       "weights": {
         "completeness": 0.40,
         "consistency": 0.30,
@@ -377,6 +509,26 @@
           "id": "S7-C3",
           "description": "DPIA section present when GDPR or equivalent was identified in Stage 1",
           "source": "stage1"
+        }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Risk register & prioritisation",
+          "sections": ["Executive Summary", "Risk Register", "Risk Prioritisation Matrix"],
+          "instruction": "Every risk needs a numeric likelihood and impact score (1-5 scale), not a qualitative label alone. High-priority risks must be consistent with the compliance requirements identified in Stage 1 — don't under-rank a compliance risk."
+        },
+        {
+          "id": "mitigation",
+          "title": "Mitigation & residual risk",
+          "sections": ["Top 5 Risks with Mitigation Plans", "Data Protection Impact Assessment (DPIA, if GDPR applicable)", "Residual Risk Statement"],
+          "instruction": "Use the risk register above. Every mitigation action needs a named owner and target date. Include the DPIA section if Stage 1 identified GDPR or an equivalent regulation. Quantify residual risk after mitigation, don't just describe it."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
         }
       ],
       "weights": {
@@ -442,6 +594,32 @@
           "id": "S8-C4",
           "description": "Risks and uncertainties in financial model reference Stage 7 risk register",
           "source": "stage7"
+        }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Costs & benefits",
+          "sections": ["Executive Summary", "Cost-Benefit Analysis (CBA) — 3-year projection", "Implementation Cost Breakdown"],
+          "instruction": "Implementation costs must align with the resource plan from Stage 6. Every financial parameter needs a cited data source (vendor quote, survey, baseline data) — no invented figures presented as fact."
+        },
+        {
+          "id": "financial_metrics",
+          "title": "Financial metrics",
+          "sections": ["NPV Calculation", "IRR Calculation", "Payback Period"],
+          "instruction": "Use the cost-benefit figures above. State and justify the NPV discount rate explicitly. Savings estimates must trace to the KPI improvements identified in Stage 1, and the payback period must be within Stage 1's maximum acceptable period."
+        },
+        {
+          "id": "decision",
+          "title": "Sensitivity & recommendation",
+          "sections": ["Sensitivity Analysis (pessimistic / optimistic scenarios)", "Executive Recommendation"],
+          "instruction": "Vary at least 2 key assumptions (e.g. adoption rate, implementation cost) in the sensitivity analysis, referencing risks/uncertainties from the Stage 7 risk register. The Executive Recommendation must clearly state go/no-go with rationale, not a hedge."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
         }
       ],
       "weights": {

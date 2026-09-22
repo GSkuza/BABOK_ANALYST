@@ -27,6 +27,26 @@
         { "id": "S1-C1", "description": "RACI has exactly one Accountable per activity", "source": "Stage 1 internal" },
         { "id": "S1-C2", "description": "Communication plan covers every quadrant of the power/interest grid", "source": "Stage 1 internal" }
       ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Stakeholders & governance",
+          "sections": ["Executive Summary", "Stakeholder Map & Power/Interest Grid", "Governance Model & Steering Committee"],
+          "instruction": "Name real stakeholder roles implied by the Stage 0 mandate, not generic placeholders. Every high-power stakeholder needs a specific engagement strategy. Steering committee needs named members and a fixed cadence."
+        },
+        {
+          "id": "criteria",
+          "title": "RACI, success criteria & communication",
+          "sections": ["RACI for the Engagement", "Success Criteria & Target KPIs", "Communication Plan"],
+          "instruction": "Use the stakeholders and governance above. RACI must have exactly one Accountable per activity. KPIs need numeric baselines and targets with dates. Communication plan must cover every quadrant of the power/interest grid."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
       "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
     },
     "stage2": {
@@ -46,6 +66,26 @@
       "consistency_checks": [
         { "id": "S2-C1", "description": "Systems are described as AS-IS context only; no solution or vendor language", "source": "Stage 0 exclusions" },
         { "id": "S2-C2", "description": "KPI Baseline covers the KPIs defined in Stage 1", "source": "stage1" }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Operating model & KPI baseline",
+          "sections": ["Executive Summary", "Current Operating Model", "KPI Baseline"],
+          "instruction": "Describe the AS-IS operating model as pure context — no solution or vendor language (this engagement never proposes systems). Every KPI from Stage 1 needs a numeric baseline or an explicit stated data gap, not a vague estimate."
+        },
+        {
+          "id": "findings",
+          "title": "Root causes & value at stake",
+          "sections": ["Findings & Root Cause Analysis", "Value-at-Stake Sizing"],
+          "instruction": "Use the operating model and KPI baseline above. Every finding needs cited evidence and a quantified impact. Every root cause must explain a specific finding and carry a confidence level, not a single surface-level guess. Value at stake must be numeric with a stated basis of estimate."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
       ],
       "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
     },
@@ -68,6 +108,26 @@
         { "id": "S3-C1", "description": "Every option references the Stage 2 root causes it addresses", "source": "stage2" },
         { "id": "S3-C2", "description": "Options describe business change, not system implementation", "source": "Stage 0 exclusions" }
       ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Options & evaluation criteria",
+          "sections": ["Executive Summary", "Option Generation", "Evaluation Criteria & Weighted Scoring"],
+          "instruction": "Generate at least three real options plus an explicit do-nothing baseline, each addressing specific Stage 2 root causes — describe business change, never system implementation or vendor selection. Criteria weights must sum to 100 with a stated source for each."
+        },
+        {
+          "id": "evaluation",
+          "title": "Evaluation & recommendation",
+          "sections": ["Options Evaluation Matrix", "Recommended Option & Rationale", "Risks of Inaction"],
+          "instruction": "Score every option (including do-nothing) from the batch above against the stated criteria. The recommendation must name one OPT-NN and state its weighted score against the runner-up, with an explicit rationale. Quantify risks of inaction with a timeframe."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
       "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
     },
     "stage4": {
@@ -88,6 +148,26 @@
         { "id": "S4-C2", "description": "Every target-state dimension maps to Stage 2 root causes", "source": "stage2" },
         { "id": "S4-C3", "description": "Change plan covers every high-power stakeholder group from Stage 1", "source": "stage1" }
       ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Target operating model",
+          "sections": ["Executive Summary", "Target Operating Model Design", "Capability & Org Design Changes"],
+          "instruction": "Name the specific OPT-NN recommended in Stage 3 and design the target state that implements it. Every target-state dimension must map to a Stage 2 root cause — no system implementation or vendor selection."
+        },
+        {
+          "id": "roadmap",
+          "title": "Roadmap & change management",
+          "sections": ["Phased Roadmap", "Change Management Plan", "Dependencies & Sequencing"],
+          "instruction": "Use the target operating model above. Every roadmap phase needs a dated, measurable milestone and a named owner. The change plan must cover every high-power stakeholder group from Stage 1."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
       "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
     },
     "stage5": {
@@ -107,6 +187,26 @@
         { "id": "S5-C1", "description": "Steering committee named here matches Stage 1", "source": "stage1" },
         { "id": "S5-C2", "description": "Adoption risks reference the Stage 4 change plan", "source": "stage4" }
       ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Risk register & readiness",
+          "sections": ["Executive Summary", "Risk Register", "Change Readiness Assessment"],
+          "instruction": "Adoption risks must reference the Stage 4 change plan, not generic implementation risks. Readiness must be scored per stakeholder group from Stage 1, not a single blanket score."
+        },
+        {
+          "id": "governance",
+          "title": "Governance & ownership",
+          "sections": ["Governance & Escalation Cadence", "Mitigation Owners"],
+          "instruction": "Use the risk register above. The steering committee named here must match Stage 1. Every Critical/High risk needs a named individual owner and a dated mitigation; escalation triggers must be numeric or observable."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
       "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
     },
     "stage6": {
@@ -125,6 +225,26 @@
       "consistency_checks": [
         { "id": "S6-C1", "description": "Every benefit traces to a Stage 2 root cause and a Stage 1 KPI", "source": "stage2" },
         { "id": "S6-C2", "description": "Total cost is compared to the Stage 0 budget ceiling", "source": "stage0" }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Business case",
+          "sections": ["Executive Summary", "Cost-Benefit Analysis & ROI/NPV", "Funding & Budget Alignment"],
+          "instruction": "Every benefit must trace to a Stage 2 root cause and a Stage 1 KPI — no invented savings. Costs and benefits need a stated basis of estimate. Total cost must be compared explicitly against the Stage 0 budget ceiling."
+        },
+        {
+          "id": "tracking",
+          "title": "Realization tracking",
+          "sections": ["Benefits Realization Tracker", "Value Tracking Governance"],
+          "instruction": "Use the business case above. ROI, payback and NPV need stated assumptions and a sensitivity range. The tracker needs a named client-side owner, a review cadence, and a corrective-action trigger."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
       ],
       "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
     }

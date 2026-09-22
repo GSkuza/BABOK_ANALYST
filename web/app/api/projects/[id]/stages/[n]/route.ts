@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { execFile } from 'child_process';
 import path from 'path';
 import fs from 'fs';
-import { getStage, isValidProjectId } from '@/lib/project-store';
-import { hashFileUtf8, validateTwoKeyApproval } from '@/lib/two-key-gate';
+import { promisify } from 'util';
+import { getProjectsDir, getStage, isValidProjectId } from '@/lib/project-store';
 
 const REPO_ROOT = path.join(process.cwd(), '..');
-const PROJECTS_DIR = path.join(REPO_ROOT, 'projects');
+const PROJECTS_DIR = getProjectsDir();
+const execFileAsync = promisify(execFile);
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string; n: string }> }) {
   const { id, n } = await params;
@@ -28,35 +30,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
   const journalPath = path.join(PROJECTS_DIR, id, `PROJECT_JOURNAL_${id}.json`);
   if (!fs.existsSync(journalPath)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const j = JSON.parse(fs.readFileSync(journalPath, 'utf-8'));
-  const stage = j.stages?.find((s: { stage: number }) => s.stage === stageNum);
-  if (!stage) return NextResponse.json({ error: 'Stage not found' }, { status: 404 });
+  const cliPath = path.join(REPO_ROOT, 'cli', 'bin', 'babok.js');
 
-  const now = new Date().toISOString();
-  if (action === 'approve') {
-    if (stage.status === 'approved') {
-      return NextResponse.json({ error: 'Stage is already approved' }, { status: 409 });
+  try {
+    if (action === 'approve') {
+      await execFileAsync('node', [cliPath, 'approve', id, String(stageNum), '--attestor', 'Web UI'], { cwd: REPO_ROOT });
+    } else if (action === 'reject') {
+      await execFileAsync('node', [cliPath, 'reject', id, String(stageNum), '--reason', reason ?? 'Rejected via Web UI'], { cwd: REPO_ROOT });
+    } else {
+      return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
+  } catch (err) {
+    const stderr = err && typeof err === 'object' && 'stderr' in err ? String(err.stderr || '') : '';
+    const message = stderr.trim().split('\n').at(-1) || (err instanceof Error ? err.message : 'Stage update failed');
+    const status = /already approved/i.test(message) ? 409 : 400;
+    return NextResponse.json({ error: message.replace(/^Error:\s*/, '') }, { status });
+  }
 
-    const deliverablePath = stage.deliverable_file
-      ? path.join(PROJECTS_DIR, id, stage.deliverable_file)
-      : null;
-    const deliverableSha256 = deliverablePath ? hashFileUtf8(deliverablePath) : null;
-
-    try {
-      validateTwoKeyApproval(stage, deliverableSha256);
-    } catch (err) {
-      return NextResponse.json({ error: err instanceof Error ? err.message : 'Approval failed' }, { status: 400 });
-    }
-
-    stage.status = 'approved'; stage.approved_at = now; stage.approved_by = 'Web UI';
-  } else if (action === 'reject') {
-    stage.status = 'rejected'; stage.notes = reason ?? 'Rejected via Web UI';
-  } else {
+  if (!['approve', 'reject'].includes(action)) {
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   }
-  j.last_updated = now;
-  fs.writeFileSync(journalPath, JSON.stringify(j, null, 2));
   revalidatePath('/');
   revalidatePath(`/projects/${id}`);
   revalidatePath(`/projects/${id}/stages/${n}`);

@@ -13,7 +13,7 @@ import path from 'path';
 import os from 'os';
 import { getProjectDir } from './project.js';
 
-export const LOCK_STALE_MINUTES = 15;
+export const LOCK_STALE_MINUTES = 120;
 const LOCK_REFRESH_MS = 60 * 1000;
 
 function lockFilePath(projectId, stageNumber, dir) {

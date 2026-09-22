@@ -194,6 +194,30 @@ Load before writing the deliverable:
 - CLI/file: read `templates/stages/STAGE_05_Future_State_Design.md`
 
 **Critical:** Keep all H2 headings from the template unchanged so `babok score` completeness checks pass.
+
+---
+
+## Single-Request Generation Procedure (MANDATORY)
+
+Generate the complete deliverable in exactly one LLM request. Treat the groups below as the required section
+order inside that response. Perform consistency and quality checks internally before returning the final
+Markdown; do not make separate LLM calls for scoring, critique, revision, or summarisation.
+
+1. **Batch "core"** — Executive Summary, TO-BE Process Map or Description, Key Design Decisions with
+   Rationale. Every must-have FR from Stage 4 needs a corresponding TO-BE design element addressing it.
+   Each design decision must document alternatives considered and why this one was chosen, not just a bare
+   conclusion.
+2. **Batch "architecture"** — Technology Stack / Solution Architecture, Integration Points, User Experience
+   Improvements. Use the TO-BE process and decisions above. Integration points must match systems from
+   Stage 2's system inventory. Quantify projected improvements against the Stage 1 KPI targets, don't just
+   describe them qualitatively.
+3. **Batch "closing"** — Quality Checklist, Approval Section. Use the complete document above as context.
+
+Before returning the response, check the entire document once — does every must-have FR have a real
+TO-BE element, are design decisions backed by actual trade-off reasoning, are improvements quantified
+against real Stage 1 targets? Fix anything that reads as generic filler before calling
+saving and submitting the result for human review.
+
 ---
 
 ## Quality Checklist for Stage 5
