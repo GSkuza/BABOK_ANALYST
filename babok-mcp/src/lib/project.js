@@ -205,7 +205,11 @@ export function getStagePrompt(stageN, profile) {
   if (!filename) return null;
   const filePath = path.join(stagesDir, filename);
   if (!fs.existsSync(filePath)) return null;
-  return fs.readFileSync(filePath, 'utf-8');
+  const stagePrompt = fs.readFileSync(filePath, 'utf-8');
+  const pluginRoot = getPluginRoot() || path.resolve(__dirname, '..', '..', '..');
+  const policyPath = path.join(pluginRoot, 'BABOK_AGENT', 'elicitation-policy.md');
+  const policy = fs.existsSync(policyPath) ? fs.readFileSync(policyPath, 'utf-8') : '';
+  return policy ? `${stagePrompt}\n\n${policy}` : stagePrompt;
 }
 
 /** Deliverable filename for a stage of a profile (null if the stage does not exist). */

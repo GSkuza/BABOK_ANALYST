@@ -1046,6 +1046,12 @@ export function loadMainSystemPrompt(profile = loadProfile(DEFAULT_PROFILE_ID)) 
   return '';
 }
 
+export function loadElicitationPolicy() {
+  const defaultSystemPrompt = resolveProfilePath(loadProfile(DEFAULT_PROFILE_ID), 'system_prompt');
+  const policyPath = path.join(path.dirname(defaultSystemPrompt), 'elicitation-policy.md');
+  return fs.existsSync(policyPath) ? fs.readFileSync(policyPath, 'utf-8') : '';
+}
+
 function getGenericStagePrompt(stageNumber, profile) {
   const stageName = getStage(profile, stageNumber)?.name ?? `Stage ${stageNumber}`;
   return `You are the ${profile.name} Agent, an expert Business Analyst.

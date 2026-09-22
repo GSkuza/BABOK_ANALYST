@@ -164,9 +164,13 @@ function readPromptContext(journal: Journal, stageNumber: number, options: Stage
 
   const systemPromptPath = path.join(repositoryRoot, profile.paths.system_prompt);
   const stagePromptPath = path.join(repositoryRoot, profile.paths.stages_dir, profileStage.prompt_file);
+  const elicitationPolicyPath = path.join(repositoryRoot, 'BABOK_AGENT', 'elicitation-policy.md');
   return {
     mainPrompt: fs.readFileSync(/* turbopackIgnore: true */ systemPromptPath, 'utf-8'),
     stagePrompt: fs.readFileSync(/* turbopackIgnore: true */ stagePromptPath, 'utf-8'),
+    elicitationPolicy: fs.existsSync(/* turbopackIgnore: true */ elicitationPolicyPath)
+      ? fs.readFileSync(/* turbopackIgnore: true */ elicitationPolicyPath, 'utf-8')
+      : '',
   };
 }
 
@@ -235,6 +239,7 @@ function createAgentContext(
   const systemPrompt = [
     prompts.mainPrompt,
     prompts.stagePrompt,
+    prompts.elicitationPolicy,
     '=== WEB INTERVIEW CONTEXT ===',
     `Project: ${journal.project_name} (${journal.project_id})`,
     `Stage: ${stageNumber} - ${stage.name ?? `Stage ${stageNumber}`}`,
@@ -243,9 +248,9 @@ function createAgentContext(
     `Decisions:\n${listValues(journal.decisions, (value) => typeof value === 'string' ? value : String((value as { description?: string }).description ?? ''))}`,
     `Assumptions:\n${listValues(journal.assumptions, String)}`,
     `Open questions:\n${listValues(journal.open_questions, String)}`,
-    'Conduct a structured business-analysis interview. Ask exactly one concise question per response.',
-    'Acknowledge the answer briefly, identify any assumption explicitly, then ask the next highest-value question.',
-    'Do not invent facts, do not ask multiple questions, and do not generate the final deliverable unless explicitly instructed.',
+    'Conduct a decision-focused business-analysis interview. Apply the Analytical Elicitation Policy above.',
+    'Use the transcript as an evidence ledger: do not repeat answered questions or mechanically follow the stage questionnaire.',
+    'Do not invent facts, and do not generate the final deliverable unless explicitly instructed.',
     `Always respond in ${language}.`,
     '================================',
   ].join('\n\n');
@@ -291,7 +296,7 @@ export async function startStageInterview(
   const context = createAgentContext(projectId, stageNumber, messages, options);
   const response = await runAgent(
     context.systemPrompt,
-    'Start the interview now. Briefly introduce your role and ask exactly one highest-value opening question.',
+    'Start directly without introducing yourself or explaining the process. State one tentative insight or hypothesis from the available project context in at most one sentence, then ask the single highest-value opening question. Keep the whole response under 60 words.',
     options.provider,
     options,
   );
@@ -324,10 +329,11 @@ export async function generateStageDraftFromChat(
     const saved = saveStageDraft(projectId, stageNumber, response.text, {
       projectsDir: getProjectsDir(options),
       profilesDir: options.profilesDir,
+      submitForReview: true,
     });
     const confirmation: StageChatMessage = {
       role: 'model',
-      parts: [{ text: `Draft updated in ${saved.fileName}. Continue the interview to refine it further.` }],
+      parts: [{ text: `Draft saved in ${saved.fileName} and submitted for review. Continue the interview if it needs refinement.` }],
     };
     saveHistory(projectId, stageNumber, [...messages, confirmation], options);
     return { draft: response.text, message: confirmation, provider: response.provider };

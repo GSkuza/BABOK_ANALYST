@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -12,7 +13,11 @@ interface JournalStage {
   status: string;
   deliverable_file?: string | null;
   revision_open?: boolean;
-  agent_submission?: unknown;
+  agent_submission?: {
+    at: string;
+    content_sha256: string;
+    review_id: string;
+  } | null;
   human_attestation?: unknown;
   started_at?: string | null;
   completed_at?: string | null;
@@ -31,6 +36,7 @@ interface Profile {
 interface SaveOptions {
   projectsDir?: string;
   profilesDir?: string;
+  submitForReview?: boolean;
 }
 
 export class StageContentError extends Error {
@@ -176,14 +182,25 @@ export function saveStageDraft(
   withStageWriteLock(projectDir, stageNumber, () => {
     fs.writeFileSync(path.join(projectDir, fileName), content, 'utf-8');
     stage.deliverable_file = fileName;
-    stage.status = 'in_progress';
     stage.started_at ??= now;
-    stage.completed_at = null;
-    stage.agent_submission = null;
+    if (options.submitForReview) {
+      stage.status = 'completed';
+      stage.completed_at = now;
+      stage.revision_open = false;
+      stage.agent_submission = {
+        at: now,
+        content_sha256: crypto.createHash('sha256').update(content, 'utf-8').digest('hex'),
+        review_id: `rev-${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}`,
+      };
+    } else {
+      stage.status = 'in_progress';
+      stage.completed_at = null;
+      stage.agent_submission = null;
+    }
     stage.human_attestation = null;
     journal.last_updated = now;
     writeJsonAtomic(journalPath, journal);
   });
 
-  return { fileName, updatedAt: now };
+  return { fileName, updatedAt: now, submittedForReview: Boolean(options.submitForReview) };
 }

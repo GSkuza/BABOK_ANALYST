@@ -17,7 +17,15 @@ const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'babok-mcp-test-'));
 process.env.BABOK_PROJECTS_DIR = tmpDir;
 
 // Re-import (after env var is set, so getProjectsDir() resolves correctly)
-const { generateProjectId, listProjectIds, resolveProjectId, getProjectDir, getDeliverable, STAGES } = await import('../lib/project.js');
+const {
+  generateProjectId,
+  listProjectIds,
+  resolveProjectId,
+  getProjectDir,
+  getDeliverable,
+  getStagePrompt,
+  STAGES,
+} = await import('../lib/project.js');
 const { createJournal, readJournal, approveStage, rejectStage, submitForReview, attestStage } = await import('../lib/journal.js');
 const { sha256Content } = await import('../lib/two-key-gate.js');
 
@@ -100,6 +108,11 @@ const { sha256Content } = await import('../lib/two-key-gate.js');
   const d2 = getDeliverable(id, 1);
   assert.equal(d2, content);
   console.log(`✅ Test 10 passed: getDeliverable reads saved file`);
+
+  const stagePrompt = getStagePrompt(0);
+  assert.match(stagePrompt, /Analytical Elicitation Policy/);
+  assert.match(stagePrompt, /Never ask for information already supplied/);
+  console.log('✅ Test 10b passed: stage prompts include analytical elicitation policy');
 }
 
 // ── Profile-aware project creation ───────────────────────────────────────

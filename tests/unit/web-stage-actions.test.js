@@ -39,8 +39,13 @@ function writeFixture({
     }),
   );
   fs.mkdirSync(path.join(root, profile, 'stages'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'BABOK_AGENT'), { recursive: true });
   fs.writeFileSync(path.join(root, profile, 'system.md'), 'SYSTEM');
   fs.writeFileSync(path.join(root, profile, 'stages', 'stage_0.md'), 'STAGE');
+  fs.writeFileSync(
+    path.join(root, 'BABOK_AGENT', 'elicitation-policy.md'),
+    'ANALYTICAL ELICITATION POLICY: Never repeat answered questions.',
+  );
   fs.writeFileSync(
     path.join(projectDir, `PROJECT_JOURNAL_${projectId}.json`),
     JSON.stringify({
@@ -120,6 +125,24 @@ describe('web stage action delegation', () => {
       (error) => {
         assert.ok(error instanceof StageActionError);
         assert.equal(error.status, 400);
+        return true;
+      },
+    );
+  });
+
+  it('replaces a missing-file path with an actionable deliverable message', async () => {
+    await assert.rejects(
+      runStageAction('BC-20260922-ABCD', 0, 'approve', undefined, async () => {
+        const error = new Error('failed');
+        error.stderr = [
+          'Error: No deliverable file for stage 0.',
+          'Expected: C:\\projects\\BC-20260922-ABCD\\STAGE_00_Engagement_Charter.md',
+        ].join('\n');
+        throw error;
+      }),
+      (error) => {
+        assert.ok(error instanceof StageActionError);
+        assert.equal(error.message, 'Generate and save the stage deliverable before approval.');
         return true;
       },
     );
@@ -213,7 +236,8 @@ describe('web AI stage interview', () => {
       const reply = await sendStageChatMessage(fixture.projectId, 0, 'Let us begin.', options);
       assert.equal(reply.provider, 'Mock LLM');
       assert.match(reply.message.parts[0].text, /business outcome/);
-      assert.match(prompts[0].systemPrompt, /Ask exactly one concise question/);
+      assert.match(prompts[0].systemPrompt, /ANALYTICAL ELICITATION POLICY/);
+      assert.match(prompts[0].systemPrompt, /Never repeat answered questions/);
 
       const history = getStageChatHistory(fixture.projectId, 0, options);
       assert.deepEqual(history.map((message) => message.role), ['user', 'model']);
@@ -227,6 +251,12 @@ describe('web AI stage interview', () => {
       );
       assert.match(prompts[1].userPrompt, /Let us begin/);
       assert.match(prompts[1].userPrompt, /What business outcome/);
+      const journal = JSON.parse(
+        fs.readFileSync(path.join(fixture.projectDir, `PROJECT_JOURNAL_${fixture.projectId}.json`), 'utf8'),
+      );
+      assert.equal(journal.stages[0].status, 'completed');
+      assert.match(journal.stages[0].agent_submission.content_sha256, /^[a-f0-9]{64}$/);
+      assert.match(journal.stages[0].agent_submission.review_id, /^rev-/);
     } finally {
       fs.rmSync(fixture.root, { recursive: true, force: true });
     }

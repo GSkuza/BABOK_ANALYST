@@ -232,7 +232,7 @@ export function StageAgentChat({ projectId, stageNumber, initialMessages, locked
                 className="inline-flex items-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-50 dark:border-brand-800 dark:bg-brand-500/10 dark:text-brand-300"
               >
                 <FilePenLine className="h-4 w-4" />
-                Generate or update draft
+                Generate and save draft
               </button>
             </div>
           </>

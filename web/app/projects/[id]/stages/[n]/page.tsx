@@ -110,7 +110,13 @@ export default async function StagePage({
                 </div>
               </div>
 
-              <StageReviewPanel projectId={id} stageNumber={stageNumber} status={stage.status} />
+              <StageReviewPanel
+                projectId={id}
+                stageNumber={stageNumber}
+                status={stage.status}
+                hasDeliverable={Boolean(stage.deliverable)}
+                submittedForReview={Boolean(stage.agent_submission)}
+              />
             </div>
           </div>
 

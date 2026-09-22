@@ -34,9 +34,13 @@ export async function runStageAction(
     await execFileImpl('node', [cliPath, 'reject', projectId, String(stageNum), '--reason', reason ?? 'Rejected via Web UI'], { cwd: REPO_ROOT });
   } catch (err) {
     const stderr = err && typeof err === 'object' && 'stderr' in err ? String(err.stderr || '') : '';
-    const message = (stderr.trim().split('\n').at(-1) || (err instanceof Error ? err.message : 'Stage update failed'))
+    const lines = stderr.trim().split(/\r?\n/).filter(Boolean);
+    const message = (lines.find((line) => /^Error:/i.test(line)) || lines.at(-1) || (err instanceof Error ? err.message : 'Stage update failed'))
       .replace(/^Error:\s*/, '');
-    const status = /already approved/i.test(message) ? 409 : 400;
-    throw new StageActionError(message, status);
+    const userMessage = /no deliverable file/i.test(message)
+      ? 'Generate and save the stage deliverable before approval.'
+      : message;
+    const status = /already approved/i.test(userMessage) ? 409 : 400;
+    throw new StageActionError(userMessage, status);
   }
 }

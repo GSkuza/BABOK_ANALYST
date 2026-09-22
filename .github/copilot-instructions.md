@@ -102,6 +102,10 @@ Each stage represents a distinct business analysis deliverable:
 
 Stages are loaded from `BABOK_AGENT/stages/BABOK_agent_stage_N.md` at runtime — no build step, changes take effect immediately.
 
+### Analytical elicitation
+
+Apply `BABOK_AGENT/elicitation-policy.md` on every conversational surface. Stage questionnaires are coverage maps, not scripts. Before asking anything, use the conversation, journal, and approved deliverables to avoid repetition. Each turn should contain at most one concise analytical observation or implication and the single highest-value question. Challenge contradictions once, propose evidence-based hypotheses, accept the human's resolution, and stop eliciting when remaining gaps are not decision-critical.
+
 ### Two-Key Journal: Agent/Human Separation of Duties
 
 Stage approval is enforced **outside the LLM** as a hard gate:

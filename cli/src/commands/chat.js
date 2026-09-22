@@ -16,6 +16,7 @@ import {
   getActiveProviderInfo,
   loadStagePrompt,
   loadMainSystemPrompt,
+  loadElicitationPolicy,
   getApiKey,
   promptForProvider,
   clearStoredKey,
@@ -58,8 +59,8 @@ export async function chatCommand(partialId, options) {
   const profile = loadProfile(journal.profile);
   const maxStage = getMaxStage(profile);
   let stageNumber = options.stage ? parseInt(options.stage) : journal.current_stage;
-  if (isNaN(stageNumber) || stageNumber < 1 || stageNumber > maxStage) {
-    console.error(chalk.red(`Error: Stage must be a number between 1 and ${maxStage}`));
+  if (isNaN(stageNumber) || stageNumber < 0 || stageNumber > maxStage) {
+    console.error(chalk.red(`Error: Stage must be a number between 0 and ${maxStage}`));
     process.exit(1);
   }
 
@@ -281,10 +282,11 @@ export async function chatCommand(partialId, options) {
 /**
  * Build context prompt with project info
  */
-function buildContextPrompt(journal, stageNumber, historySummary = '') {
+export function buildContextPrompt(journal, stageNumber, historySummary = '') {
   const profile = loadProfile(journal.profile);
   const mainPrompt = loadMainSystemPrompt(profile);
   const stagePrompt = loadStagePrompt(stageNumber, profile);
+  const elicitationPolicy = loadElicitationPolicy();
   
   const stageName = journal.stages.find(s => s.stage === stageNumber)?.name || `Stage ${stageNumber}`;
   const stageInfo = journal.stages.find(s => s.stage === stageNumber);
@@ -318,7 +320,7 @@ LANGUAGE INSTRUCTION: You MUST respond in ${journal.language === 'PL' ? 'POLISH'
 
 `;
 
-  return mainPrompt + '\n\n' + stagePrompt + '\n\n' + contextBlock;
+  return mainPrompt + '\n\n' + stagePrompt + '\n\n' + elicitationPolicy + '\n\n' + contextBlock;
 }
 
 /**

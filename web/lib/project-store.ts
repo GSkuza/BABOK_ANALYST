@@ -12,6 +12,11 @@ export interface StageDetail extends StageInfo {
   completed_at?: string | null;
   notes?: string;
   revision_open?: boolean;
+  agent_submission?: {
+    at: string;
+    content_sha256: string;
+    review_id: string;
+  } | null;
 }
 
 // Legacy BABOK labels, used only when a journal stage has no name of its own.
