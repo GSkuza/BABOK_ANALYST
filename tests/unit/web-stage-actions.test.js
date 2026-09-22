@@ -107,6 +107,7 @@ describe('web stage action delegation', () => {
       '--reason',
       'Rejected via Web UI',
     ]);
+    assert.equal(calls.length, 1);
   });
 
   it('maps ordinary CLI failures to status 400', async () => {
