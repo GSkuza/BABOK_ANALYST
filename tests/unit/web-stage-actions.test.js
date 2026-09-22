@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 
 import { StageActionError, runStageAction } from '../../web/lib/stage-actions.ts';
 
@@ -16,7 +17,7 @@ describe('web stage action delegation', () => {
     assert.equal(cmd, 'node');
     assert.deepEqual(argv.slice(1), ['approve', 'BABOK-20260922-ABCD', '0', '--attestor', 'Web UI']);
     assert.match(argv[0], /cli[\\/]bin[\\/]babok\.js$/);
-    assert.ok(options.cwd.endsWith('BABOK_ANALYST'));
+    assert.equal(argv[0], path.join(options.cwd, 'cli', 'bin', 'babok.js'));
   });
 
   it('maps CLI failures to HTTP-friendly status codes', async () => {
