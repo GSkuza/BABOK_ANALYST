@@ -15,6 +15,18 @@ import {
   streamOpenAITextResponse,
 } from '../../cli/src/llm.js';
 
+function pendingFetchUntilAbort(init = {}) {
+  return new Promise((_, reject) => {
+    const signal = init?.signal;
+    if (!signal) return;
+    if (signal.aborted) {
+      reject(signal.reason);
+      return;
+    }
+    signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+  });
+}
+
 describe('draft progress through the provider SDKs', () => {
   for (const provider of ['openai', 'anthropic']) {
     it(`${provider} does not retry a rejected drafting request`, async t => {
@@ -70,7 +82,7 @@ describe('draft progress through the provider SDKs', () => {
 describe('request control', () => {
   for (const provider of ['gemini', 'openai', 'anthropic', 'local', 'huggingface']) {
     it(`${provider} times out with a controlled error`, async t => {
-      t.mock.method(globalThis, 'fetch', async () => await new Promise(() => {}));
+      t.mock.method(globalThis, 'fetch', async (_url, init) => await pendingFetchUntilAbort(init));
       const client = createLlmClient(provider, provider === 'huggingface' ? 'hf_test_key' : 'test-key');
       await assert.rejects(
         client.chat('System', 'Draft', { timeoutMs: 5, requestLabel: `${provider} timeout` }),
@@ -80,7 +92,7 @@ describe('request control', () => {
   }
 
   it('cancels active requests on demand', async t => {
-    t.mock.method(globalThis, 'fetch', async () => await new Promise(() => {}));
+    t.mock.method(globalThis, 'fetch', async (_url, init) => await pendingFetchUntilAbort(init));
     const client = createLlmClient('openai', 'test-key');
     const pending = client.chat('System', 'Draft', { timeoutMs: 1000, requestLabel: 'cancel me' });
     await new Promise(resolve => setTimeout(resolve, 0));

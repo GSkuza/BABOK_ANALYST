@@ -47,4 +47,20 @@ describe('web stage action delegation', () => {
     const [, argv] = calls[0];
     assert.deepEqual(argv.slice(1), ['reject', 'BABOK-20260922-ABCD', '2', '--reason', 'Rejected via Web UI']);
   });
+
+  it('maps ordinary CLI failures to status 400', async () => {
+    await assert.rejects(
+      runStageAction('BABOK-20260922-ABCD', 2, 'reject', 'Missing evidence', async () => {
+        const error = new Error('failed');
+        error.stderr = 'Error: Stage 2 is not approved\n';
+        throw error;
+      }),
+      (error) => {
+        assert.ok(error instanceof StageActionError);
+        assert.equal(error.status, 400);
+        assert.equal(error.message, 'Stage 2 is not approved');
+        return true;
+      },
+    );
+  });
 });

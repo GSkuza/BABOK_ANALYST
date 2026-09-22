@@ -24,6 +24,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!isValidProjectId(id)) {
     return NextResponse.json({ error: 'Invalid project id' }, { status: 400 });
   }
+  if (!Number.isInteger(stageNum)) {
+    return NextResponse.json({ error: 'Invalid stage number' }, { status: 400 });
+  }
   const journalPath = path.join(projectsDir, id, `PROJECT_JOURNAL_${id}.json`);
   if (!fs.existsSync(journalPath)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   try {
