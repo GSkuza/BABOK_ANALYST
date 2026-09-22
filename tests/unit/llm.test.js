@@ -1,5 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   PROVIDERS,
   LLM_REQUEST_TIMEOUT_MS,
@@ -14,6 +19,53 @@ import {
   streamAnthropicTextResponse,
   streamOpenAITextResponse,
 } from '../../cli/src/llm.js';
+
+describe('LLM provider preferences', () => {
+  it('stores encrypted credentials and the preferred provider together', () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'babok-llm-settings-'));
+    const moduleUrl = pathToFileURL(path.resolve('cli/src/llm.js')).href;
+    const script = `
+      import {
+        clearStoredKey,
+        getPreferredProvider,
+        listStoredProviders,
+        readStoredKey,
+        setPreferredProvider,
+        storeKey,
+      } from ${JSON.stringify(moduleUrl)};
+      storeKey('gemini', 'test-gemini-key');
+      storeKey('openai', 'test-openai-key');
+      setPreferredProvider('openai');
+      const before = {
+        key: readStoredKey('openai'),
+        preferred: getPreferredProvider(),
+        providers: listStoredProviders(),
+      };
+      clearStoredKey('openai');
+      const after = {
+        preferred: getPreferredProvider(),
+        providers: listStoredProviders(),
+      };
+      console.log(JSON.stringify({ before, after }));
+    `;
+
+    try {
+      const result = JSON.parse(execFileSync(
+        process.execPath,
+        ['--input-type=module', '--eval', script],
+        { cwd, encoding: 'utf-8' },
+      ));
+      assert.equal(result.before.key, 'test-openai-key');
+      assert.equal(result.before.preferred, 'openai');
+      assert.deepEqual(result.before.providers, ['gemini', 'openai']);
+      assert.equal(result.after.preferred, 'gemini');
+      assert.deepEqual(result.after.providers, ['gemini']);
+      assert.doesNotMatch(fs.readFileSync(path.join(cwd, '.babok_keystore'), 'utf-8'), /test-openai-key/);
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+});
 
 function pendingFetchUntilAbort(init = {}) {
   return new Promise((_, reject) => {

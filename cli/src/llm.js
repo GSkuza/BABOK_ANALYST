@@ -330,11 +330,25 @@ export function readStoredKey(provider) {
  * Store API key for a specific provider (encrypted).
  */
 export function storeKey(provider, apiKey) {
+  if (!PROVIDERS[provider]) throw new Error(`Unknown provider: ${provider}`);
   const ks = readKeystore();
   ks[provider] = {
     k: xorCipher(Buffer.from(apiKey, 'utf-8'), deriveSecret()).toString('base64'),
     stored_at: new Date().toISOString(),
   };
+  ks._preferred_provider ??= provider;
+  writeKeystore(ks);
+}
+
+export function getPreferredProvider() {
+  const provider = readKeystore()._preferred_provider;
+  return PROVIDERS[provider] ? provider : null;
+}
+
+export function setPreferredProvider(provider) {
+  if (!PROVIDERS[provider]) throw new Error(`Unknown provider: ${provider}`);
+  const ks = readKeystore();
+  ks._preferred_provider = provider;
   writeKeystore(ks);
 }
 
@@ -349,6 +363,9 @@ export function clearStoredKey(provider) {
   }
   const ks = readKeystore();
   delete ks[provider];
+  if (ks._preferred_provider === provider) {
+    ks._preferred_provider = Object.keys(PROVIDERS).find(p => ks[p]?.k) ?? null;
+  }
   writeKeystore(ks);
 }
 
