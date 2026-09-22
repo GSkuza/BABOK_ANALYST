@@ -4,10 +4,10 @@ import fs from 'fs';
 import os from 'os';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { isValidProjectId } from '@/lib/project-store';
+import { getProjectsDir, isValidProjectId } from '@/lib/project-store';
 
 const REPO_ROOT = path.join(process.cwd(), '..');
-const PROJECTS_DIR = path.join(REPO_ROOT, 'projects');
+const PROJECTS_DIR = getProjectsDir();
 const execFileAsync = promisify(execFile);
 
 function psQuote(value: string) {

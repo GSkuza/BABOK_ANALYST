@@ -35,7 +35,7 @@ function deny(reason) {
   process.exit(2);
 }
 
-const STALE_MINUTES = 120; // matches cli/src/lock.js
+const STALE_MINUTES = 15; // matches cli/src/lock.js
 
 /**
  * @param {string} projectId

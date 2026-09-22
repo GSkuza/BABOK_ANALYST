@@ -6,7 +6,7 @@ import path from 'path';
 import { createJournal, readJournal } from '../../cli/src/journal.js';
 import { getProjectDir } from '../../cli/src/project.js';
 import { switchChatStage } from '../../cli/src/commands/chat.js';
-import { refreshLock, withStageLock } from '../../cli/src/lock.js';
+import { checkLock, LOCK_STALE_MINUTES, refreshLock, withStageLock } from '../../cli/src/lock.js';
 
 let tmpBase;
 let originalCwd;
@@ -43,6 +43,24 @@ describe('stage locking helpers', () => {
     });
 
     assert.equal(fs.existsSync(lockPath), false);
+  });
+
+  it('keeps locks active until the 2-hour stale threshold elapses', () => {
+    const projectId = 'BABOK-19700101-STALE';
+    createJournal(projectId, 'Stale Threshold Test', 'EN');
+    const projectDir = getProjectDir(projectId);
+    const lockPath = path.join(projectDir, '.stage_1.lock');
+
+    fs.writeFileSync(lockPath, JSON.stringify({
+      locked_by: 'alice',
+      hostname: 'example-host',
+      pid: 4242,
+      locked_at: new Date(Date.now() - ((LOCK_STALE_MINUTES - 1) * 60 * 1000)).toISOString(),
+    }));
+
+    const lock = checkLock(projectId, 1);
+    assert.ok(lock);
+    assert.equal(lock.locked_by, 'alice');
   });
 });
 

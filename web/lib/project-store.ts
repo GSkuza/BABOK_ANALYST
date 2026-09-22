@@ -82,31 +82,32 @@ interface JournalShape {
   stages?: StageDetail[];
 }
 
+export function getProjectsDir() {
+  return PROJECTS_DIR;
+}
+
 export function listProjects(): Project[] {
   if (!fs.existsSync(PROJECTS_DIR)) {
     return [];
   }
 
-  return fs
-    .readdirSync(PROJECTS_DIR)
-    .filter((name) => PROJECT_ID_RE.test(name) && fs.statSync(path.join(PROJECTS_DIR, name)).isDirectory())
-    .map((id) => {
-      const journalPath = getJournalPath(id);
-      if (!journalPath || !fs.existsSync(journalPath)) {
-        return null;
-      }
+  const projects: Project[] = [];
+  for (const id of fs.readdirSync(PROJECTS_DIR)) {
+    if (!PROJECT_ID_RE.test(id) || !fs.statSync(path.join(PROJECTS_DIR, id)).isDirectory()) continue;
+    const journalPath = getJournalPath(id);
+    if (!journalPath || !fs.existsSync(journalPath)) continue;
 
-      const journal = readJsonFile<JournalShape>(journalPath);
-      return {
-        id,
-        name: journal.project_name,
-        profile: journal.profile ?? 'babok',
-        stages: journal.stages ?? [],
-        createdAt: journal.created_at,
-      } satisfies Project;
-    })
-    .filter((project): project is Project => project !== null)
-    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+    const journal = readJsonFile<JournalShape>(journalPath);
+    projects.push({
+      id,
+      name: journal.project_name,
+      profile: journal.profile ?? 'babok',
+      stages: journal.stages ?? [],
+      createdAt: journal.created_at,
+    });
+  }
+
+  return projects.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 }
 
 export function getProject(id: string): Project | null {
