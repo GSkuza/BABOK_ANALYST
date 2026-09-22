@@ -15,6 +15,10 @@ const STAGES = getStages(loadProfile(DEFAULT_PROFILE_ID));
 export { STAGES };
 
 export function getProjectsDir() {
+  if (process.env.BABOK_PROJECTS_DIR && process.env.BABOK_PROJECTS_DIR !== '.') {
+    return path.resolve(process.env.BABOK_PROJECTS_DIR);
+  }
+
   // 1. Check current working directory
   const cwdProjects = path.join(process.cwd(), 'projects');
   if (fs.existsSync(cwdProjects)) return cwdProjects;

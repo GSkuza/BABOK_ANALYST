@@ -68,6 +68,19 @@ describe('getProjectDir', () => {
     assert.equal(typeof dir, 'string');
     assert.ok(path.isAbsolute(dir), 'Expected absolute path');
   });
+
+  test('respects BABOK_PROJECTS_DIR when set', () => {
+    const original = process.env.BABOK_PROJECTS_DIR;
+    const customDir = path.join(os.tmpdir(), 'babok-project-dir-override');
+    process.env.BABOK_PROJECTS_DIR = customDir;
+    try {
+      assert.equal(getProjectsDir(), customDir);
+      assert.equal(getProjectDir('BABOK-20240101-ABCD'), path.join(customDir, 'BABOK-20240101-ABCD'));
+    } finally {
+      if (original === undefined) delete process.env.BABOK_PROJECTS_DIR;
+      else process.env.BABOK_PROJECTS_DIR = original;
+    }
+  });
 });
 
 describe('getJournalPath', () => {
