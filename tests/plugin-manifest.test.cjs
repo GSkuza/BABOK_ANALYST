@@ -7,10 +7,22 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const PINNED_SEMVER = /^\d+\.\d+\.\d+$/;
+const BUNDLE_DIRS = ['skills', 'hooks', 'commands', 'agents', 'babok-mcp', 'BABOK_AGENT', 'assets', 'profiles', 'templates'];
+const BUNDLE_FILES = ['.mcp.json', '.codexignore', 'SECURITY.md', 'LICENSE', 'README.md'];
 
 function readJSON(relPath) {
   const raw = fs.readFileSync(path.join(root, relPath), 'utf8').replace(/^\uFEFF/, '');
   return JSON.parse(raw);
+}
+
+function listFiles(dir, prefix = '') {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    if (entry.name === 'node_modules') return [];
+    const relative = path.join(prefix, entry.name);
+    return entry.isDirectory()
+      ? listFiles(path.join(dir, entry.name), relative)
+      : [relative];
+  });
 }
 
 test('marketplace lists babok_analyst plugin', () => {
@@ -40,6 +52,31 @@ test('Codex plugin bundle is materialized under plugins/babok_analyst', () => {
   assert.ok(fs.existsSync(path.join(bundleRoot, 'assets', 'icon.svg')));
   assert.ok(fs.existsSync(path.join(bundleRoot, 'SECURITY.md')));
   assert.ok(fs.existsSync(path.join(bundleRoot, '.codexignore')));
+});
+
+test('Codex plugin bundle matches the portable root sources', () => {
+  const bundleRoot = path.join(root, 'plugins', 'babok_analyst');
+  for (const file of BUNDLE_FILES) {
+    assert.equal(
+      fs.readFileSync(path.join(bundleRoot, file), 'utf8'),
+      fs.readFileSync(path.join(root, file), 'utf8'),
+      `stale bundled file: ${file}`,
+    );
+  }
+
+  for (const dir of BUNDLE_DIRS) {
+    const sourceDir = path.join(root, dir);
+    const bundledDir = path.join(bundleRoot, dir);
+    const sourceFiles = listFiles(sourceDir).sort();
+    assert.deepEqual(listFiles(bundledDir).sort(), sourceFiles, `stale bundled tree: ${dir}`);
+    for (const file of sourceFiles) {
+      assert.deepEqual(
+        fs.readFileSync(path.join(bundledDir, file)),
+        fs.readFileSync(path.join(sourceDir, file)),
+        `stale bundled file: ${path.join(dir, file)}`,
+      );
+    }
+  }
 });
 
 test('Codex manifest exposes composerIcon asset', () => {
