@@ -11,6 +11,7 @@ import {
   getStageChatHistory,
   sendStageChatMessage,
 } from '../../web/lib/stage-chat.ts';
+import { normalizeAgentMarkdown } from '../../web/lib/chat-markdown.ts';
 
 function writeFixture({
   prefix = 'BABOK',
@@ -186,6 +187,13 @@ describe('web stage draft persistence', () => {
 });
 
 describe('web AI stage interview', () => {
+  it('normalizes escaped formatting in agent replies', () => {
+    assert.equal(
+      normalizeAgentMarkdown('**Question:** value and \\*\\*escaped bold\\*\\*'),
+      '**Question:** value and **escaped bold**',
+    );
+  });
+
   it('persists shared chat history and generates a draft from evidence', async () => {
     const fixture = writeFixture({ prefix: 'BC', profile: 'consulting' });
     const prompts = [];

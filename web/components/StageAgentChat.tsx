@@ -3,6 +3,10 @@
 import { FormEvent, useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Bot, FilePenLine, LoaderCircle, Send, UserRound } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import type { Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { normalizeAgentMarkdown } from '@/lib/chat-markdown';
 import type { StageChatMessage } from '@/lib/stage-chat';
 
 interface Props {
@@ -15,6 +19,23 @@ interface Props {
 function textOf(message: StageChatMessage) {
   return message.parts.map((part) => part.text).join('');
 }
+
+const chatMarkdownComponents: Components = {
+  p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
+  strong: ({ children }) => <strong className="font-semibold text-slate-950 dark:text-white">{children}</strong>,
+  ul: ({ children }) => <ul className="list-disc space-y-1 pl-5">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal space-y-1 pl-5">{children}</ol>,
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-2 border-brand-400 pl-3 text-slate-600 dark:text-slate-300">
+      {children}
+    </blockquote>
+  ),
+  code: ({ children }) => (
+    <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-brand-700 dark:bg-slate-800 dark:text-brand-300">
+      {children}
+    </code>
+  ),
+};
 
 export function StageAgentChat({ projectId, stageNumber, initialMessages, locked }: Props) {
   const router = useRouter();
@@ -148,12 +169,18 @@ export function StageAgentChat({ projectId, stageNumber, initialMessages, locked
               className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {message.role === 'model' ? <Bot className="mt-2 h-5 w-5 shrink-0 text-brand-500" /> : null}
-              <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-6 ${
+              <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
                 message.role === 'user'
                   ? 'bg-brand-600 text-white'
                   : 'border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200'
               }`}>
-                {textOf(message)}
+                {message.role === 'model' ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={chatMarkdownComponents}>
+                    {normalizeAgentMarkdown(textOf(message))}
+                  </ReactMarkdown>
+                ) : (
+                  <span className="whitespace-pre-wrap">{textOf(message)}</span>
+                )}
               </div>
               {message.role === 'user' ? <UserRound className="mt-2 h-5 w-5 shrink-0 text-slate-400" /> : null}
             </div>
