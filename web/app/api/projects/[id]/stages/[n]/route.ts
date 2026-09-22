@@ -5,8 +5,6 @@ import fs from 'fs';
 import { getProjectsDir, getStage, isValidProjectId } from '@/lib/project-store';
 import { StageActionError, runStageAction } from '@/lib/stage-actions';
 
-const PROJECTS_DIR = getProjectsDir();
-
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string; n: string }> }) {
   const { id, n } = await params;
   const stageNum = parseInt(n, 10);
@@ -22,10 +20,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id, n } = await params;
   const stageNum = parseInt(n, 10);
   const { action, reason } = await req.json();
+  const projectsDir = getProjectsDir();
   if (!isValidProjectId(id)) {
     return NextResponse.json({ error: 'Invalid project id' }, { status: 400 });
   }
-  const journalPath = path.join(PROJECTS_DIR, id, `PROJECT_JOURNAL_${id}.json`);
+  const journalPath = path.join(projectsDir, id, `PROJECT_JOURNAL_${id}.json`);
   if (!fs.existsSync(journalPath)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   try {
     if (action !== 'approve' && action !== 'reject') {
