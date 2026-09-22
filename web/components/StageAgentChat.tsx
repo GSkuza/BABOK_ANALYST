@@ -45,11 +45,14 @@ export function StageAgentChat({ projectId, stageNumber, initialMessages, locked
   const [provider, setProvider] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const busy = isLoading || isPending;
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = chatContainerRef.current;
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
   }, [messages]);
 
   async function post(payload: { message: string } | { action: 'start' | 'generate_draft' }) {
@@ -71,7 +74,6 @@ export function StageAgentChat({ projectId, stageNumber, initialMessages, locked
       }
       setMessages((current) => [...current, body.message!]);
       setProvider(body.provider || null);
-      startTransition(() => router.refresh());
     } finally {
       setIsLoading(false);
     }
@@ -104,6 +106,7 @@ export function StageAgentChat({ projectId, stageNumber, initialMessages, locked
   async function handleGenerateDraft() {
     try {
       await post({ action: 'generate_draft' });
+      startTransition(() => router.refresh());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Draft generation failed');
     }
@@ -144,7 +147,10 @@ export function StageAgentChat({ projectId, stageNumber, initialMessages, locked
           </div>
         ) : null}
 
-        <div className="max-h-[560px] min-h-72 space-y-4 overflow-y-auto rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/60">
+        <div
+          ref={chatContainerRef}
+          className="max-h-[560px] min-h-72 space-y-4 overflow-y-auto rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/60"
+        >
           {messages.length === 0 ? (
             <div className="flex min-h-64 flex-col items-center justify-center gap-4 text-center">
               <Bot className="h-10 w-10 text-brand-500" />
@@ -191,7 +197,6 @@ export function StageAgentChat({ projectId, stageNumber, initialMessages, locked
               Analyst is thinking…
             </div>
           ) : null}
-          <div ref={bottomRef} />
         </div>
 
         {messages.length > 0 ? (
