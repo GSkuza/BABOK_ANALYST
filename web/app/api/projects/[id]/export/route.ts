@@ -7,7 +7,6 @@ import { promisify } from 'util';
 import { getProjectsDir, isValidProjectId } from '@/lib/project-store';
 
 const REPO_ROOT = path.join(process.cwd(), '..');
-const PROJECTS_DIR = getProjectsDir();
 const execFileAsync = promisify(execFile);
 
 function psQuote(value: string) {
@@ -36,10 +35,11 @@ async function createZipArchive(projectDir: string, zipPath: string) {
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const projectsDir = getProjectsDir();
   if (!isValidProjectId(id)) {
     return NextResponse.json({ error: 'Invalid project id' }, { status: 400 });
   }
-  const projectDir = path.join(PROJECTS_DIR, id);
+  const projectDir = path.join(projectsDir, id);
   if (!fs.existsSync(projectDir)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const zipPath = path.join(os.tmpdir(), `${id}-${Date.now()}.zip`);

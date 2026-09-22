@@ -34,4 +34,16 @@ describe('web stage action delegation', () => {
       },
     );
   });
+
+  it('routes reject requests through the CLI reject command with a default reason', async () => {
+    const calls = [];
+    await runStageAction('BABOK-20260922-ABCD', 2, 'reject', undefined, async (...args) => {
+      calls.push(args);
+      return { stdout: '', stderr: '' };
+    });
+
+    assert.equal(calls.length, 1);
+    const [, argv] = calls[0];
+    assert.deepEqual(argv.slice(1), ['reject', 'BABOK-20260922-ABCD', '2', '--reason', 'Rejected via Web UI']);
+  });
 });

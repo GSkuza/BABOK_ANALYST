@@ -1,8 +1,9 @@
 import { execFile } from 'child_process';
+import { fileURLToPath } from 'url';
 import path from 'path';
 import { promisify } from 'util';
 
-const REPO_ROOT = path.join(process.cwd(), '..');
+const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const execFileAsync = promisify(execFile);
 
 export class StageActionError extends Error {
