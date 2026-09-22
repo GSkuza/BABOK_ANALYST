@@ -2,9 +2,10 @@ import Link from 'next/link';
 import { CalendarClock, ChevronLeft, ChevronRight, FileText, ShieldCheck, Sparkles } from 'lucide-react';
 import { DeliverableViewer } from '@/components/DeliverableViewer';
 import { QualityScoreCard } from '@/components/QualityScoreCard';
-import { StageContentEditor } from '@/components/StageContentEditor';
+import { StageAgentChat } from '@/components/StageAgentChat';
 import { StageReviewPanel } from '@/components/StageReviewPanel';
 import { getProject, getStage, STAGE_LABELS } from '@/lib/project-store';
+import { getStageChatHistory } from '@/lib/stage-chat';
 
 export const revalidate = 30;
 
@@ -43,6 +44,7 @@ export default async function StagePage({
   const currentIndex = project.stages.findIndex((projectStage) => projectStage.stage === stageNumber);
   const previousStage = currentIndex > 0 ? project.stages[currentIndex - 1] : null;
   const nextStage = currentIndex >= 0 && currentIndex < project.stages.length - 1 ? project.stages[currentIndex + 1] : null;
+  const chatMessages = getStageChatHistory(id, stageNumber);
 
   return (
     <div className="space-y-8">
@@ -86,10 +88,10 @@ export default async function StagePage({
             </div>
           </div>
 
-          <StageContentEditor
+          <StageAgentChat
             projectId={id}
             stageNumber={stageNumber}
-            initialContent={stage.deliverable ?? ''}
+            initialMessages={chatMessages}
             locked={stage.status === 'approved' && !stage.revision_open}
           />
           {stage.deliverable ? <DeliverableViewer content={stage.deliverable} /> : null}

@@ -100,6 +100,19 @@ function acquireStageLock(projectDir: string, stageNumber: number) {
   };
 }
 
+export function withStageWriteLock<T>(
+  projectDir: string,
+  stageNumber: number,
+  operation: () => T,
+) {
+  const releaseLock = acquireStageLock(projectDir, stageNumber);
+  try {
+    return operation();
+  } finally {
+    releaseLock();
+  }
+}
+
 function resolveDeliverableFile(stage: JournalStage, profile: Profile, stageNumber: number) {
   const fileName = stage.deliverable_file
     ?? profile.stages.find((profileStage) => profileStage.stage === stageNumber)?.deliverable_file;
@@ -160,9 +173,7 @@ export function saveStageDraft(
   const profile = JSON.parse(fs.readFileSync(profilePath, 'utf-8')) as Profile;
   const fileName = resolveDeliverableFile(stage, profile, stageNumber);
   const now = new Date().toISOString();
-  const releaseLock = acquireStageLock(projectDir, stageNumber);
-
-  try {
+  withStageWriteLock(projectDir, stageNumber, () => {
     fs.writeFileSync(path.join(projectDir, fileName), content, 'utf-8');
     stage.deliverable_file = fileName;
     stage.status = 'in_progress';
@@ -172,9 +183,7 @@ export function saveStageDraft(
     stage.human_attestation = null;
     journal.last_updated = now;
     writeJsonAtomic(journalPath, journal);
-  } finally {
-    releaseLock();
-  }
+  });
 
   return { fileName, updatedAt: now };
 }
