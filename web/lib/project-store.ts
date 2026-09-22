@@ -27,9 +27,6 @@ export const STAGE_LABELS: Record<number, string> = {
 };
 
 const REPO_ROOT = path.join(process.cwd(), '..');
-const PROJECTS_DIR = process.env.BABOK_PROJECTS_DIR
-  ? path.resolve(process.env.BABOK_PROJECTS_DIR)
-  : path.join(REPO_ROOT, 'projects');
 const PROFILES_DIR = path.join(REPO_ROOT, 'profiles');
 
 /** Project-ID prefixes declared by profiles/<id>/profile.json (BABOK always included). */
@@ -64,14 +61,14 @@ function getJournalPath(id: string) {
   if (!isValidProjectId(id)) {
     return null;
   }
-  return path.join(PROJECTS_DIR, id, `PROJECT_JOURNAL_${id}.json`);
+  return path.join(getProjectsDir(), id, `PROJECT_JOURNAL_${id}.json`);
 }
 
 function getProjectDir(id: string) {
   if (!isValidProjectId(id)) {
     return null;
   }
-  return path.join(PROJECTS_DIR, id);
+  return path.join(getProjectsDir(), id);
 }
 
 interface JournalShape {
@@ -83,17 +80,20 @@ interface JournalShape {
 }
 
 export function getProjectsDir() {
-  return PROJECTS_DIR;
+  return process.env.BABOK_PROJECTS_DIR
+    ? path.resolve(process.env.BABOK_PROJECTS_DIR)
+    : path.join(REPO_ROOT, 'projects');
 }
 
 export function listProjects(): Project[] {
-  if (!fs.existsSync(PROJECTS_DIR)) {
+  const projectsDir = getProjectsDir();
+  if (!fs.existsSync(projectsDir)) {
     return [];
   }
 
   const projects: Project[] = [];
-  for (const id of fs.readdirSync(PROJECTS_DIR)) {
-    if (!PROJECT_ID_RE.test(id) || !fs.statSync(path.join(PROJECTS_DIR, id)).isDirectory()) continue;
+  for (const id of fs.readdirSync(projectsDir)) {
+    if (!PROJECT_ID_RE.test(id) || !fs.statSync(path.join(projectsDir, id)).isDirectory()) continue;
     const journalPath = getJournalPath(id);
     if (!journalPath || !fs.existsSync(journalPath)) continue;
 
