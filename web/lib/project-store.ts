@@ -143,11 +143,17 @@ export function getStage(id: string, stageNum: number): StageDetail | null {
 
   const prefix = `STAGE_${String(stageNum).padStart(2, '0')}_`;
   const deliverableFile = fs
-    .readdirSync(projectDir)
+    .readdirSync(/* turbopackIgnore: true */ projectDir)
     .find((fileName) => fileName.startsWith(prefix) && fileName.endsWith('.md'));
 
   const deliverable = deliverableFile
-    ? fs.readFileSync(path.join(projectDir, deliverableFile), 'utf-8')
+    ? fs.readFileSync(
+        /* turbopackIgnore: true */ path.join(
+          /* turbopackIgnore: true */ projectDir,
+          deliverableFile,
+        ),
+        'utf-8',
+      )
     : undefined;
 
   const scorePath = path.join(projectDir, 'scores', `STAGE_${String(stageNum).padStart(2, '0')}_score.json`);
