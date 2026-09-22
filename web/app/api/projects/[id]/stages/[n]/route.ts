@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { execFile } from 'child_process';
 import path from 'path';
 import fs from 'fs';
-import { promisify } from 'util';
 import { getProjectsDir, getStage, isValidProjectId } from '@/lib/project-store';
+import { StageActionError, runStageAction } from '@/lib/stage-actions';
 
-const REPO_ROOT = path.join(process.cwd(), '..');
 const PROJECTS_DIR = getProjectsDir();
-const execFileAsync = promisify(execFile);
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string; n: string }> }) {
   const { id, n } = await params;
@@ -30,25 +27,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
   const journalPath = path.join(PROJECTS_DIR, id, `PROJECT_JOURNAL_${id}.json`);
   if (!fs.existsSync(journalPath)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const cliPath = path.join(REPO_ROOT, 'cli', 'bin', 'babok.js');
-
   try {
-    if (action === 'approve') {
-      await execFileAsync('node', [cliPath, 'approve', id, String(stageNum), '--attestor', 'Web UI'], { cwd: REPO_ROOT });
-    } else if (action === 'reject') {
-      await execFileAsync('node', [cliPath, 'reject', id, String(stageNum), '--reason', reason ?? 'Rejected via Web UI'], { cwd: REPO_ROOT });
-    } else {
+    if (action !== 'approve' && action !== 'reject') {
       return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
+    await runStageAction(id, stageNum, action, reason);
   } catch (err) {
-    const stderr = err && typeof err === 'object' && 'stderr' in err ? String(err.stderr || '') : '';
-    const message = stderr.trim().split('\n').at(-1) || (err instanceof Error ? err.message : 'Stage update failed');
-    const status = /already approved/i.test(message) ? 409 : 400;
-    return NextResponse.json({ error: message.replace(/^Error:\s*/, '') }, { status });
-  }
-
-  if (!['approve', 'reject'].includes(action)) {
-    return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+    if (err instanceof StageActionError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Stage update failed' }, { status: 500 });
   }
   revalidatePath('/');
   revalidatePath(`/projects/${id}`);

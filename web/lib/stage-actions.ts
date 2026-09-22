@@ -1,0 +1,41 @@
+import { execFile } from 'child_process';
+import path from 'path';
+import { promisify } from 'util';
+
+const REPO_ROOT = path.join(process.cwd(), '..');
+const execFileAsync = promisify(execFile);
+
+export class StageActionError extends Error {
+  status: number;
+
+  constructor(message: string, status = 400) {
+    super(message);
+    this.name = 'StageActionError';
+    this.status = status;
+  }
+}
+
+export async function runStageAction(
+  projectId: string,
+  stageNum: number,
+  action: 'approve' | 'reject',
+  reason?: string,
+  execFileImpl = execFileAsync,
+) {
+  const cliPath = path.join(REPO_ROOT, 'cli', 'bin', 'babok.js');
+
+  try {
+    if (action === 'approve') {
+      await execFileImpl('node', [cliPath, 'approve', projectId, String(stageNum), '--attestor', 'Web UI'], { cwd: REPO_ROOT });
+      return;
+    }
+
+    await execFileImpl('node', [cliPath, 'reject', projectId, String(stageNum), '--reason', reason ?? 'Rejected via Web UI'], { cwd: REPO_ROOT });
+  } catch (err) {
+    const stderr = err && typeof err === 'object' && 'stderr' in err ? String(err.stderr || '') : '';
+    const message = (stderr.trim().split('\n').at(-1) || (err instanceof Error ? err.message : 'Stage update failed'))
+      .replace(/^Error:\s*/, '');
+    const status = /already approved/i.test(message) ? 409 : 400;
+    throw new StageActionError(message, status);
+  }
+}
