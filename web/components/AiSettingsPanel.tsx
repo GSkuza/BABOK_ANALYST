@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { AlertCircle, Check, ExternalLink, KeyRound, LoaderCircle, Star, Trash2 } from 'lucide-react';
 import type { AiProviderSetting, AiSettings } from '@/lib/ai-settings';
+import { ModelRoutingPanel } from './ModelRoutingPanel';
 
 interface Props {
   initialSettings: AiSettings;
@@ -14,6 +15,7 @@ export function AiSettingsPanel({ initialSettings }: Props) {
   const [busyProvider, setBusyProvider] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedProvider, setSavedProvider] = useState<string | null>(null);
+  const [catalogVersion, setCatalogVersion] = useState(0);
 
   async function update(
     provider: AiProviderSetting,
@@ -36,6 +38,7 @@ export function AiSettingsPanel({ initialSettings }: Props) {
       setSettings(body);
       setSecrets((current) => ({ ...current, [provider.id]: '' }));
       setSavedProvider(provider.id);
+      setCatalogVersion((version) => version + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to update AI settings.');
     } finally {
@@ -148,6 +151,8 @@ export function AiSettingsPanel({ initialSettings }: Props) {
           );
         })}
       </div>
+
+      <ModelRoutingPanel refreshKey={catalogVersion} />
     </div>
   );
 }

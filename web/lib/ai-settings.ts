@@ -21,6 +21,62 @@ export interface AiSettings {
   providers: AiProviderSetting[];
 }
 
+export interface AiProviderModels {
+  id: string;
+  name: string;
+  configured: boolean;
+  preferred: boolean;
+  defaultModel: string;
+  models: string[];
+  source: 'api' | 'registry' | 'fallback' | 'unconfigured';
+  error: string | null;
+}
+
+export interface AiModelCatalog {
+  preferredProvider: string | null;
+  providers: AiProviderModels[];
+  fetchedAt: string;
+}
+
+export type EffortLevel = 'minimal' | 'low' | 'medium' | 'high';
+
+export interface ModelTarget {
+  provider: string;
+  model?: string | null;
+}
+
+export interface ModelRoutingRule {
+  provider?: string | null;
+  model?: string | null;
+  temperature?: number | null;
+  effort?: EffortLevel | null;
+  fallbacks?: ModelTarget[] | null;
+}
+
+export interface ModelRoutingProfile {
+  default: ModelRoutingRule;
+  stages: Record<string, ModelRoutingRule>;
+}
+
+export interface ModelRouting {
+  version: number;
+  failover_all_providers: boolean;
+  default: ModelRoutingRule;
+  profiles: Record<string, ModelRoutingProfile>;
+}
+
+export interface RoutingProfileSummary {
+  id: string;
+  name: string;
+  stages: Array<{ stage: number; name: string }>;
+}
+
+export interface ModelRoutingState {
+  routing: ModelRouting;
+  profiles: RoutingProfileSummary[];
+  effortLevels: EffortLevel[];
+}
+
 export class AiSettingsError extends Error {
   status: number;
 
@@ -31,8 +87,8 @@ export class AiSettingsError extends Error {
   }
 }
 
-function runSettings(payload: Record<string, unknown>) {
-  return new Promise<AiSettings>((resolve, reject) => {
+function runSettings<T = AiSettings>(payload: Record<string, unknown>, timeoutMs = 30_000) {
+  return new Promise<T>((resolve, reject) => {
     const child = spawn(process.execPath, [SETTINGS_RUNNER], {
       cwd: REPO_ROOT,
       windowsHide: true,
@@ -40,7 +96,7 @@ function runSettings(payload: Record<string, unknown>) {
     });
     let stdout = '';
     let stderr = '';
-    const timeout = setTimeout(() => child.kill(), 30_000);
+    const timeout = setTimeout(() => child.kill(), timeoutMs);
 
     child.stdout.setEncoding('utf-8');
     child.stderr.setEncoding('utf-8');
@@ -63,7 +119,7 @@ function runSettings(payload: Record<string, unknown>) {
         return;
       }
       try {
-        resolve(JSON.parse(stdout) as AiSettings);
+        resolve(JSON.parse(stdout) as T);
       } catch {
         reject(new AiSettingsError('AI settings returned an invalid response.', 500));
       }
@@ -89,4 +145,19 @@ export function preferAiProvider(provider: string) {
 
 export function clearAiProvider(provider: string) {
   return runSettings({ action: 'clear', provider });
+}
+
+export function getAiModelCatalog() {
+  return runSettings<AiModelCatalog>({ action: 'models' }, 45_000);
+}
+
+export function getModelRouting() {
+  return runSettings<ModelRoutingState>({ action: 'routing' });
+}
+
+export function saveModelRouting(routing: unknown) {
+  if (JSON.stringify(routing ?? null).length > 256_000) {
+    throw new AiSettingsError('The routing configuration is too large.', 413);
+  }
+  return runSettings<ModelRoutingState>({ action: 'save_routing', routing });
 }

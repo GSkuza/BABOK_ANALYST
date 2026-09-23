@@ -207,7 +207,7 @@ The bundled Next.js UI provides a lightweight review layer over the shared proje
 - **Dashboard**: server-rendered project cards with progress bars and approval counts
 - **Project view**: stage list, overall progress, and ZIP export
 - **Stage view**: AI-guided interview, generated deliverable drafts, Mermaid diagrams, quality score badge, and approve/reject controls
-- **AI settings**: configure an encrypted provider API key and select the provider used by stage interviews
+- **AI settings**: configure encrypted provider API keys, list the models each key can access, and route models per profile and per stage (temperature, reasoning effort, fallback chains across every configured key)
 - **Export endpoint**: project ZIP download via `web/app/api/projects/[id]/export/route.ts`, with Windows-compatible archive creation
 
 Run locally:
@@ -645,7 +645,7 @@ The repository now ships a **Next.js 15 App Router** web interface for teams who
 - **Project detail view** — stage pipeline with status indicators
 - **Stage view** — renders deliverable Markdown + Approve / Reject buttons
 - **AI stage interview** — gathers evidence one question at a time and generates a canonical draft
-- **AI settings** — stores provider credentials in the encrypted local BABOK keystore
+- **AI settings** — stores provider credentials in the encrypted local BABOK keystore, shows the models available to each key, and configures advanced model routing (see below)
 - **Export page** — one-click ZIP download of all stage deliverables
 - **Mermaid diagram viewer** — inline rendering of auto-generated process maps
 
@@ -657,6 +657,20 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
+### Advanced model routing
+
+`/settings/ai` routes stage interviews and draft generation to a provider/model per **pipeline profile**
+(IT/BABOK, consulting, software development) and per **stage** of each profile. Every level can set the model,
+`temperature` (0–2; clamped to 1 for Anthropic) and reasoning `effort` (`minimal`/`low`/`medium`/`high`,
+mapped to OpenAI `reasoning.effort`, Anthropic `output_config.effort` and Gemini thinking budgets). Resolution is
+field-by-field, most specific first: stage → profile default → global default → active provider. Each level can
+define an ordered fallback chain, and *Fail over across every configured API key* appends all remaining configured
+providers, so a failing key, quota or model automatically moves to the next resource. Parameters a model rejects are
+dropped and the request is retried once with provider defaults.
+
+The routing is stored in `.babok_model_routing.json` (no credentials, gitignored; override the path with
+`BABOK_MODEL_ROUTING_FILE`) and implemented in `cli/src/model-routing.js`.
+
 ### API Routes
 
 | Route | Method | Description |
@@ -666,6 +680,8 @@ npm run dev        # http://localhost:3000
 | `/api/projects/[id]/stages/[n]` | GET / POST | Read or save a stage deliverable |
 | `/api/projects/[id]/stages/[n]/chat` | GET / POST | Read or continue the stage AI interview |
 | `/api/settings/ai` | GET / POST / DELETE | Inspect, configure, select, or remove an AI provider |
+| `/api/settings/ai/models` | GET | List models available to every configured API key (live for OpenAI, Anthropic, Gemini) |
+| `/api/settings/ai/routing` | GET / PUT | Read or save advanced model routing |
 | `/api/projects/[id]/export` | GET | Download all deliverables as ZIP |
 
 ---

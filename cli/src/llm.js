@@ -233,26 +233,78 @@ function isOpenAITextModel(modelId) {
   return isTextFamily && !OPENAI_MODEL_EXCLUSIONS.some(part => id.includes(part));
 }
 
+function isGeminiTextModel(model) {
+  const id = String(model?.name || '').replace(/^models\//, '').toLowerCase();
+  const methods = model?.supportedGenerationMethods || [];
+  return id.startsWith('gemini-')
+    && methods.includes('generateContent')
+    && !/embedding|aqa|imagen|image-generation|tts|native-audio|live/.test(id);
+}
+
+async function listGeminiModels(apiKey, fetchImpl) {
+  const models = [];
+  let pageToken = '';
+  for (let page = 0; page < 10; page++) {
+    const url = new URL('https://generativelanguage.googleapis.com/v1beta/models');
+    url.searchParams.set('pageSize', '1000');
+    if (pageToken) url.searchParams.set('pageToken', pageToken);
+    const response = await fetchImpl(url, { headers: { 'x-goog-api-key': apiKey } });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error(body?.error?.message || `Gemini models request failed with status ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
+    models.push(...(body.models || []).filter(isGeminiTextModel).map(model => model.name.replace(/^models\//, '')));
+    pageToken = body.nextPageToken || '';
+    if (!pageToken) break;
+  }
+  return models;
+}
+
+function withDiscoveryTimeout(promise, timeoutMs, label) {
+  if (!timeoutMs) return promise;
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${label} model discovery timed out after ${Math.round(timeoutMs / 1000)}s.`)), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
 /**
- * Return models available to the supplied account. OpenAI is discovered from
- * the API; other providers continue to use their registry lists.
+ * Return models available to the supplied account. OpenAI, Anthropic and
+ * Gemini are discovered from the API; other providers use their registry lists.
  */
 export async function discoverProviderModels(provider, apiKey, options = {}) {
   const info = PROVIDERS[provider];
   if (!info) throw new Error(`Unknown provider: ${provider}`);
-  if (!['openai', 'anthropic'].includes(provider) || !apiKey) {
+  if (!['openai', 'anthropic', 'gemini'].includes(provider) || !apiKey) {
     return { models: [...info.models], source: 'registry', error: null };
   }
 
   try {
-    const client = options.client || (provider === 'openai'
-      ? new OpenAI({ apiKey })
-      : new Anthropic({ apiKey }));
-    const page = await client.models.list(provider === 'anthropic' ? { limit: 1000 } : undefined);
     const preferredOrder = new Map(info.models.map((model, index) => [model, index]));
-    const models = [...new Set(page.data
-      .map(model => model.id)
-      .filter(model => provider === 'anthropic' ? model.startsWith('claude-') : isOpenAITextModel(model)))]
+    let ids;
+    if (provider === 'gemini') {
+      ids = await withDiscoveryTimeout(
+        listGeminiModels(apiKey, options.fetch || globalThis.fetch),
+        options.timeoutMs,
+        info.name,
+      );
+    } else {
+      const client = options.client || (provider === 'openai'
+        ? new OpenAI({ apiKey })
+        : new Anthropic({ apiKey }));
+      const page = await withDiscoveryTimeout(
+        client.models.list(provider === 'anthropic' ? { limit: 1000 } : undefined),
+        options.timeoutMs,
+        info.name,
+      );
+      ids = page.data
+        .map(model => model.id)
+        .filter(model => provider === 'anthropic' ? model.startsWith('claude-') : isOpenAITextModel(model));
+    }
+    const models = [...new Set(ids)]
       .sort((left, right) => {
         const leftRank = preferredOrder.get(left) ?? Number.MAX_SAFE_INTEGER;
         const rightRank = preferredOrder.get(right) ?? Number.MAX_SAFE_INTEGER;
@@ -647,12 +699,95 @@ export async function initializeProvider(provider, apiKey, modelName) {
   activeModel = model;
 }
 
-export async function createOpenAITextResponse(client, model, messages) {
+// ──────────────────────────────────────────────
+//  GENERATION PARAMETERS (temperature / effort)
+// ──────────────────────────────────────────────
+
+export const EFFORT_LEVELS = ['minimal', 'low', 'medium', 'high'];
+
+const GEMINI_THINKING_BUDGET = { minimal: 512, low: 2048, medium: 8192, high: 24576 };
+const ANTHROPIC_EFFORT = { minimal: 'low', low: 'low', medium: 'medium', high: 'high' };
+
+/**
+ * Normalise user-facing generation settings. `null` means "provider default".
+ */
+export function normalizeGenerationOptions(generation = {}) {
+  const temperature = generation?.temperature;
+  const effort = generation?.effort;
+  return {
+    temperature: typeof temperature === 'number' && Number.isFinite(temperature)
+      ? Math.min(2, Math.max(0, temperature))
+      : null,
+    effort: EFFORT_LEVELS.includes(effort) ? effort : null,
+  };
+}
+
+function hasGenerationOverrides(generation) {
+  return generation.temperature !== null || generation.effort !== null;
+}
+
+/**
+ * Detects a provider rejection caused by an optional generation parameter
+ * (for example `temperature` on reasoning-only models).
+ */
+export function isUnsupportedGenerationParameterError(error) {
+  const status = error?.status ?? error?.statusCode ?? error?.response?.status;
+  const message = String(error?.message || error?.error?.message || '');
+  const badRequest = status === 400 || status === 422 || /\b(400|422)\b|bad request/i.test(message);
+  return badRequest
+    && /temperature|reasoning|effort|thinking|output_config|unsupported|not supported|unknown (?:parameter|field|name)|unrecognized|extra inputs/i.test(message);
+}
+
+/**
+ * Run a request with the requested generation parameters and retry once with
+ * provider defaults when the model rejects one of those optional parameters.
+ */
+async function withGenerationFallback(generation, run, hasEmittedOutput = () => false) {
+  if (!hasGenerationOverrides(generation)) return run(generation);
+  try {
+    return await run(generation);
+  } catch (error) {
+    // Never replay a request whose partial output already reached the caller.
+    if (hasEmittedOutput() || !isUnsupportedGenerationParameterError(error)) throw error;
+    return run({ temperature: null, effort: null });
+  }
+}
+
+function openAIGenerationParams(generation = {}) {
+  const { temperature, effort } = normalizeGenerationOptions(generation);
+  return {
+    ...(temperature !== null ? { temperature } : {}),
+    ...(effort !== null ? { reasoning: { effort } } : {}),
+  };
+}
+
+function anthropicGenerationParams(generation = {}) {
+  const { temperature, effort } = normalizeGenerationOptions(generation);
+  return {
+    ...(temperature !== null ? { temperature: Math.min(1, temperature) } : {}),
+    ...(effort !== null ? { output_config: { effort: ANTHROPIC_EFFORT[effort] } } : {}),
+  };
+}
+
+function geminiGenerationConfig(model, generation = {}) {
+  const { temperature, effort } = normalizeGenerationOptions(generation);
+  const supportsThinking = /gemini-(?:2\.5|[3-9])/i.test(model || '');
+  return {
+    maxOutputTokens: 8192,
+    temperature: temperature ?? 0.7,
+    ...(effort !== null && supportsThinking
+      ? { thinkingConfig: { thinkingBudget: GEMINI_THINKING_BUDGET[effort] } }
+      : {}),
+  };
+}
+
+export async function createOpenAITextResponse(client, model, messages, generation = {}) {
   return withControlledRequest(async () => {
     const response = await client.responses.create({
       model,
       input: messages,
       max_output_tokens: 8192,
+      ...openAIGenerationParams(generation),
     }, LLM_REQUEST_OPTIONS);
     return response.output_text || '';
   }, { requestLabel: `OpenAI ${model} request` });
@@ -664,6 +799,7 @@ export async function streamOpenAITextResponse(client, model, messages, onChunk,
       model,
       input: messages,
       max_output_tokens: 8192,
+      ...openAIGenerationParams(options.generation),
       stream: true,
     }, { ...LLM_REQUEST_OPTIONS, signal });
     let fullResponse = '';
@@ -690,6 +826,7 @@ export async function createAnthropicTextResponse(client, model, systemPrompt, m
       system: systemPrompt,
       messages,
       max_tokens: 8192,
+      ...anthropicGenerationParams(options.generation),
     });
     return response.content?.find(block => block.type === 'text')?.text || '';
   }, { ...options, requestLabel: options.requestLabel || `Anthropic ${model} request` });
@@ -702,6 +839,7 @@ export async function streamAnthropicTextResponse(client, model, systemPrompt, m
       system: systemPrompt,
       messages,
       max_tokens: 8192,
+      ...anthropicGenerationParams(options.generation),
     });
     let fullResponse = '';
     for await (const event of stream) {
@@ -722,140 +860,158 @@ export async function streamAnthropicTextResponse(client, model, systemPrompt, m
  * @param {string} provider
  * @param {string} apiKey
  * @param {string} [modelName]
- * @returns {{ chat: (systemPrompt: string, userMessage: string) => Promise<string>, providerName: string, modelName: string }}
+ * @param {{ temperature?: number|null, effort?: 'minimal'|'low'|'medium'|'high'|null }} [generationOptions]
+ *   Optional sampling/reasoning settings. Unsupported values are dropped
+ *   automatically when the provider rejects them for the selected model.
+ * @returns {{ chat: (systemPrompt: string, userMessage: string) => Promise<string>, providerName: string, modelName: string, generation: { temperature: number|null, effort: string|null } }}
  */
-export function createLlmClient(provider, apiKey, modelName) {
+export function createLlmClient(provider, apiKey, modelName, generationOptions = {}) {
   const info = PROVIDERS[provider];
   if (!info) throw new Error(`createLlmClient: unknown provider "${provider}"`);
   const model = modelName || info.defaultModel;
+  const generation = normalizeGenerationOptions(generationOptions);
   // Reuse the SDK instance across drafts, judges and revisions.
   let sdkClient;
 
   const chat = async (systemPrompt, userMessage, arg3, arg4) => {
-    const { onChunk, signal, timeoutMs, requestLabel } = normalizeChatInvocation(arg3, arg4);
+    const { onChunk: rawOnChunk, signal, timeoutMs, requestLabel } = normalizeChatInvocation(arg3, arg4);
+    let emitted = false;
+    const onChunk = rawOnChunk
+      ? (delta) => { emitted = true; rawOnChunk(delta); }
+      : null;
     const requestOptions = { signal, timeoutMs, requestLabel: requestLabel || `${info.name} ${model}` };
-    switch (provider) {
-      case 'gemini': {
-        return withControlledRequest(async (requestSignal) => {
-          const genAI = sdkClient ??= new GoogleGenerativeAI(apiKey);
-          const genModel = genAI.getGenerativeModel({
-            model,
-            systemInstruction: systemPrompt,
-            generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
-          });
-          if (onChunk) {
-            const result = await genModel.generateContentStream(userMessage);
-            let text = '';
-            for await (const chunk of result.stream) {
-              if (requestSignal.aborted) throw createAbortError(requestSignal, `Gemini ${model} stream cancelled.`);
-              const delta = chunk.text();
-              text += delta;
-              onChunk(delta);
+
+    const run = async (gen) => {
+      switch (provider) {
+        case 'gemini': {
+          return withControlledRequest(async (requestSignal) => {
+            const genAI = sdkClient ??= new GoogleGenerativeAI(apiKey);
+            const genModel = genAI.getGenerativeModel({
+              model,
+              systemInstruction: systemPrompt,
+              generationConfig: geminiGenerationConfig(model, gen),
+            });
+            if (onChunk) {
+              const result = await genModel.generateContentStream(userMessage);
+              let text = '';
+              for await (const chunk of result.stream) {
+                if (requestSignal.aborted) throw createAbortError(requestSignal, `Gemini ${model} stream cancelled.`);
+                const delta = chunk.text();
+                text += delta;
+                onChunk(delta);
+              }
+              return text;
             }
-            return text;
-          }
-          const result = await genModel.generateContent(userMessage);
-          if (requestSignal.aborted) throw createAbortError(requestSignal, `Gemini ${model} request cancelled.`);
-          return result.response.text();
-        }, requestOptions);
-      }
-      case 'vertex': {
-        return withControlledRequest(async (requestSignal) => {
-          const { VertexAI } = await import('@google-cloud/vertexai');
-          let cfg = {};
-          try { cfg = JSON.parse(apiKey); } catch { cfg = { project_id: apiKey }; }
-          const vertexOptions = {
-            project: cfg.project_id,
-            location: cfg.location || 'us-central1',
-          };
-          if (cfg.credentials_file) {
-            vertexOptions.googleAuthOptions = { keyFilename: cfg.credentials_file };
-          }
-          const vertexAI = new VertexAI(vertexOptions);
-          const genModel = vertexAI.getGenerativeModel({ model });
-          if (onChunk) {
-            const result = await genModel.generateContentStream({
+            const result = await genModel.generateContent(userMessage);
+            if (requestSignal.aborted) throw createAbortError(requestSignal, `Gemini ${model} request cancelled.`);
+            return result.response.text();
+          }, requestOptions);
+        }
+        case 'vertex': {
+          return withControlledRequest(async (requestSignal) => {
+            const { VertexAI } = await import('@google-cloud/vertexai');
+            let cfg = {};
+            try { cfg = JSON.parse(apiKey); } catch { cfg = { project_id: apiKey }; }
+            const vertexOptions = {
+              project: cfg.project_id,
+              location: cfg.location || 'us-central1',
+            };
+            if (cfg.credentials_file) {
+              vertexOptions.googleAuthOptions = { keyFilename: cfg.credentials_file };
+            }
+            const vertexAI = new VertexAI(vertexOptions);
+            const genModel = vertexAI.getGenerativeModel({
+              model,
+              ...(hasGenerationOverrides(gen) ? { generationConfig: geminiGenerationConfig(model, gen) } : {}),
+            });
+            if (onChunk) {
+              const result = await genModel.generateContentStream({
+                contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+              });
+              let text = '';
+              for await (const chunk of result.stream) {
+                if (requestSignal.aborted) throw createAbortError(requestSignal, `Vertex ${model} stream cancelled.`);
+                const delta = chunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                text += delta;
+                if (delta) onChunk(delta);
+              }
+              return text;
+            }
+            const result = await genModel.generateContent({
               contents: [{ role: 'user', parts: [{ text: userMessage }] }],
               systemInstruction: { parts: [{ text: systemPrompt }] },
             });
-            let text = '';
-            for await (const chunk of result.stream) {
-              if (requestSignal.aborted) throw createAbortError(requestSignal, `Vertex ${model} stream cancelled.`);
-              const delta = chunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
-              text += delta;
-              if (delta) onChunk(delta);
-            }
-            return text;
+            if (requestSignal.aborted) throw createAbortError(requestSignal, `Vertex ${model} request cancelled.`);
+            return result.response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          }, requestOptions);
+        }
+        case 'openai':
+        case 'local': {
+          const baseURL = provider === 'local'
+            ? (model?.startsWith('http') ? model : 'http://localhost:30000/v1')
+            : undefined;
+          const client = sdkClient ??= new OpenAI({ apiKey: apiKey || 'not-needed', maxRetries: 0, ...(baseURL ? { baseURL } : {}) });
+          const selectedModel = provider === 'local' ? info.defaultModel : model;
+          if (provider === 'openai') {
+            return streamOpenAITextResponse(client, selectedModel, [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userMessage },
+            ], onChunk, { ...requestOptions, generation: gen });
           }
-          const result = await genModel.generateContent({
-            contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-          });
-          if (requestSignal.aborted) throw createAbortError(requestSignal, `Vertex ${model} request cancelled.`);
-          return result.response.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        }, requestOptions);
-      }
-      case 'openai':
-      case 'local': {
-        const baseURL = provider === 'local'
-          ? (model?.startsWith('http') ? model : 'http://localhost:30000/v1')
-          : undefined;
-        const client = sdkClient ??= new OpenAI({ apiKey: apiKey || 'not-needed', maxRetries: 0, ...(baseURL ? { baseURL } : {}) });
-        const selectedModel = provider === 'local' ? info.defaultModel : model;
-        if (provider === 'openai') {
-          return streamOpenAITextResponse(client, selectedModel, [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ], onChunk, requestOptions);
+          return withControlledRequest(async (requestSignal) => {
+            const resp = await client.chat.completions.create({
+              model: selectedModel,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userMessage },
+              ],
+              max_tokens: 8192,
+              temperature: gen.temperature ?? 0.7,
+              ...(gen.effort !== null ? { reasoning_effort: gen.effort } : {}),
+            }, { ...LLM_REQUEST_OPTIONS, signal: requestSignal });
+            return resp.choices?.[0]?.message?.content || '';
+          }, { ...requestOptions, requestLabel: requestLabel || `Local ${selectedModel} request` });
         }
-        return withControlledRequest(async (requestSignal) => {
-          const resp = await client.chat.completions.create({
-            model: selectedModel,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userMessage },
-            ],
-            max_tokens: 8192,
-            temperature: 0.7,
-          }, { ...LLM_REQUEST_OPTIONS, signal: requestSignal });
-          return resp.choices?.[0]?.message?.content || '';
-        }, { ...requestOptions, requestLabel: requestLabel || `Local ${selectedModel} request` });
-      }
-      case 'anthropic': {
-        const client = sdkClient ??= new Anthropic({ apiKey, maxRetries: 0 });
-        if (onChunk) {
-          return streamAnthropicTextResponse(client, model, systemPrompt,
-            [{ role: 'user', content: userMessage }], onChunk, requestOptions);
-        }
-        return createAnthropicTextResponse(
-          client,
-          model,
-          systemPrompt,
-          [{ role: 'user', content: userMessage }],
-          requestOptions,
-        );
-      }
-      case 'huggingface': {
-        return withControlledRequest(async (requestSignal) => {
-          const hf = sdkClient ??= new HfInference(apiKey);
-          const resp = await hf.chatCompletion({
+        case 'anthropic': {
+          const client = sdkClient ??= new Anthropic({ apiKey, maxRetries: 0 });
+          if (onChunk) {
+            return streamAnthropicTextResponse(client, model, systemPrompt,
+              [{ role: 'user', content: userMessage }], onChunk, { ...requestOptions, generation: gen });
+          }
+          return createAnthropicTextResponse(
+            client,
             model,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userMessage },
-            ],
-            max_tokens: 8192,
-          });
-          if (requestSignal.aborted) throw createAbortError(requestSignal, `Hugging Face ${model} request cancelled.`);
-          return resp.choices?.[0]?.message?.content || '';
-        }, requestOptions);
+            systemPrompt,
+            [{ role: 'user', content: userMessage }],
+            { ...requestOptions, generation: gen },
+          );
+        }
+        case 'huggingface': {
+          return withControlledRequest(async (requestSignal) => {
+            const hf = sdkClient ??= new HfInference(apiKey);
+            const resp = await hf.chatCompletion({
+              model,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userMessage },
+              ],
+              max_tokens: 8192,
+              ...(gen.temperature !== null ? { temperature: gen.temperature } : {}),
+            });
+            if (requestSignal.aborted) throw createAbortError(requestSignal, `Hugging Face ${model} request cancelled.`);
+            return resp.choices?.[0]?.message?.content || '';
+          }, requestOptions);
+        }
+        default:
+          throw new Error(`createLlmClient: unsupported provider "${provider}"`);
       }
-      default:
-        throw new Error(`createLlmClient: unsupported provider "${provider}"`);
-    }
+    };
+
+    return withGenerationFallback(generation, run, () => emitted);
   };
 
-  return { chat, providerName: info.name, modelName: model };
+  return { chat, providerName: info.name, modelName: model, generation };
 }
 
 /**

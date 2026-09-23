@@ -221,8 +221,8 @@ describe('web AI stage interview', () => {
   it('persists shared chat history and generates a draft from evidence', async () => {
     const fixture = writeFixture({ prefix: 'BC', profile: 'consulting' });
     const prompts = [];
-    const agentRunner = async (systemPrompt, userPrompt) => {
-      prompts.push({ systemPrompt, userPrompt });
+    const agentRunner = async (systemPrompt, userPrompt, _provider, route) => {
+      prompts.push({ systemPrompt, userPrompt, route });
       return {
         provider: 'Mock LLM',
         text: userPrompt.includes('Generate the complete stage deliverable')
@@ -238,6 +238,7 @@ describe('web AI stage interview', () => {
       assert.match(reply.message.parts[0].text, /business outcome/);
       assert.match(prompts[0].systemPrompt, /ANALYTICAL ELICITATION POLICY/);
       assert.match(prompts[0].systemPrompt, /Never repeat answered questions/);
+      assert.deepEqual(prompts[0].route, { profile: 'consulting', stage: 0 });
 
       const history = getStageChatHistory(fixture.projectId, 0, options);
       assert.deepEqual(history.map((message) => message.role), ['user', 'model']);
