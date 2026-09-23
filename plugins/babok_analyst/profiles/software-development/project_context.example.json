@@ -1,0 +1,46 @@
+{
+  "_instructions": "Example project context for the software-development profile. Copy to my_project_context.json, edit, then run: babok run --profile software-development --context my_project_context.json",
+  "project_name": "Saved Payment Methods — Checkout Modernisation",
+  "language": "EN",
+  "company": {
+    "name": "Nordwind Retail Platform",
+    "industry": "E-commerce",
+    "size": "80 engineers, 6 squads"
+  },
+  "product": {
+    "name": "Nordwind Storefront",
+    "repositories": [
+      { "name": "storefront-web", "host": "github", "owner": "nordwind", "ref": "main", "role": "frontend" },
+      { "name": "checkout-service", "host": "gitlab", "owner": "nordwind-platform", "ref": "main", "role": "backend" }
+    ],
+    "reused_baseline_id": null
+  },
+  "scope": "Add a saved-payment-method flow to the checkout service and storefront so returning customers can pay without re-entering card details.",
+  "pain_points": [
+    "Checkout abandonment is 22% above the 12-month baseline for returning customers",
+    "Support receives repeated complaints about re-entering payment details on every order"
+  ],
+  "success_criteria": [
+    "Checkout abandonment for returning customers ≤ industry baseline (9%) within 2 releases of go-live",
+    "Saved-method checkout completes in ≤ 3 steps"
+  ],
+  "ownership": {
+    "decision_owner": "Anna Kowalczyk (Head of Product, Checkout)",
+    "execution_authoriser": "Marek Nowak (Engineering Lead, Checkout)"
+  },
+  "budget": {
+    "estimated": "35 person-days"
+  },
+  "timeline": {
+    "target_date": "2027-02-15"
+  },
+  "constraints": [
+    "No new external payment vendor",
+    "No breaking change to the existing checkout-service public API"
+  ],
+  "risk_appetite": "medium",
+  "frameworks": [],
+  "change_management": [],
+  "benchmarks": [],
+  "regulations": ["PCI-DSS scope must not expand — card data continues to be tokenised by the existing PSP"]
+}

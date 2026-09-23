@@ -36,8 +36,11 @@ Every project runs one **pipeline profile** (`profiles/<id>/profile.json`), reco
 |---------|--------|--------|---------|
 | `babok` (default) | `BABOK-` | 0–8 | IT-delivery business analysis per BABOK v3 (below) |
 | `consulting` | `BC-` | 0–6 | Non-IT advisory: charter → stakeholders & governance → diagnostic & root cause → strategic options → target operating model & roadmap → risk & change readiness → business case & value realization. Never produces software requirements, system designs or vendor selections. |
+| `software-development` | `SD-` | 0–6 | Existing-product modernisation/new-feature planning against connected repositories: change charter → autonomous product & repository baseline → change impact & gap analysis → autonomous options & ADRs → implementation & verification plan (with a distinct execution-authorisation record) → release & operational readiness → outcome & context reconciliation. Never self-approves a stage — `autoApproveGeneratedStages: false`. |
 
 Start a consulting engagement with `/babok-new-consulting` or `babok new --profile consulting`. Consulting prompts live in `profiles/consulting/stages/`, resources at `babok://profiles/consulting/stages/0..6`.
+
+Start a software-development initiative with `/babok-new-software-development` or `babok new --profile software-development`. Prompts live in `profiles/software-development/stages/`, resources at `babok://profiles/software-development/stages/0..6`. Stages 1 and 3 gather and cite repository evidence autonomously — do not ask technology/architecture questions there.
 
 ## Pipeline (Stages 0–8, profile `babok`)
 
@@ -77,7 +80,7 @@ When MCP is connected, prefer these tools over manual file edits:
 
 | Tool | Purpose |
 |------|---------|
-| `babok_new_project` | Create project, get ID (`profile`: `babok` \| `consulting`) |
+| `babok_new_project` | Create project, get ID (`profile`: `babok` \| `consulting` \| `software-development`) |
 | `babok_list_projects` | List all projects |
 | `babok_get_stage` | Stage prompt + journal + existing deliverable |
 | `babok_get_stage_template` | Deliverable skeleton + modules for current stage |
@@ -105,6 +108,7 @@ Stage instruction resources: `babok://stages/0` through `babok://stages/8`.
 - `/babok-new PL` or `/babok-new-pl` — start in Polish
 - `/babok-new ENG` or `/babok-new-eng` — start in English
 - `/babok-new-consulting [PL|ENG]` — start a consulting engagement (profile `consulting`, stages 0–6)
+- `/babok-new-software-development [PL|ENG]` — start a software-development initiative on an existing product (profile `software-development`, stages 0–6)
 - `/babok-status` — show current project progress
 - `/babok-help` — quick reference
 

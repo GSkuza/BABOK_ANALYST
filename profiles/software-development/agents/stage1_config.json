@@ -1,0 +1,37 @@
+{
+  "agent": {
+    "id": "stage1",
+    "name": "Stage 1 Agent — Product & Repository Baseline",
+    "version": "1.0",
+    "description": "Software-development-profile agent producing an evidence-backed Business/Technology/Architecture/SDLC baseline from connected repositories. Runs autonomously — no scripted human interview.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.3
+    }
+  },
+  "software_development": {
+    "stage_number": 1,
+    "stage_name": "Product & Repository Baseline",
+    "practice_area": "Autonomous Product Discovery",
+    "primary_deliverable": "Business/Technology/Architecture/SDLC baseline with evidence ledger",
+    "autonomous": true
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage1"
+  },
+  "mcp_tools": [
+    "file_system"
+  ],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage1/",
+    "artifact_type": "markdown"
+  }
+}

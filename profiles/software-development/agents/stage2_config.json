@@ -1,0 +1,37 @@
+{
+  "agent": {
+    "id": "stage2",
+    "name": "Stage 2 Agent — Change Impact & Gap Analysis",
+    "version": "1.0",
+    "description": "Software-development-profile agent comparing the Stage 0 goal to the Stage 1 baseline to size the change and its risks.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.4
+    }
+  },
+  "software_development": {
+    "stage_number": 2,
+    "stage_name": "Change Impact & Gap Analysis",
+    "practice_area": "Impact Analysis",
+    "primary_deliverable": "Affected components, data/migration impact, regression risks",
+    "autonomous": false
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage2"
+  },
+  "mcp_tools": [
+    "file_system"
+  ],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage2/",
+    "artifact_type": "markdown"
+  }
+}

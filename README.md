@@ -17,6 +17,7 @@ BABOK Analyst is a set of system prompts for AI models (Claude, ChatGPT, other L
 - Generates complete **project documentation** in Markdown format
 - Manages **project lifecycle** with unique Project IDs, save/load, and persistent journal logs
 - Specializes in IT projects for **mid-market** companies (€10-100M revenue, 50-500 employees)
+- Also ships a **consulting** profile (no IT delivery) and a **software-development** profile for modernising an *existing* product — connects to real GitHub/GitLab repositories, builds an autonomous evidence-backed baseline (`babok sd baseline build`), and gates any code execution behind an explicit, separate authorisation (`babok sd exec authorize`)
 
 ## Repository Structure
 
@@ -182,6 +183,20 @@ The table above is the default **`babok`** profile. A project can instead run th
 | **Stage 6** | Business Case & Value Realization Plan | CBA, ROI/NPV/payback, benefits tracker, budget alignment, value governance |
 
 Profiles are plain data under `profiles/<id>/` (see `profiles/profile.schema.json`); the same CLI, MCP server, hooks and web UI serve every profile.
+
+A third **`software-development`** profile (`babok new --profile software-development`, `/babok-new-software-development`, or `babok_new_project { profile: "software-development" }`) plans modernisation or new-feature work against an **existing** product and its connected repositories — project IDs prefixed `SD-`:
+
+| Stage | Name | What You Get |
+|------|-------|----------------|
+| **Stage 0** ⭐ | Change Charter | Business trigger, product & repository scope, ownership & authorisation boundaries, budget ceiling, exclusions |
+| **Stage 1** | Product & Repository Baseline | Autonomous, evidence-cited Business/Technology/Architecture/SDLC baseline pinned to a commit — no technical interview |
+| **Stage 2** | Change Impact & Gap Analysis | Current vs. desired behaviour, affected components/contracts, migration & regression risks |
+| **Stage 3** | Options & Architecture Decisions | Autonomous option generation & evaluation, recommendation, draft ADRs, compatibility approach, self-critique pass |
+| **Stage 4** | Implementation & Verification Plan | Backlog (FR-NNN), RTM, roadmap, cost vs. budget ceiling, and a distinct **execution-authorisation** record |
+| **Stage 5** | Release & Operational Readiness | Actual verification evidence, migration/rollback, monitoring, risk register with owners |
+| **Stage 6** | Outcome & Context Reconciliation | Real deployment/KPI evidence and the proposed update to the product's Stage 1 baseline |
+
+This profile never self-approves a generated stage — `orchestrator.autoApproveGeneratedStages: false` means every stage, including the autonomous ones and `babok run --orchestrate`, still waits for a human `babok approve`. Approving Stage 4 freezes the plan; it does not authorise running the analysed repository's own code/tests or publishing a pull/merge request — that is requested and recorded separately in the deliverable's Execution Authorisation Status.
 
 ---
 
@@ -473,6 +488,10 @@ babok setup
 | `babok ingest <file>` | **Ingest a document** (PDF/DOCX/XLSX/CSV/TXT/MD) into the project (NEW v2.1.0) |
 | `babok score <id> <stage\|all>` | **Quality score** for a stage or all stages (NEW v2.1.0) |
 | `babok validate <id>` | **Cross-stage consistency validation** — 6 built-in rules (NEW v2.1.0) |
+| `babok sd product create --name "..." --repo host:owner:name[:role]` | **Software-development profile**: create a durable product with its repositories |
+| `babok sd baseline build <productId>` | Autonomously build an evidence-backed Stage 1 baseline from the product's repositories (read-only; GitHub/GitLab) |
+| `babok sd exec authorize <initiativeId> --scope run_tests --commands node --dirs <dir> --by "Name"` | Record the **explicit, separate** authorisation required before running an analysed repository's own commands |
+| `babok sd exec run <initiativeId> <command> [args...] --cwd <dir>` | Run one authorised, whitelisted command and report its real exit code |
 | `babok make docx <id>` | Generate DOCX document(s) from stage files |
 | `babok make pdf <id>` | Generate PDF document(s) from stage files |
 | `babok make all <id>` | Generate DOCX + PDF in one run |

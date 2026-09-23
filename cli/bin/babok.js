@@ -24,6 +24,19 @@ import { setupWizard } from '../src/commands/setup.js';
 import { scoreCommand } from '../src/commands/score.js';
 import { validateCommand } from '../src/commands/validate.js';
 import { ingestCommand } from '../src/commands/ingest.js';
+import {
+  createProductCommand,
+  listProductsCommand,
+  showProductCommand,
+  addRepositoryCommand,
+  buildBaselineCommand,
+  listBaselinesCommand,
+  showBaselineCommand,
+  authorizeExecCommand,
+  showExecAuthCommand,
+  runExecCommand,
+  parseRepoFlag,
+} from '../src/commands/sd.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const { version: cliVersion } = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8'));
@@ -283,5 +296,69 @@ program
   .alias('VALIDATE')
   .description('Run cross-stage consistency validation')
   .action(validateCommand);
+
+// SD command group — software-development profile: durable products/baselines,
+// evidence-backed repository analysis, and authorisation-gated command execution.
+// Approving a stage never implies any of these run automatically — every write
+// here (product/baseline creation, execution authorisation) is an explicit,
+// separate human action.
+const sdCmd = program
+  .command('sd')
+  .description('Software-development profile: products, repository baselines, execution authorisation');
+
+const sdProductCmd = sdCmd.command('product').description('Durable products and their repositories');
+sdProductCmd
+  .command('create')
+  .description('Create a new product')
+  .requiredOption('--name <name>', 'Product name')
+  .option('--repo <host:owner:name[:role]>', 'Repository to attach (repeatable)', parseRepoFlag, [])
+  .action(createProductCommand);
+sdProductCmd
+  .command('list')
+  .description('List all products')
+  .action(listProductsCommand);
+sdProductCmd
+  .command('show <productId>')
+  .description('Show a product and its baseline ids')
+  .action(showProductCommand);
+sdProductCmd
+  .command('add-repo <productId>')
+  .description('Attach or update a repository on a product')
+  .requiredOption('--repo <host:owner:name[:role]>', 'Repository to add')
+  .action((productId, options) => addRepositoryCommand(productId, options.repo));
+
+const sdBaselineCmd = sdCmd.command('baseline').description('Immutable, evidence-backed product baselines');
+sdBaselineCmd
+  .command('build <productId>')
+  .description('Autonomously build a new baseline from the product\'s repositories (mechanical evidence; adds LLM narrative only if a provider is configured)')
+  .action(buildBaselineCommand);
+sdBaselineCmd
+  .command('list <productId>')
+  .description('List baselines for a product')
+  .action(listBaselinesCommand);
+sdBaselineCmd
+  .command('show <productId> <baselineId>')
+  .description('Show one baseline manifest')
+  .action(showBaselineCommand);
+
+const sdExecCmd = sdCmd.command('exec').description('Authorisation-gated execution of the analysed repository\'s own commands');
+sdExecCmd
+  .command('authorize <initiativeId>')
+  .description('Record (or revoke) an explicit human execution authorisation for one initiative')
+  .requiredOption('--scope <scope>', 'run_tests | publish_branch')
+  .option('--commands <list>', 'Comma-separated allowed commands, e.g. "node,npm"')
+  .option('--dirs <list>', 'Comma-separated allowed working directories')
+  .option('--by <name>', 'Who is authorising this')
+  .option('--revoke', 'Revoke instead of grant')
+  .action(authorizeExecCommand);
+sdExecCmd
+  .command('show <initiativeId> <scope>')
+  .description('Show the current authorisation record for one scope')
+  .action(showExecAuthCommand);
+sdExecCmd
+  .command('run <initiativeId> <command> [args...]')
+  .description('Run one authorised, whitelisted command, e.g. babok sd exec run SD-2026... node script.js')
+  .requiredOption('--cwd <dir>', 'Working directory (must be within the authorisation\'s allowedDirectories)')
+  .action((initiativeId, command, args, options) => runExecCommand(initiativeId, options, command, args));
 
 program.parse();

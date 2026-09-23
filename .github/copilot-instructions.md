@@ -82,7 +82,7 @@ BABOK Analyst ships as four independent interfaces that all read/write the same 
 
 ### 9-Stage Pipeline (default profile `babok`)
 
-The stage shape is declared per **pipeline profile** in `profiles/<id>/profile.json` (schema `profiles/profile.schema.json`). The default `babok` profile points at the existing files below; the `consulting` profile (`profiles/consulting/`, prefix `BC-`, stages 0–6) covers non-IT advisory engagements. The profile is chosen at creation (`babok new --profile`, `babok_new_project { profile }`, `/babok-new-consulting`) and stored in `journal.profile`; everything else derives from the journal. Loader `cli/src/profiles.js` is mirrored byte-for-byte in `babok-mcp/src/lib/profiles.js` (`tests/unit/lib-parity.test.js`).
+The stage shape is declared per **pipeline profile** in `profiles/<id>/profile.json` (schema `profiles/profile.schema.json`). The default `babok` profile points at the existing files below; the `consulting` profile (`profiles/consulting/`, prefix `BC-`, stages 0–6) covers non-IT advisory engagements; the `software-development` profile (`profiles/software-development/`, prefix `SD-`, stages 0–6) plans modernisation/new-feature work against an **existing** product and its connected repositories — Stages 1 and 3 run autonomously from repository evidence (no technical interview), and `orchestrator.autoApproveGeneratedStages: false` means every stage, including autonomous ones and `babok run --orchestrate`, still requires a human `babok approve`. The profile is chosen at creation (`babok new --profile`, `babok_new_project { profile }`, `/babok-new-consulting`, `/babok-new-software-development`) and stored in `journal.profile`; everything else derives from the journal. Loader `cli/src/profiles.js` is mirrored byte-for-byte in `babok-mcp/src/lib/profiles.js` (`tests/unit/lib-parity.test.js`).
 
 Each stage represents a distinct business analysis deliverable:
 
@@ -122,7 +122,7 @@ Stage approval is enforced **outside the LLM** as a hard gate:
 ### Project ID Format
 
 All projects use unique identifiers: `<PREFIX>-YYYYMMDD-XXXX`
-- `PREFIX` — from the profile (`BABOK` default, `BC` consulting)
+- `PREFIX` — from the profile (`BABOK` default, `BC` consulting, `SD` software-development)
 - `YYYYMMDD` — project creation date
 - `XXXX` — 4-character random alphanumeric suffix
 

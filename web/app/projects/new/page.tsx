@@ -117,6 +117,7 @@ export default function NewProject() {
               >
                 <option value="babok">BABOK v3 — IT business analysis (stages 0–8)</option>
                 <option value="consulting">Consulting engagement — no IT delivery (stages 0–6)</option>
+                <option value="software-development">Software development — existing product evolution (stages 0–6)</option>
               </select>
             </div>
 

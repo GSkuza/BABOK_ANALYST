@@ -75,19 +75,20 @@ All state lives under `projects/<project_id>/` (canonical — used by MCP, CLI, 
 - `STAGE_0N_<name>.md` — per-stage deliverable markdown files
 - `.stage_N.lock` — file lock for team collaboration (stale threshold: 2 hours)
 
-**Project ID format**: `<PREFIX>-YYYYMMDD-XXXX` where the prefix comes from the project's profile (`BABOK-` for the default profile, `BC-` for consulting). Partial IDs resolve by prefix matching in `cli/src/project.js`.
+**Project ID format**: `<PREFIX>-YYYYMMDD-XXXX` where the prefix comes from the project's profile (`BABOK-` for the default profile, `BC-` for consulting, `SD-` for software-development). Partial IDs resolve by prefix matching in `cli/src/project.js`.
 
 **Stage lifecycle**: `not_started → in_progress → completed → approved | rejected`
 
 ### Pipeline profiles
-The stage shape is data, not code. `profiles/<id>/profile.json` (schema: `profiles/profile.schema.json`) declares `stages[]` (number, name, deliverable file, prompt file), `id_prefix`, `paths` (stages dir, system prompt, templates dir, rubric, agents dir), `scoring.scorable_stages`, `validation.rules[]` with stage `bindings`, `orchestrator.pipeline` (sequential/parallel groups) and `knowledge.extra_categories`.
+The stage shape is data, not code. `profiles/<id>/profile.json` (schema: `profiles/profile.schema.json`) declares `stages[]` (number, name, deliverable file, prompt file), `id_prefix`, `paths` (stages dir, system prompt, templates dir, rubric, agents dir), `scoring.scorable_stages`, `validation.rules[]` with stage `bindings`, `orchestrator.pipeline` (sequential/parallel groups), an optional `orchestrator.autoApproveGeneratedStages` (default true; `babok run`/the orchestrator writes generated stages straight to `status:approved` when true — set false so a profile's autonomous stages still stop for a human `babok approve`) and `knowledge.extra_categories`.
 
 | Profile | Prefix | Stages | Content |
 |---------|--------|--------|---------|
 | `babok` (default) | `BABOK-` | 0–8 | Existing `BABOK_AGENT/`, `templates/`, rubric — nothing moved |
 | `consulting` | `BC-` | 0–6 | `profiles/consulting/` — non-IT advisory (charter, stakeholders & governance, diagnostic & root cause, options, target operating model & roadmap, risk & readiness, business case & value realization) |
+| `software-development` | `SD-` | 0–6 | `profiles/software-development/` — existing-product modernisation/new-feature planning against connected repositories (charter, autonomous product/repository baseline, change impact & gap analysis, autonomous options/ADRs, implementation & verification plan with a distinct execution-authorisation record, release & operational readiness, outcome & context reconciliation). `autoApproveGeneratedStages: false` — every stage, including the autonomous ones, requires human `babok approve`. |
 
-The profile is chosen only at creation (`babok new --profile`, `babok run --profile`, `babok_new_project { profile }`, `/babok-new-consulting`) and stored as `journal.profile` (legacy journals normalise to `babok`). Every other command, MCP tool and hook derives stage names, file names, prompts, rubric, templates and validation rules from the journal — never from a flag. Loader: `cli/src/profiles.js`, mirrored byte-for-byte in `babok-mcp/src/lib/profiles.js` (enforced by `tests/unit/lib-parity.test.js`, together with `two-key-gate.js`). Adding a profile = adding a directory; `tests/unit/profiles.test.js` checks prompts, templates, rubric, rule ids and stage configs exist and agree.
+The profile is chosen only at creation (`babok new --profile`, `babok run --profile`, `babok_new_project { profile }`, `/babok-new-consulting`, `/babok-new-software-development`) and stored as `journal.profile` (legacy journals normalise to `babok`). Every other command, MCP tool and hook derives stage names, file names, prompts, rubric, templates and validation rules from the journal — never from a flag. Loader: `cli/src/profiles.js`, mirrored byte-for-byte in `babok-mcp/src/lib/profiles.js` (enforced by `tests/unit/lib-parity.test.js`, together with `two-key-gate.js`). Adding a profile = adding a directory; `tests/unit/profiles.test.js` checks prompts, templates, rubric, rule ids and stage configs exist and agree.
 
 ### Two-Key Journal (agent/human separation of duties)
 Stage approval is a hard gate enforced outside the LLM's control, not just a prompt instruction:
@@ -171,7 +172,7 @@ Each rule is `check(artifacts, bindings)`; a profile selects rules by id and bin
 
 This repo is distributed as a plugin across three agent ecosystems. Plugin artifacts:
 - `agents/*.md` — orchestrator, per-stage (0–8), knowledge-expert, and quality-audit subagent definitions
-- `commands/*.md + *.toml` — `/babok-new`, `/babok-new-pl`, `/babok-new-eng`, `/babok-new-consulting`, `/babok-status`, `/babok-help`
+- `commands/*.md + *.toml` — `/babok-new`, `/babok-new-pl`, `/babok-new-eng`, `/babok-new-consulting`, `/babok-new-software-development`, `/babok-status`, `/babok-help`
 - `hooks/*.cjs` — lifecycle hooks: `babok-activate`/`babok-deactivate` (SessionStart/SessionEnd), `babok-config` (shared path resolution), `babok-gate` (PreToolUse Two-Key + lock enforcement), `babok-quality-gate` (PostToolUse auto-scoring), `babok-instructions`, `babok-mcp-launcher`, `babok-runtime`
 - `.claude-plugin/`, `.codex-plugin/` — marketplace manifests (keep in sync via `npm run sync-codex-plugin`)
 - `.github/copilot-instructions.md` — Copilot Chat system prompt (~1600 lines) — authoritative source for VS Code/Copilot behavior

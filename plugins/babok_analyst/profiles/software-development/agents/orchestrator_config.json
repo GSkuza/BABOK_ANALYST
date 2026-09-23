@@ -1,0 +1,29 @@
+{
+  "orchestrator": {
+    "name": "Software Development Orchestrator",
+    "version": "1.0",
+    "description": "Central coordinator for the software-development-profile pipeline. The executable pipeline shape lives in profiles/software-development/profile.json → orchestrator.pipeline; this file is informational. autoApproveGeneratedStages is false for this profile: every generated stage still requires a human babok approve before the next stage unlocks, even when run via `babok run --orchestrate`.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.3
+    },
+    "pipeline": {
+      "mode": "sequential",
+      "parallel_groups": [],
+      "mandatory_sequence": ["stage1", "stage2", "stage3", "stage4", "stage5", "stage6"]
+    },
+    "quality_gate": {
+      "enabled": true,
+      "agent": "quality_audit",
+      "min_score": 75,
+      "max_iterations": 3,
+      "escalate_to_human_after": 3
+    },
+    "context": {
+      "store_path": "../../../my_project_context.json",
+      "schema_version": "1.0",
+      "example_file": "../project_context.example.json"
+    }
+  }
+}

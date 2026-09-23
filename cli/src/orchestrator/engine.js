@@ -8,6 +8,7 @@ import { runQualityLoop } from './quality-loop.js';
 import { getProjectDir } from '../project.js';
 import { getProjectProfile, readJournal, writeJournal } from '../journal.js';
 import { DEFAULT_PROFILE_ID, getStageFileNames, loadProfile, resolveProfilePath } from '../profiles.js';
+import { generateReviewId, sha256Content } from '../two-key-gate.js';
 import { createMessageBus } from './message-bus.js';
 
 const activeStageWorkers = new Set();
@@ -57,24 +58,52 @@ function runStageInWorker(payload) {
  * small local twin rather than a shared import because run.js supports an
  * arbitrary --output directory while this path always uses the canonical
  * projects/<id>/ directory via readJournal/writeJournal.
+ *
+ * `autoApprove` (from profile.orchestrator.autoApproveGeneratedStages, default
+ * true) controls whether the generated deliverable is written straight to
+ * status:approved/approved_by:auto-run (existing behaviour for profiles that
+ * declare no opinion), or recorded as an agent_submission awaiting a human
+ * `babok approve` — the profile's Two-Key Journal gate is never bypassed for
+ * profiles that opt out of auto-approval, including when run through this
+ * autonomous orchestrator.
  */
-function recordFullStageDeliverable(projectId, stageNumber, fileName, extra = {}) {
+function recordFullStageDeliverable(projectId, stageNumber, fileName, extra = {}, options = {}) {
+  const { autoApprove = true, content = null } = options;
   const journal = readJournal(projectId);
   const now = new Date().toISOString();
   const stage = journal.stages.find(s => s.stage === stageNumber);
   if (stage) {
-    stage.status = 'approved';
-    stage.completed_at = now;
-    stage.approved_at = now;
-    stage.approved_by = 'auto-run';
+    if (autoApprove) {
+      stage.status = 'approved';
+      stage.completed_at = now;
+      stage.approved_at = now;
+      stage.approved_by = 'auto-run';
+    } else {
+      stage.status = stage.status === 'not_started' ? 'in_progress' : stage.status;
+      stage.started_at = stage.started_at || now;
+      stage.completed_at = null;
+      stage.approved_at = null;
+      stage.approved_by = null;
+      stage.agent_submission = {
+        at: now,
+        content_sha256: content ? sha256Content(content) : null,
+        review_id: generateReviewId(),
+      };
+      stage.human_attestation = null;
+      stage.revision_open = false;
+    }
     stage.deliverable_file = fileName;
     Object.assign(stage, extra);
   }
-  const nextStage = journal.stages.find(s => s.stage === stageNumber + 1);
-  if (nextStage && nextStage.status === 'not_started') {
-    nextStage.status = 'in_progress';
-    nextStage.started_at = now;
-    journal.current_stage = stageNumber + 1;
+  if (autoApprove) {
+    const nextStage = journal.stages.find(s => s.stage === stageNumber + 1);
+    if (nextStage && nextStage.status === 'not_started') {
+      nextStage.status = 'in_progress';
+      nextStage.started_at = now;
+      journal.current_stage = stageNumber + 1;
+    }
+  } else {
+    journal.current_status = 'in_progress';
   }
   journal.last_updated = now;
   writeJournal(projectId, journal);
@@ -235,6 +264,9 @@ export async function runPipeline(projectId, options = {}) {
         recordFullStageDeliverable(projectId, stageNumber, fileName, {
           generation_batches_used: execResult.generation?.batches ?? null,
           final_pass_mode: execResult.generation?.finalPass?.mode ?? null,
+        }, {
+          autoApprove: profile.orchestrator.autoApproveGeneratedStages !== false,
+          content: qualityResult.finalArtefact,
         });
       }
 

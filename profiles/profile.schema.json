@@ -104,6 +104,10 @@
           "type": "array",
           "items": { "type": "integer", "minimum": 0 },
           "uniqueItems": true
+        },
+        "autoApproveGeneratedStages": {
+          "type": "boolean",
+          "description": "Whether `babok run` (with or without --orchestrate) may write a generated stage deliverable directly as status:approved/approved_by:auto-run. Defaults to true when omitted (existing behaviour, unchanged). Profiles whose autonomous stages must still pass through the Two-Key Journal (agent_submission + human babok approve) set this to false — the generated deliverable is then recorded via submit-for-review instead of being self-approved."
         }
       }
     },

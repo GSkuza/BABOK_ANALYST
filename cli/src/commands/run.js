@@ -25,6 +25,7 @@ import { createTaskRouter } from '../router.js';
 import { generateStagedDeliverable } from '../generation/staged-generator.js';
 import { buildStageSystemPromptBase } from '../generation/prompt-builder.js';
 import { summarizeStageOutputs } from '../context-window.js';
+import { generateReviewId, sha256Content } from '../two-key-gate.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -231,25 +232,53 @@ function createRunJournal(projectId, projectName, language, projectDir, profile,
   return journal;
 }
 
-function updateJournalStage(journal, stageNum, projectDir, fileName, extra = {}) {
+/**
+ * `autoApprove` (from profile.orchestrator.autoApproveGeneratedStages, default
+ * true) controls whether a generated deliverable is written straight to
+ * status:approved/approved_by:auto-run (existing behaviour), or recorded as
+ * an agent_submission awaiting a human `babok approve` — profiles that opt
+ * out of auto-approval never have `babok run` self-approve a stage on their
+ * behalf, interactive per-stage preview notwithstanding.
+ */
+function updateJournalStage(journal, stageNum, projectDir, fileName, extra = {}, options = {}) {
+  const { autoApprove = true, content = null } = options;
   const now = new Date().toISOString();
   const stage = journal.stages.find(s => s.stage === stageNum);
   if (stage) {
-    stage.status = 'approved';
-    stage.completed_at = now;
-    stage.approved_at = now;
-    stage.approved_by = 'auto-run';
+    if (autoApprove) {
+      stage.status = 'approved';
+      stage.completed_at = now;
+      stage.approved_at = now;
+      stage.approved_by = 'auto-run';
+    } else {
+      stage.status = stage.status === 'not_started' ? 'in_progress' : stage.status;
+      stage.started_at = stage.started_at || now;
+      stage.completed_at = null;
+      stage.approved_at = null;
+      stage.approved_by = null;
+      stage.agent_submission = {
+        at: now,
+        content_sha256: content ? sha256Content(content) : null,
+        review_id: generateReviewId(),
+      };
+      stage.human_attestation = null;
+      stage.revision_open = false;
+    }
     stage.deliverable_file = fileName;
     Object.assign(stage, extra);
   }
-  const nextStage = journal.stages.find(s => s.stage === stageNum + 1);
-  if (nextStage && nextStage.status === 'not_started') {
-    nextStage.status = 'in_progress';
-    nextStage.started_at = now;
-    journal.current_stage = stageNum + 1;
-  }
-  if (!nextStage) {
-    journal.current_status = 'completed';
+  if (autoApprove) {
+    const nextStage = journal.stages.find(s => s.stage === stageNum + 1);
+    if (nextStage && nextStage.status === 'not_started') {
+      nextStage.status = 'in_progress';
+      nextStage.started_at = now;
+      journal.current_stage = stageNum + 1;
+    }
+    if (!nextStage) {
+      journal.current_status = 'completed';
+    }
+  } else {
+    journal.current_status = 'in_progress';
   }
   journal.last_updated = now;
   const journalPath = path.join(projectDir, `PROJECT_JOURNAL_${journal.project_id}.json`);
@@ -759,8 +788,14 @@ export async function runAnalysis(options) {
               refutedCount: generation.finalPass.verificationReport.refutedCount,
             } : null,
           } : {}),
+        }, {
+          autoApprove: profile.orchestrator.autoApproveGeneratedStages !== false,
+          content: response,
         });
       });
+      if (profile.orchestrator.autoApproveGeneratedStages === false) {
+        console.log(chalk.yellow(`  ⏳ Stage ${stageNum} saved and awaiting human review — run: babok approve ${projectId} ${stageNum}`));
+      }
     } catch (err) {
       console.error(chalk.red(`\n⛔ ${err.message}`));
       stageRl?.close();

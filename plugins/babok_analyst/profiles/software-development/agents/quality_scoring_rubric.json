@@ -1,0 +1,281 @@
+{
+  "version": "1.0",
+  "description": "Quality scoring rubric for the software-development profile — one entry per deliverable stage (1–6). Required sections are H2 headings of profiles/software-development/templates/stages/*.md.",
+  "scoring": {
+    "completeness_weight": 0.40,
+    "consistency_weight": 0.30,
+    "quality_weight": 0.30,
+    "min_overall_score": 75
+  },
+  "stages": {
+    "stage1": {
+      "name": "Product & Repository Baseline",
+      "required_sections": [
+        "Repository Inventory & Pinned Commits",
+        "Business Context",
+        "Technology Context",
+        "System Inventory",
+        "Architecture Context",
+        "SDLC Context",
+        "Baseline Metrics",
+        "Evidence Ledger",
+        "Assumptions & Open Gaps"
+      ],
+      "quality_criteria": [
+        { "id": "S1-Q1", "description": "Every repository has a pinned commit/ref or a disclosed dirty-tree snapshot", "applies_to": "Repository Inventory & Pinned Commits", "smart_dimension": "Specific" },
+        { "id": "S1-Q2", "description": "Every load-bearing claim in Business/Technology/Architecture/SDLC cites an EV-NNN evidence reference", "applies_to": "Evidence Ledger", "smart_dimension": "Measurable" },
+        { "id": "S1-Q3", "description": "Every unverifiable claim is labelled Hypothesis or Assumption with a confidence level", "applies_to": "Assumptions & Open Gaps", "smart_dimension": "Specific" }
+      ],
+      "consistency_checks": [
+        { "id": "S1-C1", "description": "Every EV-NNN cited in a context section has a matching row in the Evidence Ledger", "source": "Stage 1 internal" },
+        { "id": "S1-C2", "description": "System Inventory entries reappear as components in Architecture Context", "source": "Stage 1 internal" }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Repository inventory & business/technology context",
+          "sections": ["Executive Summary", "Repository Inventory & Pinned Commits", "Business Context", "Technology Context", "System Inventory"],
+          "instruction": "Pin every repository to an exact commit/ref, or disclose a dirty-tree snapshot explicitly. Ground business and technology claims in specific repository evidence — never describe the product generically. List systems/components in System Inventory using their actual names from the code."
+        },
+        {
+          "id": "architecture",
+          "title": "Architecture, SDLC & baseline metrics",
+          "sections": ["Architecture Context", "SDLC Context", "Baseline Metrics"],
+          "instruction": "State explicitly which architecture claims are confirmed by code versus documentation-only. SDLC context must reflect actual CI/CD, branching and release configuration found in the repository, not a generic best-practice description. Baseline metrics need a value, source and confidence, or an explicit gap."
+        },
+        {
+          "id": "evidence",
+          "title": "Evidence ledger & open gaps",
+          "sections": ["Evidence Ledger", "Assumptions & Open Gaps"],
+          "instruction": "Every EV-NNN referenced above must have a row here with repository, ref/commit, path/symbol and the claim it supports. Every assumption or hypothesis needs an explicit confidence level and decision impact."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    },
+    "stage2": {
+      "name": "Change Impact & Gap Analysis",
+      "required_sections": [
+        "Current vs Desired Behaviour",
+        "Affected Components & Contracts",
+        "Data & Migration Impact",
+        "Regression & Compatibility Risks",
+        "Constraints Confirmed"
+      ],
+      "quality_criteria": [
+        { "id": "S2-Q1", "description": "Current behaviour cites specific Stage 1 evidence (EV-NNN), not a generic restatement", "applies_to": "Current vs Desired Behaviour", "smart_dimension": "Specific" },
+        { "id": "S2-Q2", "description": "Every affected component/contract/data store is named individually", "applies_to": "Affected Components & Contracts", "smart_dimension": "Specific" },
+        { "id": "S2-Q3", "description": "Every regression risk names the specific component it threatens and a likelihood/impact rating", "applies_to": "Regression & Compatibility Risks", "smart_dimension": "Measurable" }
+      ],
+      "consistency_checks": [
+        { "id": "S2-C1", "description": "Affected components trace back to entries in the Stage 1 System Inventory or Technology Context", "source": "stage1" },
+        { "id": "S2-C2", "description": "Constraints Confirmed do not contradict the Stage 0 exclusions", "source": "stage0" }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Behaviour gap & affected surface",
+          "sections": ["Executive Summary", "Current vs Desired Behaviour", "Affected Components & Contracts"],
+          "instruction": "Cite specific Stage 1 evidence for current behaviour. Name every affected component, API/contract and data store individually — never a generic 'the backend'."
+        },
+        {
+          "id": "risk",
+          "title": "Migration impact & risk",
+          "sections": ["Data & Migration Impact", "Regression & Compatibility Risks", "Constraints Confirmed"],
+          "instruction": "State whether migration is required and its shape. Every regression risk needs the specific component it threatens with a likelihood/impact rating. Record any constraint raised beyond Stage 0, or confirm none."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    },
+    "stage3": {
+      "name": "Options & Architecture Decisions",
+      "required_sections": [
+        "Reuse Assessment",
+        "Option Generation",
+        "Evaluation Criteria & Weighted Scoring",
+        "Options Evaluation Matrix",
+        "Recommended Option & Rationale",
+        "Architecture Decision Records",
+        "Compatibility & Migration Approach",
+        "Critique & Corrections"
+      ],
+      "quality_criteria": [
+        { "id": "S3-Q1", "description": "At least one option reuses or extends an existing Stage 1 mechanism, or explains why none applies", "applies_to": "Reuse Assessment", "smart_dimension": "Relevant" },
+        { "id": "S3-Q2", "description": "A do-nothing/defer baseline is evaluated alongside proposed options", "applies_to": "Option Generation", "smart_dimension": "Specific" },
+        { "id": "S3-Q3", "description": "Recommendation names one OPT-NN and its weighted score against the runner-up", "applies_to": "Recommended Option & Rationale", "smart_dimension": "Specific" },
+        { "id": "S3-Q4", "description": "Every ADR has context, decision, consequences and alternatives considered", "applies_to": "Architecture Decision Records", "smart_dimension": "Specific" }
+      ],
+      "consistency_checks": [
+        { "id": "S3-C1", "description": "Every option references the Stage 2 affected components/items it addresses", "source": "stage2" },
+        { "id": "S3-C2", "description": "The critique pass references at least one Stage 1 evidence item or Stage 2 constraint", "source": "stage1" }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Reuse & options",
+          "sections": ["Executive Summary", "Reuse Assessment", "Option Generation", "Evaluation Criteria & Weighted Scoring"],
+          "instruction": "First check the Stage 1 baseline for existing mechanisms that reduce the design space. Generate 2-4 substantively different options plus an explicit do-nothing/defer baseline, each referencing specific Stage 2 affected items. Criteria weights must sum to 100."
+        },
+        {
+          "id": "recommendation",
+          "title": "Evaluation, recommendation & ADRs",
+          "sections": ["Options Evaluation Matrix", "Recommended Option & Rationale", "Architecture Decision Records", "Compatibility & Migration Approach"],
+          "instruction": "Score every option including do-nothing. The recommendation must name one OPT-NN with its weighted score against the runner-up. Draft an ADR for each key decision the recommendation implies. State the compatibility and migration approach concretely."
+        },
+        {
+          "id": "critique",
+          "title": "Critique pass",
+          "sections": ["Critique & Corrections"],
+          "instruction": "Re-examine the recommendation above against the Stage 1 evidence and Stage 2 constraints for a contradiction or unverified claim. State what was checked and what, if anything, was corrected."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    },
+    "stage4": {
+      "name": "Implementation & Verification Plan",
+      "required_sections": [
+        "Functional Requirements (Backlog Items)",
+        "Requirements Traceability Matrix (RTM)",
+        "Integration Points",
+        "Implementation Cost & Effort Estimate",
+        "Roadmap & Milestones",
+        "Verification & Test Plan",
+        "Execution Authorisation Status"
+      ],
+      "quality_criteria": [
+        { "id": "S4-Q1", "description": "Every FR has an acceptance criterion and appears in the RTM", "applies_to": "Requirements Traceability Matrix (RTM)", "smart_dimension": "Specific" },
+        { "id": "S4-Q2", "description": "Every roadmap phase has a dated, measurable milestone and a named owner", "applies_to": "Roadmap & Milestones", "smart_dimension": "Time-bound" },
+        { "id": "S4-Q3", "description": "Execution Authorisation Status reflects only what was explicitly authorised in Step 4.3, never an assumed yes", "applies_to": "Execution Authorisation Status", "smart_dimension": "Specific" }
+      ],
+      "consistency_checks": [
+        { "id": "S4-C1", "description": "Every FR implements an ADR-NN named in Stage 3", "source": "stage3" },
+        { "id": "S4-C2", "description": "Integration Points cover every system named in the Stage 1 System Inventory", "source": "stage1" },
+        { "id": "S4-C3", "description": "Implementation cost is compared explicitly against the Stage 0 budget ceiling", "source": "stage0" }
+      ],
+      "generation_batches": [
+        {
+          "id": "backlog",
+          "title": "Backlog & traceability",
+          "sections": ["Executive Summary", "Functional Requirements (Backlog Items)", "Requirements Traceability Matrix (RTM)"],
+          "instruction": "Decompose the Stage 3 recommendation into FR-NNN items with acceptance criteria, each implementing a named ADR-NN. Every FR must appear in the RTM with its affected component and test."
+        },
+        {
+          "id": "delivery",
+          "title": "Integration, cost & roadmap",
+          "sections": ["Integration Points", "Implementation Cost & Effort Estimate", "Roadmap & Milestones", "Verification & Test Plan"],
+          "instruction": "Cover every system from the Stage 1 System Inventory in Integration Points. Compare the effort/cost estimate explicitly to the Stage 0 budget ceiling. Every roadmap phase needs a dated milestone and a named owner."
+        },
+        {
+          "id": "authorisation",
+          "title": "Execution authorisation",
+          "sections": ["Execution Authorisation Status"],
+          "instruction": "Record exactly what the human authorised in Step 4.3 — do not assume authorisation was granted if the human did not explicitly say so."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    },
+    "stage5": {
+      "name": "Release & Operational Readiness",
+      "required_sections": [
+        "Verification Evidence",
+        "Migration & Rollback Plan",
+        "Monitoring & Observability",
+        "Risk Register",
+        "Release Decision Status"
+      ],
+      "quality_criteria": [
+        { "id": "S5-Q1", "description": "Verification evidence states what actually ran, where, and its result, or explicitly states nothing has run", "applies_to": "Verification Evidence", "smart_dimension": "Measurable" },
+        { "id": "S5-Q2", "description": "Every Critical/High risk has a named individual owner and a dated mitigation", "applies_to": "Risk Register", "smart_dimension": "Specific" },
+        { "id": "S5-Q3", "description": "Monitoring signals are specific to this change's expected effect, not generic uptime monitoring", "applies_to": "Monitoring & Observability", "smart_dimension": "Relevant" }
+      ],
+      "consistency_checks": [
+        { "id": "S5-C1", "description": "Verification evidence covers the FRs listed in Stage 4", "source": "stage4" },
+        { "id": "S5-C2", "description": "Migration/rollback plan matches the Stage 3 compatibility & migration approach", "source": "stage3" }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Verification & operational plan",
+          "sections": ["Executive Summary", "Verification Evidence", "Migration & Rollback Plan", "Monitoring & Observability"],
+          "instruction": "State only verification that actually happened, with command, environment and result — never assume a future pass. Migration/rollback must match the Stage 3 approach. Monitoring signals must be specific to this change's expected effect."
+        },
+        {
+          "id": "risk",
+          "title": "Risk register & release status",
+          "sections": ["Risk Register", "Release Decision Status"],
+          "instruction": "Every Critical/High risk needs a named owner and a dated mitigation. Release Decision Status must record merge and deployment as pending human decisions, never as already completed by this initiative."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    },
+    "stage6": {
+      "name": "Outcome & Context Reconciliation",
+      "required_sections": [
+        "Deployment Confirmation",
+        "KPI Outcome vs Plan",
+        "Delivery Deviations",
+        "Baseline Update Proposal",
+        "Related Initiatives"
+      ],
+      "quality_criteria": [
+        { "id": "S6-Q1", "description": "Deployment status is stated with evidence or explicitly marked not yet deployed", "applies_to": "Deployment Confirmation", "smart_dimension": "Specific" },
+        { "id": "S6-Q2", "description": "Every planned KPI has a measured value with source and window, or is explicitly marked pending", "applies_to": "KPI Outcome vs Plan", "smart_dimension": "Measurable" },
+        { "id": "S6-Q3", "description": "Baseline update proposal is specific enough to apply as a reviewable change to Stage 1", "applies_to": "Baseline Update Proposal", "smart_dimension": "Specific" }
+      ],
+      "consistency_checks": [
+        { "id": "S6-C1", "description": "KPIs measured here match the KPIs defined in Stage 0/Stage 4", "source": "stage0" },
+        { "id": "S6-C2", "description": "Baseline update proposal references specific Stage 1 sections it would change", "source": "stage1" }
+      ],
+      "generation_batches": [
+        {
+          "id": "core",
+          "title": "Deployment & outcome",
+          "sections": ["Executive Summary", "Deployment Confirmation", "KPI Outcome vs Plan", "Delivery Deviations"],
+          "instruction": "State deployment status with evidence, or explicitly mark not yet deployed — never infer deployment from a merged PR/MR or passing CI alone. Every KPI needs a measured value with source and window, or an explicit pending status. Name any deviation between the Stage 4 plan and actual delivery."
+        },
+        {
+          "id": "context",
+          "title": "Baseline update & related initiatives",
+          "sections": ["Baseline Update Proposal", "Related Initiatives"],
+          "instruction": "Propose specific, applicable updates to the Stage 1 baseline based on what was actually delivered. Name any other initiative against the same product that this outcome or update may affect, or state none was identified."
+        },
+        {
+          "id": "closing",
+          "title": "Sign-off",
+          "sections": ["Quality Checklist", "Approval Section"],
+          "instruction": "Use the complete document above as context."
+        }
+      ],
+      "weights": { "completeness": 0.40, "consistency": 0.30, "quality": 0.30 }
+    }
+  }
+}

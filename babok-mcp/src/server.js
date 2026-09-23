@@ -37,6 +37,27 @@ import {
   resolveProfilePath,
 } from './lib/profiles.js';
 
+import {
+  createProduct,
+  readProduct,
+  listProductIds,
+  createBaseline,
+  readBaseline,
+  listBaselineIds,
+} from './lib/software-development/product-store.js';
+import { buildBaseline } from './lib/software-development/baseline-builder.js';
+import { createGithubConnector } from './lib/software-development/hosting/github.js';
+import { createGitlabConnector } from './lib/software-development/hosting/gitlab.js';
+import {
+  setExecutionAuthorization,
+  readExecutionAuthorization,
+} from './lib/software-development/runtime/execution-authorization.js';
+import {
+  listPendingHostTasks,
+  claimHostTask,
+  submitHostTaskResult,
+} from './lib/software-development/runtime/host-task.js';
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  Profile helpers — every tool derives the pipeline shape from the project's journal
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1883,6 +1904,168 @@ server.tool(
       }],
     };
   }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Software-development profile: durable products/baselines, and the
+//  host-agent side of the task runtime (this MCP server — which any active
+//  plugin host connects to — is exactly the "host executor" the software-
+//  development profile plan describes; api-executor.js's runBaselineTask is
+//  the other executor, used directly by the CLI/Web runner).
+//
+//  None of these tools ever grant execution/publication authority — that is
+//  sd_authorize_execution, an explicit, separate, per-initiative human
+//  decision, never implied by a product/baseline being created or a stage
+//  being approved.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function connectorForHost(host) {
+  if (host === 'github') return createGithubConnector();
+  if (host === 'gitlab') return createGitlabConnector();
+  throw new Error(`No connector available for host "${host}"`);
+}
+
+server.tool(
+  'sd_create_product',
+  'Software-development profile: create a durable product (independent of any single initiative) with its repositories, so future initiatives can reuse its baseline instead of rebuilding it.',
+  {
+    name: z.string().min(1).describe('Product name'),
+    repositories: z.array(z.object({
+      id: z.string().min(1).describe('Stable repository id within this product, e.g. "backend"'),
+      host: z.enum(['github', 'gitlab', 'other']),
+      owner: z.string().min(1),
+      name: z.string().min(1),
+      role: z.string().optional().describe('e.g. "frontend", "backend", "infra"'),
+    })).default([]),
+  },
+  async ({ name, repositories }) => {
+    const product = createProduct({ name, repositories });
+    return { content: [{ type: 'text', text: `✅ Product created: ${product.product_id}\n${JSON.stringify(product, null, 2)}` }] };
+  },
+);
+
+server.tool(
+  'sd_list_products',
+  'Software-development profile: list all durable products.',
+  {},
+  async () => {
+    const ids = listProductIds();
+    return { content: [{ type: 'text', text: ids.length ? ids.join('\n') : 'No products yet — create one with sd_create_product.' }] };
+  },
+);
+
+server.tool(
+  'sd_get_product',
+  'Software-development profile: read one product and its known baseline ids.',
+  { product_id: z.string().min(1) },
+  async ({ product_id }) => {
+    const product = readProduct(product_id);
+    const baselineIds = listBaselineIds(product_id);
+    return { content: [{ type: 'text', text: JSON.stringify({ ...product, baseline_ids: baselineIds }, null, 2) }] };
+  },
+);
+
+server.tool(
+  'sd_build_baseline',
+  'Software-development profile Stage 1: autonomously build a NEW, immutable, evidence-backed baseline for a product from its repositories (mechanical evidence only — manifests, CI config, test directories, pinned commits; no technical interview). Read-only against every repository.',
+  { product_id: z.string().min(1) },
+  async ({ product_id }) => {
+    const product = readProduct(product_id);
+    if (product.repositories.length === 0) {
+      throw new Error(`Product "${product_id}" has no repositories — attach one before building a baseline.`);
+    }
+    const connectors = {};
+    for (const repo of product.repositories) {
+      if (!connectors[repo.host]) connectors[repo.host] = connectorForHost(repo.host);
+    }
+    const result = await buildBaseline({ productId: product_id, repositories: product.repositories, connectors });
+    const summary = result.analyses.map(a => `  - ${a.repository_id}: ${a.analysis.fileCount} files, ${a.analysis.manifests.length} manifest(s), CI: ${a.analysis.ciConfigPaths.length > 0 ? 'yes' : 'no'}`).join('\n');
+    return {
+      content: [{
+        type: 'text',
+        text: `✅ Baseline built: ${result.baseline.baseline_id} (${result.baseline.evidence.length} evidence entries)\n${summary}\n\nFull manifest:\n${JSON.stringify(result.baseline, null, 2)}`,
+      }],
+    };
+  },
+);
+
+server.tool(
+  'sd_get_baseline',
+  'Software-development profile: read one immutable baseline manifest (evidence ledger + pinned repository commits).',
+  { product_id: z.string().min(1), baseline_id: z.string().min(1) },
+  async ({ product_id, baseline_id }) => {
+    const baseline = readBaseline(product_id, baseline_id);
+    return { content: [{ type: 'text', text: JSON.stringify(baseline, null, 2) }] };
+  },
+);
+
+server.tool(
+  'sd_authorize_execution',
+  'Software-development profile: record (or revoke) an explicit human decision to authorise running the analysed repository\'s own commands for one initiative. NEVER call this on the agent\'s own initiative — only relay an explicit instruction the human actually gave in this conversation.',
+  {
+    initiative_id: z.string().min(1),
+    scope: z.enum(['run_tests', 'publish_branch']),
+    granted: z.boolean(),
+    granted_by: z.string().min(1).describe('Name of the human who gave this authorisation'),
+    allowed_commands: z.array(z.string()).optional(),
+    allowed_directories: z.array(z.string()).optional(),
+  },
+  async ({ initiative_id, scope, granted, granted_by, allowed_commands, allowed_directories }) => {
+    const record = setExecutionAuthorization(initiative_id, scope, {
+      granted,
+      grantedBy: granted_by,
+      constraints: { allowedCommands: allowed_commands, allowedDirectories: allowed_directories },
+    });
+    return { content: [{ type: 'text', text: `${granted ? '✅ Granted' : '⛔ Revoked'} "${scope}" for ${initiative_id}.\n${JSON.stringify(record[scope], null, 2)}` }] };
+  },
+);
+
+server.tool(
+  'sd_get_execution_authorization',
+  'Software-development profile: read the current execution-authorisation record for one initiative/scope.',
+  { initiative_id: z.string().min(1), scope: z.enum(['run_tests', 'publish_branch']) },
+  async ({ initiative_id, scope }) => {
+    const record = readExecutionAuthorization(initiative_id, scope);
+    return { content: [{ type: 'text', text: record ? JSON.stringify(record, null, 2) : `No "${scope}" authorisation recorded for ${initiative_id}.` }] };
+  },
+);
+
+server.tool(
+  'sd_list_pending_host_tasks',
+  'Software-development profile: list tasks awaiting a host agent (this MCP connection) for one initiative. Claim one with sd_claim_host_task before working on it.',
+  { initiative_id: z.string().min(1) },
+  async ({ initiative_id }) => {
+    const pending = listPendingHostTasks(initiative_id);
+    return { content: [{ type: 'text', text: pending.length ? JSON.stringify(pending, null, 2) : 'No tasks awaiting a host agent for this initiative.' }] };
+  },
+);
+
+server.tool(
+  'sd_claim_host_task',
+  'Software-development profile: claim a pending host task before starting work on it (refuses if another host agent already holds the lease).',
+  { initiative_id: z.string().min(1), run_id: z.string().min(1), host_agent_id: z.string().min(1).describe('e.g. "copilot-cli", "claude-code", "codex"') },
+  async ({ initiative_id, run_id, host_agent_id }) => {
+    const request = claimHostTask(initiative_id, run_id, host_agent_id);
+    return { content: [{ type: 'text', text: JSON.stringify(request, null, 2) }] };
+  },
+);
+
+server.tool(
+  'sd_submit_host_task_result',
+  'Software-development profile: report a terminal result for a host task this agent claimed. Never mark "completed" for work not actually performed and verified.',
+  {
+    initiative_id: z.string().min(1),
+    run_id: z.string().min(1),
+    status: z.enum(['completed', 'failed', 'cancelled']),
+    artefacts: z.record(z.string(), z.any()).optional(),
+    evidence: z.array(z.object({ id: z.string(), repository_id: z.string(), ref: z.string(), path: z.string().optional(), claim: z.string(), type: z.enum(['fact', 'hypothesis', 'assumption']).optional() })).optional(),
+    gaps: z.array(z.object({ reason: z.string() })).optional(),
+    model: z.string().optional(),
+  },
+  async ({ initiative_id, run_id, status, artefacts, evidence, gaps, model }) => {
+    const state = submitHostTaskResult(initiative_id, run_id, { status, artefacts, evidence, gaps, model });
+    return { content: [{ type: 'text', text: `Task ${run_id} recorded as ${state.status}.` }] };
+  },
 );
 
 // ─────────────────────────────────────────────────────────────────────────────

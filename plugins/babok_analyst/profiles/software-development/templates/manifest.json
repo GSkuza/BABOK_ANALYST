@@ -1,0 +1,44 @@
+{
+  "version": "1.0",
+  "description": "Software-development-profile deliverable template manifest — maps stages 0–6 to primary skeletons and optional modules. Shared modules are referenced from the repository-level templates/modules/ directory.",
+  "rubric_source": "profiles/software-development/agents/quality_scoring_rubric.json",
+  "stages": {
+    "0": {
+      "primary": "stages/STAGE_00_Change_Charter.md",
+      "deliverable_file": "STAGE_00_Change_Charter.md",
+      "modules": []
+    },
+    "1": {
+      "primary": "stages/STAGE_01_Product_Repository_Baseline.md",
+      "deliverable_file": "STAGE_01_Product_Repository_Baseline.md",
+      "modules": ["../../../templates/modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "2": {
+      "primary": "stages/STAGE_02_Change_Impact_Gap_Analysis.md",
+      "deliverable_file": "STAGE_02_Change_Impact_Gap_Analysis.md",
+      "modules": ["../../../templates/modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "3": {
+      "primary": "stages/STAGE_03_Options_Architecture_Decisions.md",
+      "deliverable_file": "STAGE_03_Options_Architecture_Decisions.md",
+      "modules": ["modules/ADR_Template.md", "../../../templates/modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "4": {
+      "primary": "stages/STAGE_04_Implementation_Verification_Plan.md",
+      "deliverable_file": "STAGE_04_Implementation_Verification_Plan.md",
+      "modules": ["../../../templates/modules/Short_Rationale_Evidence_Block.md"]
+    },
+    "5": {
+      "primary": "stages/STAGE_05_Release_Operational_Readiness.md",
+      "deliverable_file": "STAGE_05_Release_Operational_Readiness.md",
+      "modules": []
+    },
+    "6": {
+      "primary": "stages/STAGE_06_Outcome_Context_Reconciliation.md",
+      "deliverable_file": "STAGE_06_Outcome_Context_Reconciliation.md",
+      "modules": []
+    }
+  },
+  "industry_supplements": {},
+  "industry_triggers": {}
+}

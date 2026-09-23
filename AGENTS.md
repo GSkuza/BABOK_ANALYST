@@ -35,7 +35,7 @@ Each project directory contains `PROJECT_JOURNAL_<id>.json` and `STAGE_0N_*.md` 
 
 ## Pipeline profiles
 
-`journal.profile` selects the stage shape: `babok` (default, prefix `BABOK-`, stages 0–8 below) or `consulting` (prefix `BC-`, stages 0–6: Engagement Charter → Stakeholder & Governance → Current State Diagnostic & Root Cause → Strategic Options → Target Operating Model & Roadmap → Risk & Change Readiness → Business Case & Value Realization — **no software requirements or system design**). Always take stage names and instructions from `babok_get_stage`; start a consulting engagement with `/babok-new-consulting` or `babok_new_project { profile: "consulting" }`.
+`journal.profile` selects the stage shape: `babok` (default, prefix `BABOK-`, stages 0–8 below), `consulting` (prefix `BC-`, stages 0–6: Engagement Charter → Stakeholder & Governance → Current State Diagnostic & Root Cause → Strategic Options → Target Operating Model & Roadmap → Risk & Change Readiness → Business Case & Value Realization — **no software requirements or system design**), or `software-development` (prefix `SD-`, stages 0–6: Change Charter → Product & Repository Baseline → Change Impact & Gap Analysis → Options & Architecture Decisions → Implementation & Verification Plan → Release & Operational Readiness → Outcome & Context Reconciliation — modernises an **existing** product against connected repositories; Stages 1 and 3 run autonomously from repository evidence with no technical interview, and every stage still requires human approval since this profile disables auto-approval even for the autonomous pipeline). Always take stage names and instructions from `babok_get_stage`; start a consulting engagement with `/babok-new-consulting` or `babok_new_project { profile: "consulting" }`, or a software-development initiative with `/babok-new-software-development` or `babok_new_project { profile: "software-development" }`.
 
 ## MCP tools (when connected)
 
@@ -57,6 +57,7 @@ Detailed instructions: `BABOK_AGENT/stages/BABOK_agent_stage_N.md`
 - `/babok-new PL` / `/babok-new-pl` — start Stage 0 in Polish
 - `/babok-new ENG` / `/babok-new-eng` — start Stage 0 in English
 - `/babok-new-consulting [PL|ENG]` — start a consulting engagement (profile `consulting`)
+- `/babok-new-software-development [PL|ENG]` — start a software-development initiative on an existing product (profile `software-development`)
 - `Status` / `/babok-status` — show pipeline progress
 - `Approve [N]` — approve stage N
 - `Reject [N] [reason]` — reject with feedback

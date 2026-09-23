@@ -21,6 +21,19 @@ const MIRRORED = [
   ['cli/src/quality/checks/depth.js', 'babok-mcp/src/lib/quality/checks/depth.js'],
   ['cli/src/quality/score-content.js', 'babok-mcp/src/lib/quality/score-content.js'],
   ['cli/src/quality/prompts/depth_judge.md', 'babok-mcp/src/lib/quality/prompts/depth_judge.md'],
+  ['cli/src/software-development/schemas.js', 'babok-mcp/src/lib/software-development/schemas.js'],
+  ['cli/src/software-development/product-store.js', 'babok-mcp/src/lib/software-development/product-store.js'],
+  ['cli/src/software-development/hosting/github.js', 'babok-mcp/src/lib/software-development/hosting/github.js'],
+  ['cli/src/software-development/hosting/gitlab.js', 'babok-mcp/src/lib/software-development/hosting/gitlab.js'],
+  ['cli/src/software-development/repository-analyzer.js', 'babok-mcp/src/lib/software-development/repository-analyzer.js'],
+  ['cli/src/software-development/baseline-builder.js', 'babok-mcp/src/lib/software-development/baseline-builder.js'],
+  ['cli/src/software-development/runtime/task-store.js', 'babok-mcp/src/lib/software-development/runtime/task-store.js'],
+  ['cli/src/software-development/runtime/api-executor.js', 'babok-mcp/src/lib/software-development/runtime/api-executor.js'],
+  ['cli/src/software-development/runtime/host-task.js', 'babok-mcp/src/lib/software-development/runtime/host-task.js'],
+  ['cli/src/software-development/runtime/execution-authorization.js', 'babok-mcp/src/lib/software-development/runtime/execution-authorization.js'],
+  ['cli/src/software-development/runtime/code-executor.js', 'babok-mcp/src/lib/software-development/runtime/code-executor.js'],
+  ['cli/src/software-development/outcomes/deployment-record.js', 'babok-mcp/src/lib/software-development/outcomes/deployment-record.js'],
+  ['cli/src/software-development/outcomes/kpi-tracker.js', 'babok-mcp/src/lib/software-development/outcomes/kpi-tracker.js'],
 ];
 
 const normalize = (s) => s.replace(/\r\n/g, '\n');

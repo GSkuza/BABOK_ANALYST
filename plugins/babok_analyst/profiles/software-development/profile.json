@@ -1,0 +1,48 @@
+{
+  "$schema": "../profile.schema.json",
+  "id": "software-development",
+  "name": "Software Development — Existing Product Evolution",
+  "description": "Modernisation and new-feature planning for an existing software product. Connects to one or more repositories, reconstructs product/technology/architecture/SDLC context automatically, then plans a change through options, an implementation package, release readiness and outcome reconciliation. Stages 1 and 3 are performed autonomously by AI from repository and product evidence; every stage still requires human approval before the pipeline advances.",
+  "id_prefix": "SD",
+  "stages": [
+    { "stage": 0, "name": "Change Charter", "deliverable_file": "STAGE_00_Change_Charter.md", "prompt_file": "SoftwareDevelopment_agent_stage_0.md" },
+    { "stage": 1, "name": "Product & Repository Baseline", "deliverable_file": "STAGE_01_Product_Repository_Baseline.md", "prompt_file": "SoftwareDevelopment_agent_stage_1.md" },
+    { "stage": 2, "name": "Change Impact & Gap Analysis", "deliverable_file": "STAGE_02_Change_Impact_Gap_Analysis.md", "prompt_file": "SoftwareDevelopment_agent_stage_2.md" },
+    { "stage": 3, "name": "Options & Architecture Decisions", "deliverable_file": "STAGE_03_Options_Architecture_Decisions.md", "prompt_file": "SoftwareDevelopment_agent_stage_3.md" },
+    { "stage": 4, "name": "Implementation & Verification Plan", "deliverable_file": "STAGE_04_Implementation_Verification_Plan.md", "prompt_file": "SoftwareDevelopment_agent_stage_4.md" },
+    { "stage": 5, "name": "Release & Operational Readiness", "deliverable_file": "STAGE_05_Release_Operational_Readiness.md", "prompt_file": "SoftwareDevelopment_agent_stage_5.md" },
+    { "stage": 6, "name": "Outcome & Context Reconciliation", "deliverable_file": "STAGE_06_Outcome_Context_Reconciliation.md", "prompt_file": "SoftwareDevelopment_agent_stage_6.md" }
+  ],
+  "paths": {
+    "stages_dir": "profiles/software-development/stages",
+    "system_prompt": "profiles/software-development/SoftwareDevelopment_Agent_System_Prompt.md",
+    "templates_dir": "profiles/software-development/templates",
+    "rubric": "profiles/software-development/agents/quality_scoring_rubric.json",
+    "agents_dir": "profiles/software-development/agents"
+  },
+  "scoring": {
+    "scorable_stages": [1, 2, 3, 4, 5, 6]
+  },
+  "validation": {
+    "rules": [
+      { "id": "KPI-COVERAGE", "bindings": { "charter": 0, "as_is": 1 } },
+      { "id": "INTEGRATION-COVERAGE", "bindings": { "as_is": 1, "to_be": 4 } },
+      { "id": "BUDGET-CEILING", "bindings": { "charter": 0, "business_case": 4 } },
+      { "id": "ROADMAP-DATE", "bindings": { "charter": 0, "roadmap": 4 } },
+      { "id": "FR-TRACEABILITY", "bindings": { "requirements": 4 } },
+      { "id": "CRITICAL-RISK-OWNER", "bindings": { "risk": 5 } }
+    ]
+  },
+  "orchestrator": {
+    "pipeline": [
+      { "type": "sequential", "stages": ["stage1"] },
+      { "type": "sequential", "stages": ["stage2", "stage3", "stage4"] },
+      { "type": "sequential", "stages": ["stage5", "stage6"] }
+    ],
+    "deep_analysis_stages": [1, 2, 3],
+    "autoApproveGeneratedStages": false
+  },
+  "knowledge": {
+    "extra_categories": []
+  }
+}

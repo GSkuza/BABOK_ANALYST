@@ -1,0 +1,37 @@
+{
+  "agent": {
+    "id": "stage6",
+    "name": "Stage 6 Agent — Outcome & Context Reconciliation",
+    "version": "1.0",
+    "description": "Software-development-profile agent recording actual deployment and KPI outcomes and proposing the resulting update to the product's Stage 1 baseline.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.4
+    }
+  },
+  "software_development": {
+    "stage_number": 6,
+    "stage_name": "Outcome & Context Reconciliation",
+    "practice_area": "Outcome Verification & Context Update",
+    "primary_deliverable": "Deployment confirmation, KPI outcomes, baseline update proposal",
+    "autonomous": false
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage6"
+  },
+  "mcp_tools": [
+    "file_system"
+  ],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage6/",
+    "artifact_type": "markdown"
+  }
+}

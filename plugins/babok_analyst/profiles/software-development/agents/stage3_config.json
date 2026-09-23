@@ -1,0 +1,37 @@
+{
+  "agent": {
+    "id": "stage3",
+    "name": "Stage 3 Agent — Options & Architecture Decisions",
+    "version": "1.0",
+    "description": "Software-development-profile agent generating and evaluating options, recommending one with draft ADRs. Runs autonomously with a self-critique pass — no scripted human interview.",
+    "model": {
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "temperature": 0.3
+    }
+  },
+  "software_development": {
+    "stage_number": 3,
+    "stage_name": "Options & Architecture Decisions",
+    "practice_area": "Autonomous Option Design",
+    "primary_deliverable": "Options evaluation matrix, recommendation, ADRs, compatibility approach",
+    "autonomous": true
+  },
+  "context": {
+    "reads_from": "my_project_context.json",
+    "writes_to": "my_project_context.json",
+    "stage_key": "stage3"
+  },
+  "mcp_tools": [
+    "file_system"
+  ],
+  "quality_gate": {
+    "enabled": true,
+    "min_score": 75,
+    "max_iterations": 3
+  },
+  "output": {
+    "artifact_path": "artifacts/stage3/",
+    "artifact_type": "markdown"
+  }
+}
