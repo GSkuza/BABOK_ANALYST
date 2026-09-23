@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Docs:** `README.md`, `CLAUDE.md`, `AGENTS.md` and `.github/copilot-instructions.md` document the third profile, its `SD-` prefix and the execution-authorisation boundary (plan approval is distinct from authorising code execution, merge or deployment).
 
 ### Changed
+- **BABOK_Agent_LLM_Prompt.md (routing/profiles refresh):** documents the three pipeline profiles (`babok`, `consulting`, `software-development`) incl. stage lists, autonomous Stages 1/3 and the execution-authorisation boundary; replaces sequential Q&A with the analytical elicitation policy; lists all 32 MCP tools (incl. `sd_*` and model-routing tools); adds a Model Routing section; fixes the MCP workflow (`babok validate` is a CLI command) and CLI/Web UI highlights.
 - **BABOK_Agent_LLM_Prompt.md (v2.3.0):** Synchronized with stage-first `templates/` architecture — deliverable skeletons, `babok_get_stage_template`, Two-Key Journal workflow, industry packs, project context schema, and chat-only H2 fallback from quality rubric.
 
 ## [2.3.0] - 2026-09-03
