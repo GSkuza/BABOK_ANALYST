@@ -5,6 +5,16 @@ import { createGithubConnector } from '../software-development/hosting/github.js
 import { createGitlabConnector } from '../software-development/hosting/gitlab.js';
 import { setExecutionAuthorization, readExecutionAuthorization } from '../software-development/runtime/execution-authorization.js';
 import { runCommand as runAuthorizedCommand } from '../software-development/runtime/code-executor.js';
+import { getApiKey, getPreferredProvider, createLlmClient, listStoredProviders, PROVIDERS } from '../llm.js';
+
+/** Best-effort LLM client from whatever provider is already configured (env var or `babok setup`/Web AI Settings) — null if none. */
+function autoDetectLlmClient() {
+  const preferred = getPreferredProvider();
+  const candidates = preferred ? [preferred, ...listStoredProviders()] : listStoredProviders();
+  const provider = candidates.find(p => getApiKey(p));
+  if (!provider) return null;
+  return createLlmClient(provider, getApiKey(provider), PROVIDERS[provider].defaultModel);
+}
 
 /** Parse a repeatable "--repo host:owner:name[:role]" flag into a RepositoryRef. */
 function parseRepoFlag(value, previous = []) {
@@ -77,7 +87,9 @@ export async function buildBaselineCommand(productId) {
   console.log(chalk.cyan(`Building baseline for ${productId} (${product.repositories.length} repositor${product.repositories.length === 1 ? 'y' : 'ies'})...`));
   try {
     const connectors = connectorsForRepositories(product.repositories);
-    const result = await buildBaseline({ productId, repositories: product.repositories, connectors });
+    const llmClient = autoDetectLlmClient();
+    if (llmClient) console.log(chalk.dim(`  Using ${llmClient.providerName}/${llmClient.modelName} for narrative synthesis.`));
+    const result = await buildBaseline({ productId, repositories: product.repositories, connectors, llmClient });
     console.log(chalk.green('✓ Baseline built'));
     console.log(chalk.cyan('  Baseline ID: ') + chalk.bold(result.baseline.baseline_id));
     console.log(chalk.cyan('  Evidence entries: ') + result.baseline.evidence.length);

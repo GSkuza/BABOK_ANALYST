@@ -16,6 +16,12 @@ import { analyzeRepository } from '../../cli/src/software-development/repository
 import { buildBaseline } from '../../cli/src/software-development/baseline-builder.js';
 import { createProduct, readBaseline } from '../../cli/src/software-development/product-store.js';
 import { createGithubConnector } from '../../cli/src/software-development/hosting/github.js';
+import { getApiKey, createLlmClient, PROVIDERS } from '../../cli/src/llm.js';
+
+// Resolved at module scope, before any test's before() hook changes cwd —
+// getApiKey()/the encrypted keystore are both resolved relative to
+// process.cwd() at call time, so this must happen before the chdir below.
+const openAiApiKey = (() => { try { return getApiKey('openai'); } catch { return null; } })();
 
 let tmpBase;
 let originalCwd;
@@ -168,5 +174,36 @@ describe('baseline-builder (live GitHub, GSkuza/BABOK_ANALYST, read-only)', { sk
 
     const reread = readBaseline('PROD-LIVEBABOK', result.baseline.baseline_id);
     assert.deepEqual(reread, result.baseline);
+  });
+});
+
+const openAiSkipReason = openAiApiKey ? false : 'No OpenAI API key is configured in this environment (babok setup / Web AI Settings)';
+
+describe('baseline-builder (live GitHub evidence + live OpenAI narrative synthesis)', { skip: openAiSkipReason }, () => {
+  it('adds a real, evidence-grounded narrative on top of the mechanical baseline for the actual repository', async () => {
+    createProduct(
+      { name: 'BABOK Analyst (live, narrated)', repositories: [{ id: 'main', host: 'github', owner: 'GSkuza', name: 'BABOK_ANALYST', role: 'monorepo' }] },
+      { productId: 'PROD-LIVEBABOK-NARRATIVE' },
+    );
+    const github = createGithubConnector();
+    const llmClient = createLlmClient('openai', openAiApiKey, PROVIDERS.openai.defaultModel);
+
+    const result = await buildBaseline({
+      productId: 'PROD-LIVEBABOK-NARRATIVE',
+      repositories: [{ id: 'main', host: 'github', owner: 'GSkuza', name: 'BABOK_ANALYST' }],
+      connectors: { github },
+      llmClient,
+    });
+
+    assert.equal(typeof result.narrative, 'string');
+    assert.ok(result.narrative.length > 200, 'expected a substantive narrative, not a one-liner');
+    // The whole point of grounding the narrative in evidence: it must cite at
+    // least one real EV-NNN id that this baseline actually produced.
+    const citedIds = result.baseline.evidence.map(e => e.id).filter(id => result.narrative.includes(id));
+    assert.ok(citedIds.length > 0, `expected the narrative to cite at least one of: ${result.baseline.evidence.map(e => e.id).join(', ')}`);
+    assert.equal(result.baseline.narrative, result.narrative);
+
+    const reread = readBaseline('PROD-LIVEBABOK-NARRATIVE', result.baseline.baseline_id);
+    assert.equal(reread.narrative, result.narrative);
   });
 });

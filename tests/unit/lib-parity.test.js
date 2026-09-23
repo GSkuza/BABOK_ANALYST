@@ -27,6 +27,7 @@ const MIRRORED = [
   ['cli/src/software-development/hosting/gitlab.js', 'babok-mcp/src/lib/software-development/hosting/gitlab.js'],
   ['cli/src/software-development/repository-analyzer.js', 'babok-mcp/src/lib/software-development/repository-analyzer.js'],
   ['cli/src/software-development/baseline-builder.js', 'babok-mcp/src/lib/software-development/baseline-builder.js'],
+  ['cli/src/software-development/options-recommender.js', 'babok-mcp/src/lib/software-development/options-recommender.js'],
   ['cli/src/software-development/runtime/task-store.js', 'babok-mcp/src/lib/software-development/runtime/task-store.js'],
   ['cli/src/software-development/runtime/api-executor.js', 'babok-mcp/src/lib/software-development/runtime/api-executor.js'],
   ['cli/src/software-development/runtime/host-task.js', 'babok-mcp/src/lib/software-development/runtime/host-task.js'],
