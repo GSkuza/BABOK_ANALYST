@@ -26,8 +26,45 @@ import { generateStagedDeliverable } from '../generation/staged-generator.js';
 import { buildStageSystemPromptBase } from '../generation/prompt-builder.js';
 import { summarizeStageOutputs } from '../context-window.js';
 import { generateReviewId, sha256Content } from '../two-key-gate.js';
+import { getModelRoutingPath } from '../model-routing.js';
+import { activeModelRouting, listConfiguredProviders, resolveConfiguredRoute } from '../routed-llm.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Advanced model routing (.babok_model_routing.json, shared with Web AI Settings
+ * and MCP) applies when no explicit --provider/--model/--deep-model was given
+ * and --no-routing is absent. Returns the primary candidate or null.
+ */
+export function selectRoutedPrimary(options, profile) {
+  const modelRouting = activeModelRouting({
+    disabled: options.routing === false,
+    explicit: Boolean(options.provider || options.model || options.deepModel),
+  });
+  if (!modelRouting || listConfiguredProviders().length === 0) return null;
+  const route = resolveConfiguredRoute({ routing: modelRouting, profile: profile.id, stage: null });
+  const primary = route.candidates[0];
+  if (!primary) return null;
+  return { modelRouting, provider: primary.provider, apiKey: getApiKey(primary.provider), model: primary.model };
+}
+
+function formatRouteLabel(client) {
+  const extras = [];
+  if (client.generation?.temperature !== null && client.generation?.temperature !== undefined) {
+    extras.push(`temperature ${client.generation.temperature}`);
+  }
+  if (client.generation?.effort) extras.push(`effort ${client.generation.effort}`);
+  const fallbackCount = (client.candidates?.length || 1) - 1;
+  if (fallbackCount > 0) extras.push(`${fallbackCount} fallback${fallbackCount === 1 ? '' : 's'}`);
+  return `${client.providerName} · ${client.modelName}${extras.length ? ` (${extras.join(', ')})` : ''}`;
+}
+
+function logRouteFailover(failure, next) {
+  console.error(chalk.yellow(
+    `\n  ⚠ ${failure.provider}/${failure.model} failed (${failure.error}). ` +
+    `Failing over to ${next.provider}/${next.model}...`
+  ));
+}
 
 // Stage → output file name mapping and stage names come from the active profile
 // (profiles/<id>/profile.json). Templates loaded via <templates_dir>/manifest.json.
@@ -412,11 +449,14 @@ export async function runAnalysis(options) {
     console.log('');
 
     // ── Provider selection for orchestrator ──
-    let orchProvider = options.provider || null;
-    let orchApiKey = null;
-    let orchModel = options.model || null;
+    const routed = selectRoutedPrimary(options, profile);
+    let orchProvider = routed?.provider || options.provider || null;
+    let orchApiKey = routed?.apiKey || null;
+    let orchModel = routed?.model || options.model || null;
 
-    if (orchProvider && PROVIDERS[orchProvider]) {
+    if (routed) {
+      // Advanced model routing picks provider/model per stage; no prompt needed.
+    } else if (orchProvider && PROVIDERS[orchProvider]) {
       orchApiKey = getApiKey(orchProvider);
       if (!orchApiKey) {
         console.error(chalk.red(`\nError: No API key found for provider: ${orchProvider}`));
@@ -438,6 +478,7 @@ export async function runAnalysis(options) {
 
     const llmClient = createLlmClient(orchProvider, orchApiKey, orchModel);
     console.log(chalk.cyan('  Provider  : ') + chalk.bold(`${llmClient.providerName} / ${llmClient.modelName}`));
+    if (routed) console.log(chalk.cyan('  Routing   : ') + chalk.bold('advanced model routing') + chalk.dim(`  (${getModelRoutingPath()})`));
 
     // ── Deep analysis client for the profile's deep-analysis stages ──
     let deepAnalysisClient = llmClient;
@@ -446,28 +487,24 @@ export async function runAnalysis(options) {
       console.log(chalk.cyan('  Deep model: ') + chalk.bold(options.deepModel) + chalk.dim(`  (stages ${deepStagesLabel})`));
     }
 
-    const taskRouter = createTaskRouter({
+    const llmRuntime = {
       primaryProvider: orchProvider,
       primaryApiKey: orchApiKey,
       primaryModel: orchModel,
       deepProvider: orchProvider,
       deepApiKey: orchApiKey,
       deepModel: options.deepModel || orchModel,
-    });
+      modelRouting: routed?.modelRouting || null,
+      profileId: profile.id,
+    };
+    const taskRouter = createTaskRouter({ ...llmRuntime, onRouteFailover: logRouteFailover });
     console.log('');
 
     const result = await runPipeline(projectId, {
       dryRun: false,
       profile,
       taskRouter,
-      llmRuntime: {
-        primaryProvider: orchProvider,
-        primaryApiKey: orchApiKey,
-        primaryModel: orchModel,
-        deepProvider: orchProvider,
-        deepApiKey: orchApiKey,
-        deepModel: options.deepModel || orchModel,
-      },
+      llmRuntime,
       onProgress: (e) => {
         const modeTag = e.mode === 'deep_analysis' ? chalk.magenta(' [DEEP]') : '';
         console.log(chalk.cyan('  [orchestrator]'), e.type, e.stage || '', modeTag);
@@ -482,11 +519,14 @@ export async function runAnalysis(options) {
   }
 
   // ── 1. Provider / API key selection (first!) ──
-  let provider = options.provider || null;
-  let apiKey = null;
-  let modelName = options.model || null;
+  const routed = selectRoutedPrimary(options, profile);
+  let provider = routed?.provider || options.provider || null;
+  let apiKey = routed?.apiKey || null;
+  let modelName = routed?.model || options.model || null;
 
-  if (provider && PROVIDERS[provider]) {
+  if (routed) {
+    // Advanced model routing picks provider/model per stage; no prompt needed.
+  } else if (provider && PROVIDERS[provider]) {
     // --provider given explicitly on CLI → just get/verify key
     apiKey = getApiKey(provider);
     if (!apiKey) {
@@ -539,6 +579,9 @@ export async function runAnalysis(options) {
     deepProvider: provider,
     deepApiKey: apiKey,
     deepModel: options.deepModel || modelName,
+    modelRouting: routed?.modelRouting || null,
+    profileId: profile.id,
+    onRouteFailover: logRouteFailover,
   });
 
   // Stage filtering
@@ -575,6 +618,7 @@ export async function runAnalysis(options) {
   console.log(chalk.cyan('  Output  : ') + chalk.dim(projectDir));
   console.log(chalk.cyan('  Provider: ') + chalk.magenta(PROVIDERS[provider]?.name || provider));
   console.log(chalk.cyan('  Model   : ') + chalk.dim(modelName));
+  if (routed) console.log(chalk.cyan('  Routing : ') + chalk.bold('advanced model routing') + chalk.dim(`  (${getModelRoutingPath()})`));
   console.log(chalk.cyan('  Stages  : ') + chalk.dim(stagesToRun.join(', ')));
   if (provider === 'huggingface') {
     console.log('');
@@ -606,6 +650,7 @@ export async function runAnalysis(options) {
     const stageRubric = rubric.stages[`stage${stageNum}`];
     const isDeepStage = profile.orchestrator.deep_analysis_stages.includes(stageNum);
     const stageClient = taskRouter.getStageClient(stageNum);
+    const routeLabel = routed ? formatRouteLabel(stageClient) : '';
 
     // ── 7a. Ask user for additional input (interactive mode) ──
     let extraInput = '';
@@ -618,6 +663,7 @@ export async function runAnalysis(options) {
     } else {
       console.log(chalk.cyan(`  [${stageNum}/8] ${stageMeta.name}`));
     }
+    if (routeLabel) console.log(chalk.dim(`      model: ${routeLabel}`));
 
     // Build the complete prompt and generate the document in one request.
     const userMessageIntro = language === 'PL'

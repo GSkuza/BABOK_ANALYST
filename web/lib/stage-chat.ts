@@ -41,6 +41,13 @@ interface Profile {
 interface AgentResult {
   text: string;
   provider: string;
+  providerId?: string;
+  model?: string;
+}
+
+export interface AgentRouteContext {
+  profile: string;
+  stage: number;
 }
 
 interface StageChatOptions {
@@ -52,6 +59,7 @@ interface StageChatOptions {
     systemPrompt: string,
     userPrompt: string,
     provider?: string,
+    route?: AgentRouteContext,
   ) => Promise<AgentResult>;
 }
 
@@ -177,10 +185,11 @@ function readPromptContext(journal: Journal, stageNumber: number, options: Stage
 async function runAgent(
   systemPrompt: string,
   userPrompt: string,
-  provider: string | undefined,
+  route: AgentRouteContext,
   options: StageChatOptions,
 ) {
-  if (options.agentRunner) return options.agentRunner(systemPrompt, userPrompt, provider);
+  const provider = options.provider;
+  if (options.agentRunner) return options.agentRunner(systemPrompt, userPrompt, provider, route);
   return new Promise<AgentResult>((resolve, reject) => {
     const child = spawn(process.execPath, [AGENT_RUNNER], {
       cwd: REPO_ROOT,
@@ -220,7 +229,7 @@ async function runAgent(
       const status = /no configured llm provider|no api key/i.test(message) ? 503 : 502;
       reject(new StageChatError(message.replace(/^Error:\s*/i, ''), status));
     });
-    child.stdin.end(JSON.stringify({ systemPrompt, userPrompt, provider }));
+    child.stdin.end(JSON.stringify({ systemPrompt, userPrompt, provider, profile: route.profile, stage: route.stage }));
   });
 }
 
@@ -254,7 +263,11 @@ function createAgentContext(
     `Always respond in ${language}.`,
     '================================',
   ].join('\n\n');
-  return { systemPrompt, transcript: buildTranscript(messages) };
+  return {
+    systemPrompt,
+    transcript: buildTranscript(messages),
+    route: { profile: journal.profile ?? 'babok', stage: stageNumber },
+  };
 }
 
 export async function sendStageChatMessage(
@@ -274,7 +287,7 @@ export async function sendStageChatMessage(
   const prompt = context.transcript
     ? `Conversation so far:\n\n${context.transcript}\n\nUSER: ${message}\n\nRespond as ANALYST.`
     : `Begin the interview from this user message:\n\nUSER: ${message}\n\nRespond as ANALYST.`;
-  const response = await runAgent(context.systemPrompt, prompt, options.provider, options);
+  const response = await runAgent(context.systemPrompt, prompt, context.route, options);
   const updatedMessages: StageChatMessage[] = [
     ...messages,
     { role: 'user', parts: [{ text: message }] },
@@ -297,7 +310,7 @@ export async function startStageInterview(
   const response = await runAgent(
     context.systemPrompt,
     'Start directly without introducing yourself or explaining the process. State one tentative insight or hypothesis from the available project context in at most one sentence, then ask the single highest-value opening question. Keep the whole response under 60 words.',
-    options.provider,
+    context.route,
     options,
   );
   const firstMessage: StageChatMessage = {
@@ -323,7 +336,7 @@ export async function generateStageDraftFromChat(
     'Do not invent facts. Mark missing evidence as an explicit open question or assumption.',
     `Conversation:\n\n${context.transcript}`,
   ].join('\n\n');
-  const response = await runAgent(context.systemPrompt, prompt, options.provider, options);
+  const response = await runAgent(context.systemPrompt, prompt, context.route, options);
 
   try {
     const saved = saveStageDraft(projectId, stageNumber, response.text, {

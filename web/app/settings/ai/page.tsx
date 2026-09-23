@@ -24,8 +24,9 @@ export default async function AiSettingsPage() {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">AI provider settings</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-              Configure the provider used by stage interviews. Credentials are encrypted in the local BABOK keystore
-              and are never returned to the browser after saving.
+              Configure the providers used by stage interviews and draft generation, see the models each API key can
+              access, and route models per profile and stage with temperature, effort and cross-provider fallbacks.
+              Credentials are encrypted in the local BABOK keystore and are never returned to the browser after saving.
             </p>
             <div className="mt-4 flex items-start gap-2 text-sm text-slate-500 dark:text-slate-400">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />

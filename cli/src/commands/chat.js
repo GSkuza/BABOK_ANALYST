@@ -30,6 +30,54 @@ import { runDebate } from '../reasoning/debate.js';
 import { generateStagedDeliverable } from '../generation/staged-generator.js';
 import { buildStageSystemPromptBase } from '../generation/prompt-builder.js';
 import { summarizeConversationHistory } from '../context-window.js';
+import { activeModelRouting, isNonFailoverError, listConfiguredProviders, resolveConfiguredRoute } from '../routed-llm.js';
+
+// Advanced model routing state for this chat session: { routing, profile, route, index }.
+let chatRoute = null;
+
+function routeGeneration(route) {
+  return { temperature: route.temperature, effort: route.effort };
+}
+
+function describeGeneration(generation = {}) {
+  const parts = [];
+  if (generation.temperature !== null && generation.temperature !== undefined) parts.push(`temperature ${generation.temperature}`);
+  if (generation.effort) parts.push(`effort ${generation.effort}`);
+  return parts.join(', ');
+}
+
+/**
+ * Send through the active session; with advanced routing, fail over to the
+ * next routed provider/model when a request fails before any output streamed.
+ */
+async function routedSendMessage(message, onChunk, options) {
+  for (;;) {
+    try {
+      return await sendMessageStream(message, onChunk, options);
+    } catch (error) {
+      if (!chatRoute || isNonFailoverError(error)) throw error;
+      const failed = chatRoute.route.candidates[chatRoute.index];
+      const next = chatRoute.route.candidates[chatRoute.index + 1];
+      if (!next) throw error;
+      console.log(chalk.yellow(`\n⚠ ${failed.provider}/${failed.model} failed (${error.message}). Failing over to ${next.provider}/${next.model}...`));
+      chatRoute.index += 1;
+      await initializeProvider(next.provider, getApiKey(next.provider), next.model, routeGeneration(chatRoute.route));
+    }
+  }
+}
+
+/** Re-resolve the routed model after a stage switch. */
+async function applyStageRoute(stage) {
+  if (!chatRoute) return;
+  const route = resolveConfiguredRoute({ routing: chatRoute.routing, profile: chatRoute.profile, stage });
+  const primary = route.candidates[0];
+  if (!primary) return;
+  chatRoute.route = route;
+  chatRoute.index = 0;
+  await initializeProvider(primary.provider, getApiKey(primary.provider), primary.model, routeGeneration(route));
+  const generation = describeGeneration(route);
+  console.log(chalk.dim(`  Routed model: ${PROVIDERS[primary.provider]?.name || primary.provider} · ${primary.model}${generation ? ` (${generation})` : ''}`));
+}
 
 /**
  * Interactive chat command for BABOK stages
@@ -72,7 +120,24 @@ export async function chatCommand(partialId, options) {
   let apiKey = null;
   let modelName = options.model || null;
 
-  if (provider && PROVIDERS[provider]) {
+  chatRoute = null;
+  const modelRouting = activeModelRouting({
+    disabled: options.routing === false,
+    explicit: Boolean(options.provider || options.model),
+  });
+  if (modelRouting && listConfiguredProviders().length > 0) {
+    const route = resolveConfiguredRoute({ routing: modelRouting, profile: profile.id, stage: currentStage });
+    if (route.candidates.length > 0) {
+      chatRoute = { routing: modelRouting, profile: profile.id, route, index: 0 };
+      provider = route.candidates[0].provider;
+      apiKey = getApiKey(provider);
+      modelName = route.candidates[0].model;
+    }
+  }
+
+  if (chatRoute) {
+    // Advanced model routing selected the provider/model for this stage.
+  } else if (provider && PROVIDERS[provider]) {
     // Provider specified via --provider flag
     apiKey = getApiKey(provider);
     if (!apiKey) {
@@ -120,6 +185,11 @@ export async function chatCommand(partialId, options) {
   keyValue('Stage:', chalk.cyan(`${currentStage} - ${getStageName(currentStage)}`));
   keyValue('Provider:', chalk.magenta(PROVIDERS[provider]?.name || provider));
   keyValue('Model:', chalk.dim(modelName));
+  if (chatRoute) {
+    const generation = describeGeneration(chatRoute.route);
+    const fallbackCount = chatRoute.route.candidates.length - 1;
+    keyValue('Routing:', chalk.dim(`advanced model routing${generation ? ` · ${generation}` : ''}${fallbackCount > 0 ? ` · ${fallbackCount} fallback(s)` : ''}`));
+  }
   keyValue('API Key:', chalk.dim('●●●●●●●●' + apiKey.slice(-4)));
   console.log(chalk.dim(line()));
   console.log('');
@@ -136,7 +206,7 @@ export async function chatCommand(partialId, options) {
 
   // Initialize provider
   try {
-    await initializeProvider(provider, apiKey, modelName);
+    await initializeProvider(provider, apiKey, modelName, chatRoute ? routeGeneration(chatRoute.route) : {});
   } catch (err) {
     console.error(chalk.red(`Error initializing ${PROVIDERS[provider]?.name}: ${err.message}`));
     process.exit(1);
@@ -198,6 +268,11 @@ export async function chatCommand(partialId, options) {
           messages.length = 0;
           messages.push(...nextStage.messages);
           console.log(chalk.green(`\n✓ Switched to Stage ${currentStage}`));
+          try {
+            await applyStageRoute(currentStage);
+          } catch (err) {
+            console.error(chalk.red(`\nCould not apply routed model: ${err.message}`));
+          }
         }
         prompt();
         return;
@@ -209,7 +284,7 @@ export async function chatCommand(partialId, options) {
       
       try {
         interrupted = false;
-        let response = await sendMessageStream(trimmed, (chunk) => {
+        let response = await routedSendMessage(trimmed, (chunk) => {
           process.stdout.write(chunk);
         }, { requestLabel: `Chat stage ${currentStage}` });
         console.log(''); // New line after response
@@ -220,7 +295,7 @@ export async function chatCommand(partialId, options) {
           const llmClientForDebate = {
             chat: async (systemPrompt, userMessage) => {
               startChatSession(systemPrompt, []);
-              return sendMessageStream(userMessage, null, { requestLabel: `Debate stage ${currentStage}` });
+              return routedSendMessage(userMessage, null, { requestLabel: `Debate stage ${currentStage}` });
             },
           };
           const contextForDebate = { stage: currentStage, journal_summary: journal.project_name };
@@ -429,6 +504,10 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
       try {
         await initializeProvider(pKey, key, newModel);
         console.log(chalk.green(`\n✓ Model zmieniony na: ${pInfo.name} - ${newModel}`));
+        if (chatRoute) {
+          chatRoute = null;
+          console.log(chalk.dim('  Advanced model routing is off for the rest of this session.'));
+        }
       } catch (err) {
         console.error(chalk.red(`\nBłąd: ${err.message}`));
       }
@@ -455,6 +534,11 @@ async function handleCommand(command, rl, projectId, stageNumber, messages, jour
       const info = getActiveProviderInfo();
       console.log(chalk.dim(`\n  Provider: ${info.name}`));
       console.log(chalk.dim(`  Model:    ${info.model}`));
+      if (describeGeneration(info.generation)) console.log(chalk.dim(`  Params:   ${describeGeneration(info.generation)}`));
+      if (chatRoute) {
+        const remaining = chatRoute.route.candidates.slice(chatRoute.index + 1);
+        console.log(chalk.dim(`  Routing:  advanced (${remaining.length ? `next: ${remaining.map(c => `${c.provider}/${c.model}`).join(' → ')}` : 'no further fallbacks'})`));
+      }
       const savedProviders = listStoredProviders();
       if (savedProviders.length > 0) {
         console.log(chalk.dim(`  Saved keys: ${savedProviders.join(', ')}`));
@@ -532,7 +616,7 @@ async function handleGenerate(projectId, stageNumber, journal) {
   const generationLlmClient = {
     chat: async (systemPrompt, userMessage, onChunk) => {
       startChatSession(systemPrompt, []);
-      return sendMessageStream(userMessage, onChunk, { requestLabel: `Generate stage ${stageNumber}` });
+      return routedSendMessage(userMessage, onChunk, { requestLabel: `Generate stage ${stageNumber}` });
     },
   };
 

@@ -57,6 +57,56 @@ import {
   claimHostTask,
   submitHostTaskResult,
 } from './lib/software-development/runtime/host-task.js';
+import {
+  EFFORT_LEVELS,
+  ROUTING_PROVIDERS,
+  describeModelRoute,
+  detectConfiguredProviders,
+  getModelRoutingPath,
+  hasModelRoutingRules,
+  readModelRouting,
+  removeModelRoutingRule,
+  resolveModelRoute,
+  setModelRoutingRule,
+  writeModelRouting,
+} from './lib/model-routing.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Advanced model routing — shared with the CLI (`babok routing`, `babok run`,
+//  `babok chat`) and Web AI Settings. The routing file lives in the workspace
+//  root (parent of projects/) unless BABOK_MODEL_ROUTING_FILE overrides it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function routingWorkspaceDir() {
+  return path.dirname(getProjectsDir());
+}
+
+function routingFilePath() {
+  return getModelRoutingPath(routingWorkspaceDir());
+}
+
+/** Providers with credentials (env, .env or keystore entry) — keys are never read or decrypted. */
+function configuredRoutingProviders() {
+  const dirs = [...new Set([routingWorkspaceDir(), process.cwd()])];
+  const providers = new Set();
+  let preferredProvider = null;
+  for (const baseDir of dirs) {
+    const detected = detectConfiguredProviders({ baseDir });
+    detected.providers.forEach(p => providers.add(p));
+    preferredProvider ??= detected.preferredProvider;
+  }
+  return { providers: Object.keys(ROUTING_PROVIDERS).filter(p => providers.has(p)), preferredProvider };
+}
+
+function resolveRouteFor(profileId, stage) {
+  const detected = configuredRoutingProviders();
+  return resolveModelRoute(readModelRouting({ filePath: routingFilePath() }), {
+    profile: profileId,
+    stage: Number.isInteger(stage) ? stage : null,
+    availableProviders: detected.providers,
+    preferredProvider: detected.preferredProvider,
+  });
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Profile helpers — every tool derives the pipeline shape from the project's journal
@@ -358,6 +408,16 @@ server.tool(
       sections.push('');
       sections.push('## Existing Deliverable');
       sections.push(deliverable);
+    }
+
+    const routing = readModelRouting({ filePath: routingFilePath() });
+    if (hasModelRoutingRules(routing)) {
+      sections.push('');
+      sections.push('## Model Route (advanced model routing)');
+      sections.push('```');
+      sections.push(describeModelRoute(resolveRouteFor(profile.id, stage_n)));
+      sections.push('```');
+      sections.push('If your host lets you choose the model, temperature or reasoning effort for this stage (or for a sub-agent), prefer candidate 1 with these parameters and fall back in the listed order.');
     }
 
     return {
@@ -2065,6 +2125,127 @@ server.tool(
   async ({ initiative_id, run_id, status, artefacts, evidence, gaps, model }) => {
     const state = submitHostTaskResult(initiative_id, run_id, { status, artefacts, evidence, gaps, model });
     return { content: [{ type: 'text', text: `Task ${run_id} recorded as ${state.status}.` }] };
+  },
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  TOOLS: advanced model routing
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ROUTING_PROVIDER_IDS = Object.keys(ROUTING_PROVIDERS);
+
+function routingTarget(project_id, profile, stage_n) {
+  let profileId = profile || null;
+  if (project_id) {
+    const fullId = resolveProjectId(project_id);
+    if (!fullId) throw new Error(`Project not found: ${project_id}`);
+    const journal = readJournal(fullId);
+    profileId ??= journal.profile || DEFAULT_PROFILE_ID;
+  }
+  if (profileId && !PROFILE_IDS.includes(profileId)) {
+    throw new Error(`Unknown profile "${profileId}". Available: ${PROFILE_IDS.join(', ')}`);
+  }
+  if (stage_n !== undefined && stage_n !== null) {
+    if (!profileId) throw new Error('stage_n requires a profile or project_id.');
+    if (!loadProfile(profileId).stages.some(s => s.stage === stage_n)) {
+      throw new Error(`Profile "${profileId}" has no stage ${stage_n}.`);
+    }
+  }
+  return { profileId, stage: stage_n ?? null };
+}
+
+server.tool(
+  'babok_get_model_routing',
+  'Read the advanced model routing configuration (provider, model, temperature and reasoning effort per profile and per stage, fallbacks, fail over across every configured API key) shared with the CLI and Web AI Settings. Lists which providers have credentials configured (never the keys).',
+  {},
+  async () => {
+    const routing = readModelRouting({ filePath: routingFilePath() });
+    const detected = configuredRoutingProviders();
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          file: routingFilePath(),
+          configured_providers: detected.providers,
+          preferred_provider: detected.preferredProvider,
+          routing,
+        }, null, 2),
+      }],
+    };
+  },
+);
+
+server.tool(
+  'babok_resolve_model_route',
+  'Resolve the effective model route for a project stage (or profile/stage): ordered provider/model candidates plus temperature and reasoning effort, most specific rule first (stage → profile → global → active provider). This server does not call LLMs itself — use the route when your host lets you choose the model or delegate to a sub-agent.',
+  {
+    project_id: z.string().optional().describe('Full or partial project ID; supplies the profile and (by default) the current stage'),
+    profile: z.enum(PROFILE_IDS).optional().describe('Pipeline profile (overrides the project profile)'),
+    stage_n: z.number().int().min(0).max(MAX_STAGE_ANY).optional().describe('Stage number (defaults to the project current stage)'),
+  },
+  async ({ project_id, profile, stage_n }) => {
+    let stage = stage_n;
+    if (project_id && stage === undefined) {
+      const fullId = resolveProjectId(project_id);
+      if (!fullId) throw new Error(`Project not found: ${project_id}`);
+      stage = readJournal(fullId).current_stage;
+    }
+    const target = routingTarget(project_id, profile, stage);
+    const route = resolveRouteFor(target.profileId || DEFAULT_PROFILE_ID, target.stage);
+    return {
+      content: [{
+        type: 'text',
+        text: `${describeModelRoute(route)}\n\n${JSON.stringify(route, null, 2)}`,
+      }],
+    };
+  },
+);
+
+const routingTargetSchema = z.object({
+  provider: z.enum(ROUTING_PROVIDER_IDS).optional(),
+  model: z.string().min(1).max(256).optional(),
+});
+
+server.tool(
+  'babok_set_model_routing_rule',
+  'Update advanced model routing. Only call this when the human explicitly asked to change model routing. Targets the global default (no profile), a profile default (profile), or one stage (profile + stage_n). For each field: omit to keep, null to inherit from the parent level. Contains no credentials.',
+  {
+    project_id: z.string().optional().describe('Take the profile from this project'),
+    profile: z.enum(PROFILE_IDS).optional().describe('Profile to configure; omit (and omit project_id) for the global default'),
+    stage_n: z.number().int().min(0).max(MAX_STAGE_ANY).optional().describe('Stage to configure (requires a profile)'),
+    provider: z.enum(ROUTING_PROVIDER_IDS).nullable().optional(),
+    model: z.string().min(1).max(256).nullable().optional().describe('Model id; requires a provider on this rule'),
+    temperature: z.number().min(0).max(2).nullable().optional(),
+    effort: z.enum(EFFORT_LEVELS).nullable().optional().describe('Reasoning effort'),
+    fallbacks: z.array(routingTargetSchema.required({ provider: true })).max(10).nullable().optional()
+      .describe('Ordered fallback candidates; [] clears inherited fallbacks, null inherits'),
+    remove_rule: z.boolean().optional().describe('Remove the whole rule at this level instead of patching it'),
+    failover_all_providers: z.boolean().optional().describe('Also fail over across every configured API key'),
+  },
+  async ({ project_id, profile, stage_n, provider, model, temperature, effort, fallbacks, remove_rule, failover_all_providers }) => {
+    const target = routingTarget(project_id, profile, stage_n);
+    const filePath = routingFilePath();
+    let routing = readModelRouting({ filePath });
+    const ruleTarget = { profile: target.profileId, stage: target.stage };
+    const patch = { provider, model, temperature, effort, fallbacks };
+    const hasPatch = Object.values(patch).some(v => v !== undefined);
+    if (remove_rule) {
+      routing = removeModelRoutingRule(routing, ruleTarget);
+    } else if (hasPatch) {
+      routing = setModelRoutingRule(routing, ruleTarget, patch);
+    }
+    if (failover_all_providers !== undefined) routing = { ...routing, failover_all_providers };
+    if (!remove_rule && !hasPatch && failover_all_providers === undefined) {
+      throw new Error('Nothing to change: pass a rule field, remove_rule or failover_all_providers.');
+    }
+    const saved = writeModelRouting(routing, { filePath });
+    const effective = resolveRouteFor(target.profileId || DEFAULT_PROFILE_ID, target.stage);
+    return {
+      content: [{
+        type: 'text',
+        text: `✅ Model routing saved: ${filePath}\n\n${describeModelRoute(effective)}\n\n${JSON.stringify(saved, null, 2)}`,
+      }],
+    };
   },
 );
 

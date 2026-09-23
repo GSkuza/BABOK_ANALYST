@@ -63,7 +63,8 @@ BABOK_ANALYST/
 |   |   |-- prompts/                      # LLM prompt templates
 |   |-- src/lib/document-parser.js        # PDF/DOCX/XLSX/CSV/TXT/MD parser (NEW v2.1.0)
 |   |-- src/lock.js                       # File-locking for team collaboration
-|   |-- src/llm.js                        # Multi-provider LLM integration & keystore
+|   |-- src/llm.js                        # Multi-provider LLM integration, model discovery & keystore
+|   |-- src/model-routing.js              # Profile/stage model routing, temperature, effort, failover
 |   |-- src/journal.js                    # Project journal management
 |   |-- src/project.js                    # Project ID generation
 |   |-- src/display.js                    # Terminal output formatting
@@ -207,7 +208,7 @@ The bundled Next.js UI provides a lightweight review layer over the shared proje
 - **Dashboard**: server-rendered project cards with progress bars and approval counts
 - **Project view**: stage list, overall progress, and ZIP export
 - **Stage view**: AI-guided interview, generated deliverable drafts, Mermaid diagrams, quality score badge, and approve/reject controls
-- **AI settings**: configure an encrypted provider API key and select the provider used by stage interviews
+- **AI settings**: configure encrypted provider API keys, list the models each key can access, and route models per profile and per stage (temperature, reasoning effort, fallback chains across every configured key)
 - **Export endpoint**: project ZIP download via `web/app/api/projects/[id]/export/route.ts`, with Windows-compatible archive creation
 
 Run locally:
@@ -497,6 +498,8 @@ babok setup
 | `babok make all <id>` | Generate DOCX + PDF in one run |
 | `babok llm list` | List all available AI models |
 | `babok llm change` | Interactively switch AI provider/model |
+| `babok routing show\|resolve\|set\|unset\|failover\|reset` | **Advanced model routing** per profile and stage (model, temperature, effort, fallbacks) — see [Advanced model routing](#advanced-model-routing) |
+| `babok run --no-routing` / `babok chat <id> --no-routing` | Ignore `.babok_model_routing.json` and use the single selected provider |
 | `babok lang [EN\|PL]` | Set or show interface language |
 
 ### Stage diff
@@ -645,7 +648,7 @@ The repository now ships a **Next.js 15 App Router** web interface for teams who
 - **Project detail view** — stage pipeline with status indicators
 - **Stage view** — renders deliverable Markdown + Approve / Reject buttons
 - **AI stage interview** — gathers evidence one question at a time and generates a canonical draft
-- **AI settings** — stores provider credentials in the encrypted local BABOK keystore
+- **AI settings** — stores provider credentials in the encrypted local BABOK keystore, shows the models available to each key, and configures advanced model routing (see below)
 - **Export page** — one-click ZIP download of all stage deliverables
 - **Mermaid diagram viewer** — inline rendering of auto-generated process maps
 
@@ -657,6 +660,69 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
+### Advanced model routing
+
+`/settings/ai` routes stage interviews and draft generation to a provider/model per **pipeline profile**
+(IT/BABOK, consulting, software development) and per **stage** of each profile. Every level can set the model,
+`temperature` (0–2; clamped to 1 for Anthropic) and reasoning `effort` (`minimal`/`low`/`medium`/`high`,
+mapped to OpenAI `reasoning.effort`, Anthropic `output_config.effort` and Gemini thinking budgets). Resolution is
+field-by-field, most specific first: stage → profile default → global default → active provider. Each level can
+define an ordered fallback chain, and *Fail over across every configured API key* appends all remaining configured
+providers, so a failing key, quota or model automatically moves to the next resource. Parameters a model rejects are
+dropped and the request is retried once with provider defaults.
+
+The routing is stored in `.babok_model_routing.json` (no credentials, gitignored; override the path with
+`BABOK_MODEL_ROUTING_FILE`) and implemented in `cli/src/model-routing.js`. Example:
+
+```json
+{
+  "version": 1,
+  "failover_all_providers": true,
+  "default": { "provider": "openai", "model": "gpt-4o-mini", "temperature": 0.4 },
+  "profiles": {
+    "software-development": {
+      "default": { "provider": "anthropic", "model": "claude-sonnet-4-5", "effort": "high" },
+      "stages": {
+        "1": { "provider": "gemini", "model": "gemini-2.5-pro", "effort": "medium",
+               "fallbacks": [{ "provider": "openai", "model": "gpt-4o" }] }
+      }
+    }
+  }
+}
+```
+
+Each stage-chat reply reports the provider and model that actually answered (after any failover).
+
+**The same routing file drives every interface.** The shared resolver in `cli/src/model-routing.js` (mirrored
+byte-for-byte in `babok-mcp/src/lib/model-routing.js`) and the failover client in `cli/src/routed-llm.js` are used by:
+
+| Interface | Behaviour |
+|-----------|-----------|
+| Web UI (`/settings/ai`, stage chat) | Edits the file; stage interviews and drafts use the resolved route with failover |
+| `babok run` (normal, `--auto`, `--orchestrate`) | Each stage is sent to its own route for the project's profile, with temperature/effort and failover across keys; the header and every stage print the model in use |
+| `babok chat` | Uses the route of the current stage, re-applies it after `/stage N`, fails over to the next candidate on errors; `/provider` shows parameters and remaining fallbacks, `/llm` switches routing off for the session |
+| `babok sd …` (software-development autonomous stages) | Uses the `software-development` profile route |
+| MCP server | `babok_get_stage` appends a *Model Route* section (preferred model, parameters, fallback order) for hosts that can pick a model or sub-agent; three tools read, resolve and edit the routing |
+
+Routing is active whenever the file defines at least one rule and at least one provider has a key. An explicit
+`--provider`, `--model` or `--deep-model` flag always wins over routing, and `--no-routing` (on `run` and `chat`)
+ignores the file. A request that was cancelled, timed out, or had already streamed partial output is never replayed on
+another provider.
+
+Manage the routing from the terminal:
+
+```bash
+babok routing show [--json]                                   # file path, configured keys, rules, route per profile
+babok routing resolve --profile consulting --stage 3          # effective route (or --project <id> --stage N)
+babok routing set --provider openai -m gpt-5.6-luna -t 0.4    # global default
+babok routing set --profile software-development --stage 1 \
+  --provider anthropic -m claude-opus-5 -e high -f openai:gpt-5.6-terra -f gemini
+babok routing set --profile consulting -t none                # 'none' removes a field (inherit again)
+babok routing unset --profile consulting --stage 3            # remove a rule (no --stage: whole profile)
+babok routing failover on|off                                 # fail over across every configured API key
+babok routing reset                                           # delete all rules
+```
+
 ### API Routes
 
 | Route | Method | Description |
@@ -666,6 +732,8 @@ npm run dev        # http://localhost:3000
 | `/api/projects/[id]/stages/[n]` | GET / POST | Read or save a stage deliverable |
 | `/api/projects/[id]/stages/[n]/chat` | GET / POST | Read or continue the stage AI interview |
 | `/api/settings/ai` | GET / POST / DELETE | Inspect, configure, select, or remove an AI provider |
+| `/api/settings/ai/models` | GET | List models available to every configured API key (live for OpenAI, Anthropic, Gemini) |
+| `/api/settings/ai/routing` | GET / PUT | Read or save advanced model routing |
 | `/api/projects/[id]/export` | GET | Download all deliverables as ZIP |
 
 ---
@@ -693,7 +761,7 @@ When multiple analysts work on the **same project directory** (e.g. on a shared 
 
 > **The biggest differentiator.** Claude and other MCP-compatible AI assistants can now manage your BABOK project lifecycle _without leaving the chat interface_.
 
-The `babok-mcp` package is a [Model Context Protocol](https://modelcontextprotocol.io) server that exposes **19 tools** and 9 resources to any compatible AI client.
+The `babok-mcp` package is a [Model Context Protocol](https://modelcontextprotocol.io) server that exposes **32 tools** and 9 resources to any compatible AI client.
 
 ### Setup (Plugin install — recommended)
 
@@ -756,6 +824,12 @@ Restart Claude Desktop — a 🔧 tool icon confirms the server is connected.
 | `babok_create_jira_epic` | Create Jira epic from roadmap |
 | `babok_create_github_issues` | Create GitHub issues from roadmap |
 | `babok_read_external_context` | Read external context files |
+| `babok_get_model_routing` | Read the advanced model routing file and the providers that have keys |
+| `babok_resolve_model_route` | Effective provider/model, temperature, effort and fallback order for a profile/project and stage |
+| `babok_set_model_routing_rule` | Set or remove a routing rule (global, profile or stage) — only on explicit human request |
+
+The table lists the core tools; the server also exposes software-development product, baseline, execution and
+outcome tools.
 
 ### Example flow in Claude
 
@@ -853,6 +927,7 @@ All API keys are secured and **never committed to the repository**.
 3. **Gitignored**: `.babok_keystore`, `.env`, and `.env.*` are all in `.gitignore`
 4. **No keys in config**: `agent_config.json` (tracked by git) contains **zero API keys**
 5. **Per-provider storage**: Each provider's key is stored independently — you can have keys for all 5 providers
+6. **Multiple keys, one routing**: when several keys are configured, the Web UI (`/settings/ai`) lists the models each key can access and lets [advanced model routing](#advanced-model-routing) use, and fail over across, every configured provider. The routing file `.babok_model_routing.json` stores only provider/model names and parameters, never keys
 
 ### Setting Up API Keys
 
@@ -1084,20 +1159,19 @@ The agent is designed in compliance with GDPR, BABOK Code of Conduct, and ISO 27
 
 ## Test Suite
 
-The repository currently runs **106 automated tests** (native `node:test` runner, ESM) covering CLI workflow, templates, Two-Key gate, plugin manifests, hooks, and uninstall flow:
+The root suite currently runs **362 automated tests** (native `node:test` runner, ESM). The files are listed in the
+`test` script of `package.json`:
 
-| File | Tests | What It Covers |
-|------|-------|----------------|
-| `tests/unit/project.test.js` | 15 | Project ID generation, path resolution |
-| `tests/unit/journal.test.js` | 16 | Journal CRUD, stage transitions |
-| `tests/unit/two-key-gate.test.js` | 7 | Two-Key attestation guard and SHA checks |
-| `tests/unit/scoring.test.js` | 14 | Quality scorer rubric logic |
-| `tests/unit/validation.test.js` | 18 | Cross-stage validation rules |
-| `tests/unit/templates.test.js` | 13 | Stage template manifest and rubric alignment |
-| `tests/integration/cli-workflow.test.js` | 10 | End-to-end CLI workflow steps |
-| `tests/plugin-manifest.test.cjs` | 12 | Marketplace/plugin manifest integrity |
-| `tests/hooks.test.cjs` | 1 | Lifecycle hook wiring checks |
-| `tests/uninstall.test.cjs` | 1 | External state uninstall behavior |
+| Area | Files |
+|------|-------|
+| Core storage & gates | `project`, `journal`, `two-key-gate`, `chat-locking`, `lib-parity` (CLI ↔ MCP library mirrors) |
+| Quality & validation | `scoring`, `validation`, `templates`, `profiles`, `knowledge-loader` |
+| LLM & routing | `llm`, `model-routing`, `routed-llm` (failover, stage routing, `babok run` routing selection), `staged-generator`, `generation-context-cache`, `engine` |
+| Web UI actions | `web-stage-actions` |
+| Software-development profile | `software-development-{storage,github,gitlab,baseline,runtime,execution,outcomes,options}` |
+| Integration & plugin | `tests/integration/cli-workflow.test.js`, `tests/plugin-manifest.test.cjs`, `tests/hooks.test.cjs`, `tests/uninstall.test.cjs` |
+
+Unit test files live in `tests/unit/<name>.test.js`. The MCP server has its own smoke test (`cd babok-mcp && npm test`).
 
 Run the tests:
 

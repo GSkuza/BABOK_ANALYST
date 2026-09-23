@@ -41,8 +41,13 @@ Each project directory contains `PROJECT_JOURNAL_<id>.json` and `STAGE_0N_*.md` 
 
 Use `babok_new_project`, `babok_get_stage`, `babok_save_deliverable`,
 `babok_submit_for_review`, and human `babok approve` for the core lifecycle.
-The server exposes **18 tools**
+The server exposes **32 tools**
 and **9 stage resources** (`babok://stages/0` … `babok://stages/8`).
+
+If `babok_get_stage` returns a *Model Route* section and your host lets you pick a
+model, temperature or reasoning effort (or a sub-agent model), prefer the first
+candidate with those parameters. Call `babok_set_model_routing_rule` only when the
+human explicitly asks to change model routing.
 
 ## Stages
 

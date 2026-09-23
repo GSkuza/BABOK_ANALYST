@@ -16,6 +16,8 @@ import {
   createOpenAITextResponse,
   discoverProviderModels,
   getRateLimitRetryDelayMs,
+  isUnsupportedGenerationParameterError,
+  normalizeGenerationOptions,
   streamAnthropicTextResponse,
   streamOpenAITextResponse,
 } from '../../cli/src/llm.js';
@@ -216,10 +218,10 @@ describe('OpenAI model discovery', () => {
 
   it('does not call an API for registry-backed providers', async () => {
     const client = { models: { list: async () => { throw new Error('must not be called'); } } };
-    const result = await discoverProviderModels('gemini', 'test-key', { client });
+    const result = await discoverProviderModels('huggingface', 'hf_test_key', { client });
 
     assert.equal(result.source, 'registry');
-    assert.deepEqual(result.models, PROVIDERS.gemini.models);
+    assert.deepEqual(result.models, PROVIDERS.huggingface.models);
   });
 });
 
@@ -405,5 +407,99 @@ describe('OpenAI Responses API', () => {
     assert.equal(requestOptions.timeout, LLM_REQUEST_TIMEOUT_MS);
     assert.equal(requestOptions.maxRetries, 0);
     assert.ok(requestOptions.signal instanceof AbortSignal);
+  });
+});
+
+describe('Gemini model discovery', () => {
+  it('lists generateContent models available to the API key', async () => {
+    let requested;
+    const fetch = async (url, init) => {
+      requested = { url: String(url), key: init.headers['x-goog-api-key'] };
+      return new Response(JSON.stringify({
+        models: [
+          { name: 'models/gemini-2.5-pro', supportedGenerationMethods: ['generateContent', 'countTokens'] },
+          { name: 'models/text-embedding-004', supportedGenerationMethods: ['embedContent'] },
+          { name: 'models/gemini-2.0-flash', supportedGenerationMethods: ['generateContent'] },
+          { name: 'models/gemini-embedding-001', supportedGenerationMethods: ['generateContent'] },
+        ],
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+
+    const result = await discoverProviderModels('gemini', 'test-key', { fetch });
+
+    assert.equal(result.source, 'api');
+    assert.equal(requested.key, 'test-key');
+    assert.doesNotMatch(requested.url, /test-key/);
+    assert.deepEqual(result.models, ['gemini-2.0-flash', 'gemini-2.5-pro']);
+  });
+
+  it('falls back to the registry when the Gemini API rejects the key', async () => {
+    const fetch = async () => new Response(JSON.stringify({ error: { message: 'API key not valid' } }), { status: 400 });
+    const result = await discoverProviderModels('gemini', 'bad-key', { fetch });
+    assert.equal(result.source, 'fallback');
+    assert.match(result.error.message, /API key not valid/);
+    assert.deepEqual(result.models, PROVIDERS.gemini.models);
+  });
+});
+
+describe('generation options (temperature / effort)', () => {
+  it('normalises temperature and effort', () => {
+    assert.deepEqual(normalizeGenerationOptions({ temperature: 3, effort: 'high' }), { temperature: 2, effort: 'high' });
+    assert.deepEqual(normalizeGenerationOptions({ temperature: 'x', effort: 'extreme' }), { temperature: null, effort: null });
+  });
+
+  it('recognises unsupported-parameter rejections only', () => {
+    assert.equal(isUnsupportedGenerationParameterError({ status: 400, message: "Unsupported parameter: 'temperature'" }), true);
+    assert.equal(isUnsupportedGenerationParameterError({ status: 401, message: 'invalid temperature key' }), false);
+    assert.equal(isUnsupportedGenerationParameterError({ status: 400, message: 'context too long' }), false);
+  });
+
+  it('sends temperature and reasoning effort to OpenAI and retries without them when rejected', async t => {
+    const bodies = [];
+    t.mock.method(globalThis, 'fetch', async (_url, init) => {
+      bodies.push(JSON.parse(init.body));
+      if (bodies.length === 1) {
+        return new Response(JSON.stringify({ error: { message: "Unsupported parameter: 'temperature' is not supported with this model.", type: 'invalid_request_error' } }),
+          { status: 400, headers: { 'content-type': 'application/json' } });
+      }
+      const events = [
+        { type: 'response.output_text.delta', delta: 'ok' },
+        { type: 'response.completed', response: {} },
+      ];
+      return new Response(events.map(event => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join(''),
+        { headers: { 'content-type': 'text/event-stream' } });
+    });
+    const client = createLlmClient('openai', 'test-key', 'gpt-5.6-terra', { temperature: 0.2, effort: 'high' });
+    assert.deepEqual(client.generation, { temperature: 0.2, effort: 'high' });
+    assert.equal(await client.chat('System', 'Draft'), 'ok');
+    assert.equal(bodies.length, 2);
+    assert.equal(bodies[0].temperature, 0.2);
+    assert.deepEqual(bodies[0].reasoning, { effort: 'high' });
+    assert.equal('temperature' in bodies[1], false);
+    assert.equal('reasoning' in bodies[1], false);
+  });
+
+  it('clamps Anthropic temperature and maps effort to output_config', async () => {
+    let request;
+    const client = { messages: { create: async value => { request = value; return { content: [{ type: 'text', text: 'ok' }] }; } } };
+    await createAnthropicTextResponse(client, 'claude-sonnet-5', 'System', [{ role: 'user', content: 'x' }], {
+      generation: { temperature: 1.6, effort: 'minimal' },
+    });
+    assert.equal(request.temperature, 1);
+    assert.deepEqual(request.output_config, { effort: 'low' });
+  });
+
+  it('passes temperature and a thinking budget to Gemini thinking models', async t => {
+    let body;
+    t.mock.method(globalThis, 'fetch', async (_url, init) => {
+      body = JSON.parse(init.body);
+      return new Response(JSON.stringify({
+        candidates: [{ index: 0, content: { role: 'model', parts: [{ text: 'ok' }] }, finishReason: 'STOP' }],
+      }), { headers: { 'content-type': 'application/json' } });
+    });
+    const client = createLlmClient('gemini', 'test-key', 'gemini-2.5-pro', { temperature: 0.1, effort: 'medium' });
+    assert.equal(await client.chat('System', 'Draft'), 'ok');
+    assert.equal(body.generationConfig.temperature, 0.1);
+    assert.deepEqual(body.generationConfig.thinkingConfig, { thinkingBudget: 8192 });
   });
 });

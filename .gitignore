@@ -32,6 +32,7 @@ babok-mcp/node_modules/
 cli/.env
 cli/.babok_keystore
 .babok_keystore
+.babok_model_routing.json
 
 # Temporary files
 *.tmp
