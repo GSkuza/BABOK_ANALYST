@@ -8,6 +8,7 @@ import path from 'path';
 import readline from 'readline';
 import os from 'os';
 import { DEFAULT_PROFILE_ID, getStage, loadProfile, resolveProfilePath } from './profiles.js';
+import { EFFORT_LEVELS } from './model-routing.js';
 
 export const LLM_REQUEST_TIMEOUT_MS = 10 * 60 * 1000;
 const LLM_REQUEST_OPTIONS = { timeout: LLM_REQUEST_TIMEOUT_MS, maxRetries: 0 };
@@ -322,6 +323,7 @@ export async function discoverProviderModels(provider, apiKey, options = {}) {
 let activeProvider = null;   // 'gemini' | 'openai' | 'anthropic' | 'huggingface'
 let activeClient = null;
 let activeModel = null;
+let activeGeneration = { temperature: null, effort: null };
 let conversationMessages = []; // universal message buffer
 let systemPromptCache = '';
 
@@ -642,11 +644,14 @@ function chalk_green(s) { return `\x1b[32m${s}\x1b[0m`; }
 
 /**
  * Initialize the selected provider.
+ * @param {{ temperature?: number|null, effort?: string|null }} [generationOptions]
+ *   Optional session-wide sampling/reasoning settings (see createLlmClient).
  */
-export async function initializeProvider(provider, apiKey, modelName) {
+export async function initializeProvider(provider, apiKey, modelName, generationOptions = {}) {
   const info = PROVIDERS[provider];
   if (!info) throw new Error(`Unknown provider: ${provider}`);
   const model = modelName || info.defaultModel;
+  activeGeneration = normalizeGenerationOptions(generationOptions);
 
   switch (provider) {
     case 'gemini': {
@@ -703,7 +708,7 @@ export async function initializeProvider(provider, apiKey, modelName) {
 //  GENERATION PARAMETERS (temperature / effort)
 // ──────────────────────────────────────────────
 
-export const EFFORT_LEVELS = ['minimal', 'low', 'medium', 'high'];
+export { EFFORT_LEVELS };
 
 const GEMINI_THINKING_BUDGET = { minimal: 512, low: 2048, medium: 8192, high: 24576 };
 const ANTHROPIC_EFFORT = { minimal: 'low', low: 'low', medium: 'medium', high: 'high' };
@@ -1008,7 +1013,13 @@ export function createLlmClient(provider, apiKey, modelName, generationOptions =
       }
     };
 
-    return withGenerationFallback(generation, run, () => emitted);
+    try {
+      return await withGenerationFallback(generation, run, () => emitted);
+    } catch (error) {
+      // Lets failover wrappers avoid replaying a request whose output already streamed.
+      if (emitted && error && typeof error === 'object') error.partialOutputEmitted = true;
+      throw error;
+    }
   };
 
   return { chat, providerName: info.name, modelName: model, generation };
@@ -1034,9 +1045,11 @@ export function clearChatHistory() {
  */
 export async function sendMessageStream(message, onChunk, options = {}) {
   conversationMessages.push({ role: 'user', parts: [{ text: message }] });
+  let emitted = false;
+  const emit = onChunk ? (delta) => { emitted = true; onChunk(delta); } : null;
 
   try {
-    const fullResponse = await withControlledRequest(async (signal) => {
+    const fullResponse = await withGenerationFallback(activeGeneration, gen => withControlledRequest(async (signal) => {
       let responseText = '';
 
       switch (activeProvider) {
@@ -1044,14 +1057,14 @@ export async function sendMessageStream(message, onChunk, options = {}) {
           const chat = activeClient.startChat({
             history: conversationMessages.slice(0, -1),
             systemInstruction: { parts: [{ text: systemPromptCache }] },
-            generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
+            generationConfig: geminiGenerationConfig(activeModel, gen),
           });
           const result = await chat.sendMessageStream(message);
           for await (const chunk of result.stream) {
             if (signal.aborted) throw createAbortError(signal, `Gemini ${activeModel} stream cancelled.`);
             const text = chunk.text();
             responseText += text;
-            if (onChunk) onChunk(text);
+            if (emit) emit(text);
           }
           break;
         }
@@ -1063,14 +1076,14 @@ export async function sendMessageStream(message, onChunk, options = {}) {
               parts: m.parts,
             })),
             systemInstruction: { parts: [{ text: systemPromptCache }] },
-            generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
+            generationConfig: geminiGenerationConfig(activeModel, gen),
           });
           const result = await chat.sendMessageStream(message);
           for await (const chunk of result.stream) {
             if (signal.aborted) throw createAbortError(signal, `Vertex ${activeModel} stream cancelled.`);
             const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
             responseText += text;
-            if (onChunk && text) onChunk(text);
+            if (emit && text) emit(text);
           }
           break;
         }
@@ -1087,10 +1100,11 @@ export async function sendMessageStream(message, onChunk, options = {}) {
               content: m.parts[0].text,
             })),
           ];
-          responseText = await streamOpenAITextResponse(activeClient, selectedModel, messages, onChunk, {
+          responseText = await streamOpenAITextResponse(activeClient, selectedModel, messages, emit, {
             signal,
             timeoutMs: options.timeoutMs,
             requestLabel: options.requestLabel || `${PROVIDERS[activeProvider]?.name || activeProvider} ${selectedModel} chat`,
+            generation: activeProvider === 'local' ? { temperature: gen.temperature, effort: null } : gen,
           });
           break;
         }
@@ -1105,11 +1119,12 @@ export async function sendMessageStream(message, onChunk, options = {}) {
             activeModel,
             systemPromptCache,
             messages,
-            onChunk,
+            emit,
             {
               signal,
               timeoutMs: options.timeoutMs,
               requestLabel: options.requestLabel || `Anthropic ${activeModel} chat`,
+              generation: gen,
             },
           );
           break;
@@ -1127,7 +1142,7 @@ export async function sendMessageStream(message, onChunk, options = {}) {
           const streamOptions = {
             messages,
             max_tokens: 8192,
-            temperature: 0.7,
+            temperature: gen.temperature ?? 0.7,
             provider: 'auto',
           };
           if (!isEndpoint) {
@@ -1141,7 +1156,7 @@ export async function sendMessageStream(message, onChunk, options = {}) {
             if (signal.aborted) throw createAbortError(signal, `Hugging Face ${activeModel} stream cancelled.`);
             const text = chunk.choices?.[0]?.delta?.content || '';
             responseText += text;
-            if (onChunk && text) onChunk(text);
+            if (emit && text) emit(text);
           }
           break;
         }
@@ -1155,12 +1170,13 @@ export async function sendMessageStream(message, onChunk, options = {}) {
       signal: options.signal,
       timeoutMs: options.timeoutMs,
       requestLabel: options.requestLabel || `${PROVIDERS[activeProvider]?.name || activeProvider} ${activeModel} chat`,
-    });
+    }), () => emitted);
 
     conversationMessages.push({ role: 'model', parts: [{ text: fullResponse }] });
     return fullResponse;
   } catch (error) {
     conversationMessages.pop();
+    if (emitted && error && typeof error === 'object') error.partialOutputEmitted = true;
     throw error;
   }
 }
@@ -1173,6 +1189,7 @@ export function getActiveProviderInfo() {
     provider: activeProvider,
     model: activeModel,
     name: PROVIDERS[activeProvider]?.name || activeProvider,
+    generation: { ...activeGeneration },
   };
 }
 

@@ -14,6 +14,15 @@ import { exportProject } from '../src/commands/export.js';
 import { chatCommand } from '../src/commands/chat.js';
 import { setLanguageCommand, showLanguage } from '../src/commands/language.js';
 import { listModels, changeModel } from '../src/commands/llm.js';
+import {
+  collectRepeatable,
+  routingFailoverCommand,
+  routingResetCommand,
+  routingResolveCommand,
+  routingSetCommand,
+  routingShowCommand,
+  routingUnsetCommand,
+} from '../src/commands/routing.js';
 import { getCurrentLanguage } from '../src/language.js';
 import { makeCommand, makeDocx, makePdf } from '../src/commands/makedoc.js';
 import { runAnalysis } from '../src/commands/run.js';
@@ -120,6 +129,7 @@ program
   .option('-s, --stage <number>', 'Stage number (1-8)')
   .option('-p, --provider <name>', 'AI provider: gemini, openai, anthropic, huggingface')
   .option('-m, --model <name>', 'Model name (provider-specific)')
+  .option('--no-routing', 'Ignore advanced model routing (.babok_model_routing.json)')
   .option('--debate', 'Enable Analyst→Critic→Synthesiser debate for deep-analysis stages (3,4,6,8)')
   .action(chatCommand);
 
@@ -174,6 +184,56 @@ llmCmd
   .description('Shortcut to set API key')
   .action(changeModel); // changeModel also handles keys if missing
 
+// Advanced model routing — shared with the Web UI (/settings/ai) and MCP server.
+const routingCmd = program
+  .command('routing')
+  .alias('ROUTING')
+  .description('Advanced model routing per profile and stage (provider, model, temperature, effort, failover)');
+
+routingCmd
+  .command('show')
+  .description('Show the routing configuration and the providers with API keys')
+  .option('--json', 'Print raw JSON')
+  .action(routingShowCommand);
+
+routingCmd
+  .command('resolve')
+  .description('Show the effective route (candidates, temperature, effort) for a profile/stage')
+  .option('-p, --profile <id>', 'Pipeline profile (default: babok, or the project profile)')
+  .option('-s, --stage <number>', 'Stage number')
+  .option('--project <id>', 'Take the profile (and current stage) from a project')
+  .option('--json', 'Print raw JSON')
+  .action(routingResolveCommand);
+
+routingCmd
+  .command('set')
+  .description('Set a routing rule (global default, profile default, or one stage)')
+  .option('-p, --profile <id>', 'Profile to configure (omit for the global default)')
+  .option('-s, --stage <number>', 'Stage to configure (requires --profile)')
+  .option('--provider <name>', 'Provider: gemini, openai, anthropic, huggingface, vertex, local')
+  .option('-m, --model <name>', 'Model id (requires --provider)')
+  .option('-t, --temperature <value>', 'Temperature 0-2 ("none" to inherit)')
+  .option('-e, --effort <level>', 'Reasoning effort: minimal, low, medium, high ("none" to inherit)')
+  .option('-f, --fallback <provider[:model]>', 'Fallback candidate (repeatable, ordered; "none" clears inherited fallbacks)', collectRepeatable, [])
+  .action(routingSetCommand);
+
+routingCmd
+  .command('unset')
+  .description('Remove a routing rule (global default, profile, or one stage)')
+  .option('-p, --profile <id>', 'Profile')
+  .option('-s, --stage <number>', 'Stage (requires --profile)')
+  .action(routingUnsetCommand);
+
+routingCmd
+  .command('failover <state>')
+  .description('Fail over across every configured API key: on | off')
+  .action(routingFailoverCommand);
+
+routingCmd
+  .command('reset')
+  .description('Remove all routing rules')
+  .action(routingResetCommand);
+
 program
   .command('zacznij')
   .alias('ZACZNIJ')
@@ -205,6 +265,7 @@ program
   .option('--provider <name>', 'AI provider: gemini, openai, anthropic, huggingface, vertex')
   .option('-m, --model <name>', 'Model name (provider-specific)')
   .option('--deep-model <name>', 'Model for deep-analysis stages (per profile); defaults to --model')
+  .option('--no-routing', 'Ignore advanced model routing (.babok_model_routing.json)')
   .option('-l, --lang <lang>', 'Language: EN or PL (overrides context file)')
   .option('-s, --stages <list>', 'Comma-separated stages to run, e.g. "1,2,3" (default: all)')
   .option('--profile <id>', 'Pipeline profile (see profiles/); prompts interactively if omitted')

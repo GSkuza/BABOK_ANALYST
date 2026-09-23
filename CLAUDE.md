@@ -137,6 +137,8 @@ Full design/roadmap (partly aspirational): `docs/L2_L3_ARCHITECTURE.md`.
 | `cli/src/profiles.js` | Pipeline profile loader (`loadProfile`, `buildProjectIdRegex`, `profileIdFromJournal`); byte-identical mirror in `babok-mcp/src/lib/profiles.js` |
 | `cli/src/project.js` | Project ID generation (profile prefix) & path resolution |
 | `cli/src/llm.js` | Multi-provider LLM client (Gemini, OpenAI, Anthropic, HuggingFace, Vertex AI) with encrypted key storage |
+| `cli/src/model-routing.js` | Advanced model routing (`.babok_model_routing.json`): per profile/stage provider, model, temperature, effort, fallbacks; dependency-free, byte-identical mirror in `babok-mcp/src/lib/model-routing.js` |
+| `cli/src/routed-llm.js` | Failover LLM client over a resolved route — used by `babok run`/orchestrator, `babok chat`, `babok sd`, the web stage runner; `babok routing` edits the file, MCP exposes `babok_get_model_routing`/`babok_resolve_model_route`/`babok_set_model_routing_rule` |
 | `cli/src/lock.js` | File locking for concurrent team access |
 | `cli/src/quality/scorer.js` | Quality scoring: Completeness 40%, SMART 30%, Consistency 30% (rubric from the project's profile) |
 | `cli/src/validation/cross-stage-validator.js` | Runs the profile's rules (`rulesForProfile`) from `cli/src/validation/rules/` against a project |

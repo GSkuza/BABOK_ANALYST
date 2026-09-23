@@ -6,9 +6,18 @@ import { createGitlabConnector } from '../software-development/hosting/gitlab.js
 import { setExecutionAuthorization, readExecutionAuthorization } from '../software-development/runtime/execution-authorization.js';
 import { runCommand as runAuthorizedCommand } from '../software-development/runtime/code-executor.js';
 import { getApiKey, getPreferredProvider, createLlmClient, listStoredProviders, PROVIDERS } from '../llm.js';
+import { activeModelRouting, createRoutedLlmClient, resolveConfiguredRoute } from '../routed-llm.js';
 
-/** Best-effort LLM client from whatever provider is already configured (env var or `babok setup`/Web AI Settings) — null if none. */
-function autoDetectLlmClient() {
+/**
+ * Best-effort LLM client from whatever provider is already configured (env var or `babok setup`/Web AI Settings) — null if none.
+ * Honours advanced model routing for the software-development profile stage (baseline = Stage 1).
+ */
+function autoDetectLlmClient(stage = 1) {
+  const routing = activeModelRouting();
+  if (routing) {
+    const route = resolveConfiguredRoute({ routing, profile: 'software-development', stage });
+    if (route.candidates.length > 0) return createRoutedLlmClient(route);
+  }
   const preferred = getPreferredProvider();
   const candidates = preferred ? [preferred, ...listStoredProviders()] : listStoredProviders();
   const provider = candidates.find(p => getApiKey(p));

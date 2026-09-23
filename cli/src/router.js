@@ -1,5 +1,6 @@
 import { createLlmClient, getApiKey, PROVIDERS } from './llm.js';
 import { createHfTaskClient } from './llm-tasks.js';
+import { createRoutedLlmClient, resolveConfiguredRoute } from './routed-llm.js';
 
 const DEEP_STAGES = new Set([3, 4, 6, 8]);
 
@@ -80,6 +81,10 @@ export function createTaskRouter(options = {}) {
 
   const chatClientCache = new Map();
   const hfTaskClientCache = new Map();
+  // Advanced profile/stage routing (.babok_model_routing.json). Plain JSON so
+  // it survives the worker_threads boundary inside llmRuntime.
+  const modelRouting = options.modelRouting || null;
+  const profileId = options.profileId || 'babok';
 
   const getProviderApiKey = (provider) => {
     if (provider === primaryProvider) return primaryApiKey;
@@ -106,6 +111,15 @@ export function createTaskRouter(options = {}) {
     hfTaskClientCache.set(provider, client);
     return client;
   };
+
+  const resolveStageRoute = (stageNumber) => resolveConfiguredRoute({
+    routing: modelRouting || {},
+    profile: profileId,
+    stage: stageNumber,
+    getKey: getProviderApiKey,
+    availableProviders: options.availableProviders,
+    preferredProvider: primaryProvider || options.preferredProvider,
+  });
 
   const resolveGenerateConfig = (stageNumber) => {
     const taskCfg = routing.tasks.generate_deliverable || {};
@@ -222,6 +236,20 @@ export function createTaskRouter(options = {}) {
   };
 
   const getStageClient = (stageNumber) => {
+    if (modelRouting) {
+      const route = resolveStageRoute(stageNumber);
+      const routed = createRoutedLlmClient(route, {
+        getKey: getProviderApiKey,
+        onFailover: options.onRouteFailover,
+      });
+      return Object.assign(routed, {
+        summarizeContext,
+        classify,
+        classifyVerdict,
+        scoreQuality,
+      });
+    }
+
     const cfg = resolveGenerateConfig(stageNumber);
     const client = getChatClient(cfg.provider || primaryProvider, cfg.model || primaryModel);
     if (!client) {
@@ -241,10 +269,12 @@ export function createTaskRouter(options = {}) {
 
   return {
     getStageClient,
+    resolveStageRoute,
     summarizeContext,
     classify,
     classifyVerdict,
     scoreQuality,
     routing,
+    modelRouting,
   };
 }
