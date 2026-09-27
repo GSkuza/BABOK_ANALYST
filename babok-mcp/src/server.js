@@ -29,6 +29,7 @@ import {
 
 import { hashFileUtf8, sha256Content } from './lib/two-key-gate.js';
 import { getStageTemplatePayload } from './lib/templates.js';
+import { buildPriorStageContext } from './lib/prior-stage-context.js';
 import {
   DEFAULT_PROFILE_ID,
   getMaxStage,
@@ -402,6 +403,18 @@ server.tool(
       sections.push('');
       sections.push(`## Stage Instructions`);
       sections.push(`*(Prompt file not found — expected ${profile.stages[stage_n].prompt_file} in ${resolveProfilePath(profile, 'stages_dir')})*`);
+    }
+
+    const priorStageContext = buildPriorStageContext(
+      journal.stages
+        .filter(s => s.stage < stage_n)
+        .map(s => ({ stage: s.stage, name: s.name, status: s.status, content: getDeliverable(fullId, s.stage, profile) })),
+      { currentStage: stage_n },
+    );
+    if (priorStageContext) {
+      sections.push('');
+      sections.push('## Prior-Stage Deliverables');
+      sections.push(priorStageContext);
     }
 
     if (deliverable) {

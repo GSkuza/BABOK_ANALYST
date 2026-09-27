@@ -16,6 +16,8 @@ const MIRRORED = [
   ['cli/src/profiles.js', 'babok-mcp/src/lib/profiles.js'],
   ['cli/src/two-key-gate.js', 'babok-mcp/src/lib/two-key-gate.js'],
   ['cli/src/model-routing.js', 'babok-mcp/src/lib/model-routing.js'],
+  ['cli/src/prior-stage-context.js', 'babok-mcp/src/lib/prior-stage-context.js'],
+  ['cli/src/prior-stage-context.js', 'web/lib/prior-stage-context.js'],
   ['cli/src/quality/checks/completeness.js', 'babok-mcp/src/lib/quality/checks/completeness.js'],
   ['cli/src/quality/checks/smart.js', 'babok-mcp/src/lib/quality/checks/smart.js'],
   ['cli/src/quality/checks/consistency.js', 'babok-mcp/src/lib/quality/checks/consistency.js'],
