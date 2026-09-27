@@ -294,7 +294,7 @@ describe('Anthropic Messages API', () => {
       model: 'claude-sonnet-5',
       system: 'System',
       messages,
-      max_tokens: 8192,
+      max_tokens: 16384,
     });
   });
 
@@ -327,7 +327,7 @@ describe('Anthropic Messages API', () => {
     assert.equal(result, 'Part 1 + Part 2');
     assert.deepEqual(chunks, ['Part 1', ' + Part 2']);
     assert.equal(request.model, 'claude-opus-5');
-    assert.equal(request.max_tokens, 8192);
+    assert.equal(request.max_tokens, 16384);
     assert.equal('temperature' in request, false);
   });
 });
@@ -367,7 +367,7 @@ describe('OpenAI Responses API', () => {
     assert.deepEqual(request, {
       model: 'gpt-5.6-terra',
       input: messages,
-      max_output_tokens: 8192,
+      max_output_tokens: 16384,
     });
     assert.deepEqual(requestOptions, { timeout: LLM_REQUEST_TIMEOUT_MS, maxRetries: 0 });
   });

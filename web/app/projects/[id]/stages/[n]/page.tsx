@@ -116,6 +116,7 @@ export default async function StagePage({
                 status={stage.status}
                 hasDeliverable={Boolean(stage.deliverable)}
                 submittedForReview={Boolean(stage.agent_submission)}
+                revisionOpen={Boolean(stage.revision_open)}
               />
             </div>
           </div>

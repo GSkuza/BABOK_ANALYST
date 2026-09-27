@@ -19,7 +19,7 @@ export class StageActionError extends Error {
 export async function runStageAction(
   projectId: string,
   stageNum: number,
-  action: 'approve' | 'reject',
+  action: 'approve' | 'reject' | 'open_revision',
   reason?: string,
   execFileImpl = execFileAsync,
 ) {
@@ -28,6 +28,11 @@ export async function runStageAction(
   try {
     if (action === 'approve') {
       await execFileImpl('node', [cliPath, 'approve', projectId, String(stageNum), '--attestor', 'Web UI'], { cwd: REPO_ROOT });
+      return;
+    }
+
+    if (action === 'open_revision') {
+      await execFileImpl('node', [cliPath, 'open-revision', projectId, String(stageNum)], { cwd: REPO_ROOT });
       return;
     }
 

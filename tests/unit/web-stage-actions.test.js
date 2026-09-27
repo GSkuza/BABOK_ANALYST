@@ -99,6 +99,19 @@ describe('web stage action delegation', () => {
     );
   });
 
+  it('routes open_revision requests through the CLI open-revision command', async () => {
+    const calls = [];
+    await runStageAction('BABOK-20260922-ABCD', 1, 'open_revision', undefined, async (...args) => {
+      calls.push(args);
+      return { stdout: '', stderr: '' };
+    });
+
+    assert.equal(calls.length, 1);
+    const [cmd, argv] = calls[0];
+    assert.equal(cmd, 'node');
+    assert.deepEqual(argv.slice(1), ['open-revision', 'BABOK-20260922-ABCD', '1']);
+  });
+
   it('routes reject requests through the CLI reject command with a default reason', async () => {
     const calls = [];
     await runStageAction('BABOK-20260922-ABCD', 2, 'reject', undefined, async (...args) => {
