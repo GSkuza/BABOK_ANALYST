@@ -31,7 +31,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const journalPath = path.join(projectsDir, id, `PROJECT_JOURNAL_${id}.json`);
   if (!fs.existsSync(journalPath)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   try {
-    if (action !== 'approve' && action !== 'reject') {
+    if (action !== 'approve' && action !== 'reject' && action !== 'open_revision') {
       return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
     await runStageAction(id, stageNum, action, reason);

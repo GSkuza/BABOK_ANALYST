@@ -712,6 +712,10 @@ export { EFFORT_LEVELS };
 
 const GEMINI_THINKING_BUDGET = { minimal: 512, low: 2048, medium: 8192, high: 24576 };
 const ANTHROPIC_EFFORT = { minimal: 'low', low: 'low', medium: 'medium', high: 'high' };
+// Visible output budget for stage deliverables. Reasoning/thinking tokens (effort levels) are
+// billed from this same budget on several providers, so 8192 was too tight for verbose, table-heavy
+// stage documents and silently truncated them mid-section. Kept generous across all providers.
+const LLM_MAX_OUTPUT_TOKENS = 16384;
 
 /**
  * Normalise user-facing generation settings. `null` means "provider default".
@@ -778,7 +782,7 @@ function geminiGenerationConfig(model, generation = {}) {
   const { temperature, effort } = normalizeGenerationOptions(generation);
   const supportsThinking = /gemini-(?:2\.5|[3-9])/i.test(model || '');
   return {
-    maxOutputTokens: 8192,
+    maxOutputTokens: LLM_MAX_OUTPUT_TOKENS,
     temperature: temperature ?? 0.7,
     ...(effort !== null && supportsThinking
       ? { thinkingConfig: { thinkingBudget: GEMINI_THINKING_BUDGET[effort] } }
@@ -791,7 +795,7 @@ export async function createOpenAITextResponse(client, model, messages, generati
     const response = await client.responses.create({
       model,
       input: messages,
-      max_output_tokens: 8192,
+      max_output_tokens: LLM_MAX_OUTPUT_TOKENS,
       ...openAIGenerationParams(generation),
     }, LLM_REQUEST_OPTIONS);
     return response.output_text || '';
@@ -803,7 +807,7 @@ export async function streamOpenAITextResponse(client, model, messages, onChunk,
     const stream = await client.responses.create({
       model,
       input: messages,
-      max_output_tokens: 8192,
+      max_output_tokens: LLM_MAX_OUTPUT_TOKENS,
       ...openAIGenerationParams(options.generation),
       stream: true,
     }, { ...LLM_REQUEST_OPTIONS, signal });
@@ -830,7 +834,7 @@ export async function createAnthropicTextResponse(client, model, systemPrompt, m
       model,
       system: systemPrompt,
       messages,
-      max_tokens: 8192,
+      max_tokens: LLM_MAX_OUTPUT_TOKENS,
       ...anthropicGenerationParams(options.generation),
     });
     return response.content?.find(block => block.type === 'text')?.text || '';
@@ -843,7 +847,7 @@ export async function streamAnthropicTextResponse(client, model, systemPrompt, m
       model,
       system: systemPrompt,
       messages,
-      max_tokens: 8192,
+      max_tokens: LLM_MAX_OUTPUT_TOKENS,
       ...anthropicGenerationParams(options.generation),
     });
     let fullResponse = '';
@@ -971,7 +975,7 @@ export function createLlmClient(provider, apiKey, modelName, generationOptions =
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userMessage },
               ],
-              max_tokens: 8192,
+              max_tokens: LLM_MAX_OUTPUT_TOKENS,
               temperature: gen.temperature ?? 0.7,
               ...(gen.effort !== null ? { reasoning_effort: gen.effort } : {}),
             }, { ...LLM_REQUEST_OPTIONS, signal: requestSignal });
@@ -1001,7 +1005,7 @@ export function createLlmClient(provider, apiKey, modelName, generationOptions =
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userMessage },
               ],
-              max_tokens: 8192,
+              max_tokens: LLM_MAX_OUTPUT_TOKENS,
               ...(gen.temperature !== null ? { temperature: gen.temperature } : {}),
             });
             if (requestSignal.aborted) throw createAbortError(requestSignal, `Hugging Face ${model} request cancelled.`);
@@ -1141,7 +1145,7 @@ export async function sendMessageStream(message, onChunk, options = {}) {
           const isEndpoint = activeModel.startsWith('http') || activeModel.includes('.endpoints.huggingface.cloud');
           const streamOptions = {
             messages,
-            max_tokens: 8192,
+            max_tokens: LLM_MAX_OUTPUT_TOKENS,
             temperature: gen.temperature ?? 0.7,
             provider: 'auto',
           };
