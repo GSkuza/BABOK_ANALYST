@@ -10,6 +10,7 @@ import {
   generateStageDraftFromChat,
   getStageChatHistory,
   sendStageChatMessage,
+  startStageInterview,
 } from '../../web/lib/stage-chat.ts';
 import { normalizeAgentMarkdown } from '../../web/lib/chat-markdown.ts';
 
@@ -271,6 +272,66 @@ describe('web AI stage interview', () => {
       assert.equal(journal.stages[0].status, 'completed');
       assert.match(journal.stages[0].agent_submission.content_sha256, /^[a-f0-9]{64}$/);
       assert.match(journal.stages[0].agent_submission.review_id, /^rev-/);
+    } finally {
+      fs.rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it('gives a later-stage interview the prior-stage deliverables so it does not re-ask them', async () => {
+    const fixture = writeFixture();
+    const profilePath = path.join(fixture.profilesDir, 'babok', 'profile.json');
+    const profileJson = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
+    profileJson.stages.push({ stage: 1, deliverable_file: 'STAGE_01_Init.md', prompt_file: 'stage_1.md' });
+    fs.writeFileSync(profilePath, JSON.stringify(profileJson));
+    fs.writeFileSync(path.join(fixture.root, 'babok', 'stages', 'stage_1.md'), 'STAGE ONE');
+    const journalPath = path.join(fixture.projectDir, `PROJECT_JOURNAL_${fixture.projectId}.json`);
+    const journal = JSON.parse(fs.readFileSync(journalPath, 'utf8'));
+    journal.stages[0].status = 'approved';
+    journal.stages.push({ stage: 1, name: 'Stage one', status: 'in_progress' });
+    fs.writeFileSync(journalPath, JSON.stringify(journal));
+    fs.writeFileSync(
+      path.join(fixture.projectDir, fixture.deliverableFile),
+      '# Charter\n\n## Scope\n\nPilot covers the Warsaw truck fleet only.\n\n## Approval\n\nSigned by sponsor.\n',
+    );
+    const prompts = [];
+    const agentRunner = async (systemPrompt, userPrompt) => {
+      prompts.push({ systemPrompt, userPrompt });
+      return { provider: 'Mock LLM', text: 'Which fleet KPI matters most?' };
+    };
+    const options = { ...fixture, repositoryRoot: fixture.root, agentRunner };
+
+    try {
+      await startStageInterview(fixture.projectId, 1, options);
+      assert.match(prompts[0].systemPrompt, /PRIOR-STAGE DELIVERABLES/);
+      assert.match(prompts[0].systemPrompt, /Stage 0: Stage zero \[APPROVED/);
+      assert.match(prompts[0].systemPrompt, /Warsaw truck fleet only/);
+      assert.doesNotMatch(prompts[0].systemPrompt, /Signed by sponsor/);
+      assert.match(prompts[0].userPrompt, /what the prior-stage deliverables already establish/);
+
+      await startStageInterview(fixture.projectId, 0, options);
+      assert.doesNotMatch(prompts[1].systemPrompt, /PRIOR-STAGE DELIVERABLES/);
+    } finally {
+      fs.rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps early interview answers instead of cutting the transcript at 40 messages', async () => {
+    const fixture = writeFixture();
+    const history = Array.from({ length: 60 }, (_, index) => ({
+      role: index % 2 === 0 ? 'user' : 'model',
+      parts: [{ text: index === 0 ? 'EARLIEST-FACT: 42 depots' : `message ${index}` }],
+    }));
+    fs.mkdirSync(path.join(fixture.projectDir, 'chat_history'), { recursive: true });
+    fs.writeFileSync(path.join(fixture.projectDir, 'chat_history', 'stage_0.json'), JSON.stringify({ messages: history }));
+    const prompts = [];
+    const agentRunner = async (systemPrompt, userPrompt) => {
+      prompts.push({ systemPrompt, userPrompt });
+      return { provider: 'Mock LLM', text: 'Next question?' };
+    };
+
+    try {
+      await sendStageChatMessage(fixture.projectId, 0, 'Continue.', { ...fixture, repositoryRoot: fixture.root, agentRunner });
+      assert.match(prompts[0].userPrompt, /EARLIEST-FACT: 42 depots/);
     } finally {
       fs.rmSync(fixture.root, { recursive: true, force: true });
     }

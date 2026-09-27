@@ -29,6 +29,7 @@ import { withStageLock } from '../lock.js';
 import { runDebate } from '../reasoning/debate.js';
 import { generateStagedDeliverable } from '../generation/staged-generator.js';
 import { buildStageSystemPromptBase } from '../generation/prompt-builder.js';
+import { buildPriorStageContext } from '../prior-stage-context.js';
 import { summarizeConversationHistory } from '../context-window.js';
 import { activeModelRouting, isNonFailoverError, listConfiguredProviders, resolveConfiguredRoute } from '../routed-llm.js';
 
@@ -355,13 +356,35 @@ export async function chatCommand(partialId, options) {
 }
 
 /**
+ * Read earlier stages' deliverables and render them as the prior-stage evidence block,
+ * so an interview never re-elicits what previous stages already established.
+ */
+export function loadPriorStageContext(journal, stageNumber, projectDir) {
+  const dir = projectDir || (journal.project_id ? getProjectDir(journal.project_id) : null);
+  if (!dir || !Array.isArray(journal.stages)) return '';
+  const fileNames = getStageFileNames(loadProfile(journal.profile));
+  const entries = journal.stages
+    .filter(s => s.stage < stageNumber)
+    .map(s => {
+      const fileName = s.deliverable_file || fileNames[s.stage];
+      if (!fileName || path.basename(fileName) !== fileName) return null;
+      const filePath = path.join(dir, fileName);
+      if (!fs.existsSync(filePath)) return null;
+      return { stage: s.stage, name: s.name, status: s.status, content: fs.readFileSync(filePath, 'utf-8') };
+    })
+    .filter(Boolean);
+  return buildPriorStageContext(entries, { currentStage: stageNumber });
+}
+
+/**
  * Build context prompt with project info
  */
-export function buildContextPrompt(journal, stageNumber, historySummary = '') {
+export function buildContextPrompt(journal, stageNumber, historySummary = '', projectDir) {
   const profile = loadProfile(journal.profile);
   const mainPrompt = loadMainSystemPrompt(profile);
   const stagePrompt = loadStagePrompt(stageNumber, profile);
   const elicitationPolicy = loadElicitationPolicy();
+  const priorStageContext = loadPriorStageContext(journal, stageNumber, projectDir);
   
   const stageName = journal.stages.find(s => s.stage === stageNumber)?.name || `Stage ${stageNumber}`;
   const stageInfo = journal.stages.find(s => s.stage === stageNumber);
@@ -395,7 +418,8 @@ LANGUAGE INSTRUCTION: You MUST respond in ${journal.language === 'PL' ? 'POLISH'
 
 `;
 
-  return mainPrompt + '\n\n' + stagePrompt + '\n\n' + elicitationPolicy + '\n\n' + contextBlock;
+  return mainPrompt + '\n\n' + stagePrompt + '\n\n' + elicitationPolicy + '\n\n'
+    + (priorStageContext ? priorStageContext + '\n\n' : '') + contextBlock;
 }
 
 /**
@@ -605,7 +629,10 @@ async function handleGenerate(projectId, stageNumber, journal) {
     conversation: conversationState.recentMessages,
   };
 
-  const systemPromptBase = buildStageSystemPromptBase(profile, stageNumber, projectContext, language);
+  const priorStageContext = loadPriorStageContext(journal, stageNumber, getProjectDir(projectId));
+  const systemPromptBase = buildStageSystemPromptBase(profile, stageNumber, projectContext, language, {
+    prevContext: priorStageContext ? `\n\n${priorStageContext}\n` : '',
+  });
   const userMessageIntro = language === 'PL'
     ? `Wygeneruj kompletny dokument dostarczany dla Etapu ${stageNumber}: "${stageMeta?.name || ''}". Użyj kontekstu projektu i dotychczasowej rozmowy.`
     : `Generate the complete deliverable document for Stage ${stageNumber}: "${stageMeta?.name || ''}". Use the project context and the conversation so far.`;

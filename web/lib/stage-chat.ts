@@ -3,11 +3,15 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { saveStageDraft, StageContentError, withStageWriteLock } from './stage-content.ts';
+import { buildPriorStageContext } from './prior-stage-context.js';
 
 const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const AGENT_RUNNER = path.join(REPO_ROOT, 'scripts', 'web-stage-agent.mjs');
 const MAX_MESSAGE_LENGTH = 20_000;
-const MAX_TRANSCRIPT_LENGTH = 60_000;
+// Character budgets (not message counts): long interviews must not silently lose their
+// earliest answers, which are usually the scope and data facts everything else builds on.
+const MAX_INTERVIEW_TRANSCRIPT_LENGTH = 100_000;
+const MAX_DRAFT_TRANSCRIPT_LENGTH = 200_000;
 const MAX_AGENT_OUTPUT_BYTES = 2 * 1024 * 1024;
 
 export interface StageChatMessage {
@@ -28,6 +32,7 @@ interface Journal {
     name?: string;
     status: string;
     notes?: string;
+    deliverable_file?: string;
     last_chat_at?: string;
     chat_message_count?: number;
   }>;
@@ -35,7 +40,7 @@ interface Journal {
 
 interface Profile {
   paths: { system_prompt: string; stages_dir: string };
-  stages: Array<{ stage: number; prompt_file: string }>;
+  stages: Array<{ stage: number; prompt_file: string; deliverable_file?: string }>;
 }
 
 interface AgentResult {
@@ -145,12 +150,21 @@ function messageText(message: StageChatMessage) {
   return message.parts.map((part) => part.text).join('');
 }
 
-function buildTranscript(messages: StageChatMessage[]) {
-  const text = messages
-    .slice(-40)
-    .map((message) => `${message.role === 'user' ? 'USER' : 'ANALYST'}: ${messageText(message)}`)
-    .join('\n\n');
-  return text.slice(-MAX_TRANSCRIPT_LENGTH);
+function buildTranscript(messages: StageChatMessage[], maxLength = MAX_INTERVIEW_TRANSCRIPT_LENGTH) {
+  const lines = messages.map(
+    (message) => `${message.role === 'user' ? 'USER' : 'ANALYST'}: ${messageText(message)}`,
+  );
+  const kept: string[] = [];
+  let length = 0;
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    if (length + lines[index].length > maxLength && kept.length > 0) {
+      kept.unshift(`[… ${index + 1} earlier messages omitted to fit the context budget …]`);
+      break;
+    }
+    kept.unshift(lines[index]);
+    length += lines[index].length + 2;
+  }
+  return kept.join('\n\n');
 }
 
 function listValues(values: unknown[] | undefined, formatter: (value: unknown) => string) {
@@ -174,6 +188,7 @@ function readPromptContext(journal: Journal, stageNumber: number, options: Stage
   const stagePromptPath = path.join(repositoryRoot, profile.paths.stages_dir, profileStage.prompt_file);
   const elicitationPolicyPath = path.join(repositoryRoot, 'BABOK_AGENT', 'elicitation-policy.md');
   return {
+    profile,
     mainPrompt: fs.readFileSync(/* turbopackIgnore: true */ systemPromptPath, 'utf-8'),
     stagePrompt: fs.readFileSync(/* turbopackIgnore: true */ stagePromptPath, 'utf-8'),
     elicitationPolicy: fs.existsSync(/* turbopackIgnore: true */ elicitationPolicyPath)
@@ -233,22 +248,50 @@ async function runAgent(
   });
 }
 
+function readPriorStageContext(
+  projectDir: string,
+  journal: Journal,
+  profile: Profile,
+  stageNumber: number,
+) {
+  const entries = journal.stages
+    .filter((entry) => entry.stage < stageNumber)
+    .map((entry) => {
+      const fileName = entry.deliverable_file
+        ?? profile.stages.find((profileStage) => profileStage.stage === entry.stage)?.deliverable_file;
+      if (!fileName || path.basename(fileName) !== fileName) return null;
+      const filePath = path.join(projectDir, fileName);
+      if (!fs.existsSync(/* turbopackIgnore: true */ filePath)) return null;
+      return {
+        stage: entry.stage,
+        name: entry.name,
+        status: entry.status,
+        content: fs.readFileSync(/* turbopackIgnore: true */ filePath, 'utf-8'),
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+  return buildPriorStageContext(entries, { currentStage: stageNumber });
+}
+
 function createAgentContext(
   projectId: string,
   stageNumber: number,
   messages: StageChatMessage[],
   options: StageChatOptions,
+  transcriptLength = MAX_INTERVIEW_TRANSCRIPT_LENGTH,
 ) {
-  const { journalPath } = getProjectPaths(projectId, stageNumber, options);
+  const { projectDir, journalPath } = getProjectPaths(projectId, stageNumber, options);
   const journal = readJournal(journalPath);
   const stage = journal.stages.find((entry) => entry.stage === stageNumber);
   if (!stage) throw new StageChatError('Stage not found.', 404);
   const prompts = readPromptContext(journal, stageNumber, options);
+  const priorStageContext = readPriorStageContext(projectDir, journal, prompts.profile, stageNumber);
   const language = journal.language === 'PL' ? 'Polish' : 'English';
   const systemPrompt = [
     prompts.mainPrompt,
     prompts.stagePrompt,
     prompts.elicitationPolicy,
+    priorStageContext,
     '=== WEB INTERVIEW CONTEXT ===',
     `Project: ${journal.project_name} (${journal.project_id})`,
     `Stage: ${stageNumber} - ${stage.name ?? `Stage ${stageNumber}`}`,
@@ -258,14 +301,16 @@ function createAgentContext(
     `Assumptions:\n${listValues(journal.assumptions, String)}`,
     `Open questions:\n${listValues(journal.open_questions, String)}`,
     'Conduct a decision-focused business-analysis interview. Apply the Analytical Elicitation Policy above.',
-    'Use the transcript as an evidence ledger: do not repeat answered questions or mechanically follow the stage questionnaire.',
+    'Use the prior-stage deliverables and the transcript as an evidence ledger: do not ask for anything they already contain, and do not mechanically follow the stage questionnaire.',
+    'Stay within this stage\'s purpose. If the human volunteers detail that belongs to a later stage, acknowledge it in one clause as carried forward and return to this stage\'s open decisions.',
     'Do not invent facts, and do not generate the final deliverable unless explicitly instructed.',
     `Always respond in ${language}.`,
     '================================',
-  ].join('\n\n');
+  ].filter(Boolean).join('\n\n');
   return {
     systemPrompt,
-    transcript: buildTranscript(messages),
+    transcript: buildTranscript(messages, transcriptLength),
+    hasPriorStageContext: priorStageContext.length > 0,
     route: { profile: journal.profile ?? 'babok', stage: stageNumber },
   };
 }
@@ -307,9 +352,12 @@ export async function startStageInterview(
     return { message: messages.at(-1)!, provider: '' };
   }
   const context = createAgentContext(projectId, stageNumber, messages, options);
+  const opener = context.hasPriorStageContext
+    ? 'Start directly without introducing yourself or explaining the process. In at most two sentences, state what the prior-stage deliverables already establish for this stage and the most important gap or tension you see in them for this stage\'s purpose. Then ask the single highest-value question about that gap — never a question the prior deliverables already answer. Keep the whole response under 90 words.'
+    : 'Start directly without introducing yourself or explaining the process. State one tentative insight or hypothesis from the available project context in at most one sentence, then ask the single highest-value opening question. Keep the whole response under 60 words.';
   const response = await runAgent(
     context.systemPrompt,
-    'Start directly without introducing yourself or explaining the process. State one tentative insight or hypothesis from the available project context in at most one sentence, then ask the single highest-value opening question. Keep the whole response under 60 words.',
+    opener,
     context.route,
     options,
   );
@@ -328,11 +376,12 @@ export async function generateStageDraftFromChat(
 ) {
   const messages = getStageChatHistory(projectId, stageNumber, options);
   if (messages.length < 2) throw new StageChatError('Start the interview before generating a draft.');
-  const context = createAgentContext(projectId, stageNumber, messages, options);
+  const context = createAgentContext(projectId, stageNumber, messages, options, MAX_DRAFT_TRANSCRIPT_LENGTH);
   const prompt = [
-    'Generate the complete stage deliverable now from the evidence in this conversation.',
+    'Generate the complete stage deliverable now from the evidence in this conversation and in the prior-stage deliverables.',
     'Return only Markdown without code fences.',
     'Follow every required section from the stage instructions.',
+    'Stay consistent with approved prior-stage deliverables and reference them (e.g. "see Stage 2, Pain Points") instead of restating them at length.',
     'Do not invent facts. Mark missing evidence as an explicit open question or assumption.',
     `Conversation:\n\n${context.transcript}`,
   ].join('\n\n');
