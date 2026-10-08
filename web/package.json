@@ -30,7 +30,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@tailwindcss/postcss": "^4.3.3",
-    "autoprefixer": "^10.5.4",
+    "autoprefixer": "^10.6.1",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.2.10",
     "postcss": "^8.5.19",
