@@ -116,6 +116,7 @@ How does the organisation prefer to receive engagement communication (steering b
 Load before writing: MCP `babok_get_stage_template` with `stage_n: 1` and the `project_id`.
 
 **Critical:** Keep all H2 headings unchanged so `babok score` completeness checks pass.
+**Approval Section rule:** Keep section `## Approval Section` strictly with `Status: PENDING human attestation` and empty/pending fields. Do not pre-fill client names, signatures or mock hashes as approvers. Approval is granted exclusively through the Two-Key Gate (`babok approve`).
 
 ---
 
@@ -123,6 +124,7 @@ Load before writing: MCP `babok_get_stage_template` with `stage_n: 1` and the `p
 
 - [ ] Every High-power stakeholder has a named engagement strategy
 - [ ] Steering committee has named members, a chair and a fixed cadence
+- [ ] Collaboration Model specifies advisor facilitation, client co-creation, and 100% client procedure ownership
 - [ ] Every KPI has numeric baseline (or "provisional") and target with dates
 - [ ] RACI has exactly one A per activity
 - [ ] Communication plan covers all four grid quadrants

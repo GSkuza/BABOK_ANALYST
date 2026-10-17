@@ -92,11 +92,24 @@ R = Responsible · A = Accountable · C = Consulted · I = Informed
 
 ---
 
+## Collaboration Model
+
+| Dimension | Specification |
+|-----------|---------------|
+| Advisor Role | Facilitators and process architects; guiding methodology, never imposing external templates without adaptation |
+| Client Co-Creation | Client operational leaders and staff actively co-create diagnostic findings, solution designs, and roadmap milestones |
+| Procedure Ownership | Client holds 100% post-implementation ownership of all designed procedures, operating models, and tools |
+| Working Rhythm | Regular cadence (weekly working sessions on site / gemba walks, bi-weekly steering reviews) |
+| Decision Governance | Advisory recommendations require executive sponsor approval before execution |
+
+---
+
 ## Quality Checklist
 
 - [ ] Every high-power stakeholder has a named engagement strategy (S1-Q1)
 - [ ] Steering committee has named members and a fixed cadence (S1-Q2)
 - [ ] Every KPI has numeric baseline and target with dates (S1-Q3)
+- [ ] Collaboration Model specifies facilitation roles, client co-creation, and post-implementation procedure ownership (S1-Q4)
 - [ ] RACI has exactly one A per activity (S1-C1)
 - [ ] Communication plan covers every quadrant of the power/interest grid (S1-C2)
 
@@ -104,10 +117,13 @@ R = Responsible · A = Accountable · C = Consulted · I = Informed
 
 ## Approval Section
 
+Status: PENDING human attestation
+
 | Field | Value |
 |-------|-------|
-| Approver | [Name, Title] |
-| Date | [YYYY-MM-DD] |
+| Approver | [Pending human attestation via Two-Key Gate] |
+| Date | [Pending] |
+| Signature Hash | [Generated upon attestation] |
 | Comments | [Optional] |
 
 **Change log**

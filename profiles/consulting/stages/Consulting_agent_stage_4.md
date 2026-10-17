@@ -118,6 +118,7 @@ For each stakeholder group from Stage 1: where do you see the biggest gap — Aw
 Load before writing: MCP `babok_get_stage_template` with `stage_n: 4` and the `project_id`.
 
 **Critical:** Keep all H2 headings unchanged. The **Target Operating Model Design** section must name the implemented `OPT-NN` from Stage 3 (`RECOMMENDATION-TRACEABILITY` rule); the **Phased Roadmap** completion date is checked against the Stage 0 target date (`ROADMAP-DATE` rule).
+**Approval Section rule:** Keep section `## Approval Section` strictly with `Status: PENDING human attestation` and empty/pending fields. Do not pre-fill client names, signatures or mock hashes as approvers. Approval is granted exclusively through the Two-Key Gate (`babok approve`).
 
 ---
 
