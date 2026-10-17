@@ -59,11 +59,72 @@ export function assertCanSaveDeliverable(stage) {
 }
 
 /**
+ * Check if reviewId matches generated pattern rev-<base36>-<hex8>.
+ * @param {string} reviewId
+ * @returns {boolean}
+ */
+export function isValidReviewId(reviewId) {
+  return typeof reviewId === 'string' && /^rev-[a-z0-9]+-[a-f0-9]{8}$/i.test(reviewId);
+}
+
+/**
+ * Validate that deliverable markdown does not contain a repeated-char mock hash
+ * and that any embedded hash matches content_sha256.
+ * @param {string} content
+ * @param {string} [expectedSha256]
+ * @param {number} [stageNumber]
+ */
+export function validateDeliverableHash(content, expectedSha256, stageNumber = 0) {
+  if (!content || typeof content !== 'string') return;
+
+  // Reject repeated-character hashes (e.g. 1111..., 2222...)
+  if (/([a-f0-9])\1{15,}/i.test(content)) {
+    throw new Error(`Two-Key Gate: stage ${stageNumber} deliverable contains a mock repeated-character hash.`);
+  }
+
+  // If deliverable contains an explicit hash declaration, verify it matches
+  const match =
+    content.match(/(?:signature|attestation)?\s*hash:\s*([a-f0-9]{64})/i) ||
+    content.match(/\|\s*Signature Hash\s*\|\s*([a-f0-9]{64})\s*\|/i);
+
+  if (match) {
+    const embeddedHash = match[1].toLowerCase();
+    if (expectedSha256 && embeddedHash !== expectedSha256.toLowerCase()) {
+      throw new Error(
+        `Two-Key Gate: embedded hash in stage ${stageNumber} deliverable (${embeddedHash.slice(0, 12)}…) does not match content_sha256 (${expectedSha256.slice(0, 12)}…).`,
+      );
+    }
+  }
+}
+
+/**
+ * Ensure no two approved stages share identical approved_at timestamp up to the second.
+ * @param {object} journal
+ */
+export function validateJournalApprovalTimestamps(journal) {
+  if (!journal?.stages) return;
+  const seenSeconds = new Map();
+  for (const stage of journal.stages) {
+    if (stage.status === 'approved' && stage.approved_at) {
+      const sec = new Date(stage.approved_at).toISOString().slice(0, 19);
+      if (seenSeconds.has(sec)) {
+        const prior = seenSeconds.get(sec);
+        throw new Error(
+          `Two-Key Gate: stages ${prior} and ${stage.stage} share identical approved_at second (${sec}): approvals must not be batched.`,
+        );
+      }
+      seenSeconds.set(sec, stage.stage);
+    }
+  }
+}
+
+/**
  * Validate two-key pair before approval.
  * @param {object} stage
  * @param {string} [deliverableSha256] Optional on-disk file hash for extra verification.
+ * @param {object} [options] Optional extra verification context (deliverableContent, journal).
  */
-export function validateTwoKeyApproval(stage, deliverableSha256) {
+export function validateTwoKeyApproval(stage, deliverableSha256, options = {}) {
   ensureStageTwoKeyFields(stage);
 
   if (!stage.agent_submission?.content_sha256) {
@@ -71,6 +132,14 @@ export function validateTwoKeyApproval(stage, deliverableSha256) {
       `Stage ${stage.stage} has no agent_submission. Agent must call babok_submit_for_review after saving the deliverable.`,
     );
   }
+
+  const reviewId = stage.agent_submission.review_id;
+  if (!isValidReviewId(reviewId)) {
+    throw new Error(
+      `Two-Key Gate: invalid review_id format for stage ${stage.stage}: "${reviewId || ''}". Expected rev-<base36>-<hex8>.`,
+    );
+  }
+
   if (!stage.human_attestation?.content_sha256) {
     throw new Error(
       `Stage ${stage.stage} has no human_attestation. Human must run: babok approve <id> ${stage.stage}`,
@@ -98,6 +167,14 @@ export function validateTwoKeyApproval(stage, deliverableSha256) {
       `Two-Key Gate: on-disk deliverable hash does not match agent_submission for stage ${stage.stage}. ` +
         'The file changed after review submission.',
     );
+  }
+
+  if (options.deliverableContent) {
+    validateDeliverableHash(options.deliverableContent, agentSha, stage.stage);
+  }
+
+  if (options.journal) {
+    validateJournalApprovalTimestamps(options.journal);
   }
 }
 

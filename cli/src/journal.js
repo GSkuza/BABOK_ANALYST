@@ -8,6 +8,7 @@ import {
   hashFileUtf8,
   normalizeJournalTwoKey,
   validateTwoKeyApproval,
+  isValidReviewId,
 } from './two-key-gate.js';
 
 // Default-profile file names; kept for backward compatibility with existing imports.
@@ -83,6 +84,10 @@ export function submitForReview(projectId, stageNumber, contentSha256, reviewId)
     throw new Error(`Stage ${stageNumber} is approved. Call babok open-revision to edit.`);
   }
 
+  if (reviewId && !isValidReviewId(reviewId)) {
+    throw new Error(`Invalid review_id format: "${reviewId}". Expected rev-<base36>-<hex8>.`);
+  }
+
   const now = new Date().toISOString();
   stage.agent_submission = {
     at: now,
@@ -152,9 +157,30 @@ export function approveStage(projectId, stageNumber, notes, deliverableSha256) {
   if (!stage) throw new Error(`Stage ${stageNumber} not found`);
   if (stage.status === 'approved') throw new Error(`Stage ${stageNumber} is already approved`);
 
-  validateTwoKeyApproval(stage, deliverableSha256);
+  let deliverableContent = null;
+  const stageFileMap = getStageFileNames(loadProfile(journal.profile || DEFAULT_PROFILE_ID));
+  const filename = stage.deliverable_file || stageFileMap[stageNumber];
+  if (filename) {
+    const filePath = path.join(getProjectDir(projectId), filename);
+    if (fs.existsSync(filePath)) {
+      deliverableContent = fs.readFileSync(filePath, 'utf8');
+    }
+  }
+
+  validateTwoKeyApproval(stage, deliverableSha256, { journal, deliverableContent });
 
   const now = new Date().toISOString();
+  const nowSec = now.slice(0, 19);
+  for (const s of journal.stages) {
+    if (s.stage !== stageNumber && s.status === 'approved' && s.approved_at) {
+      const existingSec = new Date(s.approved_at).toISOString().slice(0, 19);
+      if (existingSec === nowSec) {
+        throw new Error(
+          `Two-Key Gate: stage ${stageNumber} cannot share approved_at second (${nowSec}) with stage ${s.stage}.`,
+        );
+      }
+    }
+  }
   stage.status = 'approved';
   stage.approved_at = now;
   stage.approved_by = stage.human_attestation?.attestor || 'Human';
