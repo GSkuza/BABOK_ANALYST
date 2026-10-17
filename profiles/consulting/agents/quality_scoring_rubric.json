@@ -14,14 +14,34 @@
       "required_sections": [
         "Stakeholder Map & Power/Interest Grid",
         "Governance Model & Steering Committee",
+        "Collaboration Model",
         "RACI for the Engagement",
         "Success Criteria & Target KPIs",
         "Communication Plan"
       ],
       "quality_criteria": [
-        { "id": "S1-Q1", "description": "Every high-power stakeholder has a named engagement strategy", "applies_to": "Stakeholder Map & Power/Interest Grid", "smart_dimension": "Specific" },
-        { "id": "S1-Q2", "description": "Steering committee has named members and a fixed cadence", "applies_to": "Governance Model & Steering Committee", "smart_dimension": "Specific" },
-        { "id": "S1-Q3", "description": "Every KPI has a numeric baseline and target with dates", "applies_to": "Success Criteria & Target KPIs", "smart_dimension": "Measurable" }
+        {
+          "id": "S1-Q1",
+          "description": "Every high-power stakeholder has a named engagement strategy",
+          "applies_to": "Stakeholder Map & Power/Interest Grid",
+          "smart_dimension": "Specific",
+          "signals": ["Engagement Strategy", "Strategia", "Champion", "Manage closely", "Zarządzać", "Monitorować"]
+        },
+        {
+          "id": "S1-Q2",
+          "description": "Steering committee has named members and a fixed cadence",
+          "applies_to": "Governance Model & Steering Committee",
+          "smart_dimension": "Specific",
+          "signals": ["cadence", "kadencja", "weekly", "bi-weekly", "monthly", "co tydzień", "co 2 tyg", "spotkania"]
+        },
+        { "id": "S1-Q3", "description": "Every KPI has a numeric baseline and target with dates", "applies_to": "Success Criteria & Target KPIs", "smart_dimension": "Measurable" },
+        {
+          "id": "S1-Q4",
+          "description": "Collaboration Model specifies facilitation roles, client co-creation and post-implementation procedure ownership",
+          "applies_to": "Collaboration Model",
+          "smart_dimension": "Specific",
+          "signals": ["Facilitat", "Co-creat", "Ownership", "Współtworz", "Własność", "Facylitat"]
+        }
       ],
       "consistency_checks": [
         { "id": "S1-C1", "description": "RACI has exactly one Accountable per activity", "source": "Stage 1 internal" },
@@ -31,8 +51,8 @@
         {
           "id": "core",
           "title": "Stakeholders & governance",
-          "sections": ["Executive Summary", "Stakeholder Map & Power/Interest Grid", "Governance Model & Steering Committee"],
-          "instruction": "Name real stakeholder roles implied by the Stage 0 mandate, not generic placeholders. Every high-power stakeholder needs a specific engagement strategy. Steering committee needs named members and a fixed cadence."
+          "sections": ["Executive Summary", "Stakeholder Map & Power/Interest Grid", "Governance Model & Steering Committee", "Collaboration Model"],
+          "instruction": "Name real stakeholder roles implied by the Stage 0 mandate, not generic placeholders. Every high-power stakeholder needs a specific engagement strategy. Steering committee needs named members and a fixed cadence. Define the Collaboration Model (facilitation, co-creation, client procedure ownership)."
         },
         {
           "id": "criteria",
@@ -224,7 +244,8 @@
       ],
       "consistency_checks": [
         { "id": "S6-C1", "description": "Every benefit traces to a Stage 2 root cause and a Stage 1 KPI", "source": "stage2" },
-        { "id": "S6-C2", "description": "Total cost is compared to the Stage 0 budget ceiling", "source": "stage0" }
+        { "id": "S6-C2", "description": "Total cost is compared to the Stage 0 budget ceiling", "source": "stage0" },
+        { "id": "S6-C3", "description": "Annual benefit totals in Stage 6 match the sum of component items and reconcile with Stage 2 value-at-stake within 5% tolerance", "source": "stage2", "tolerance_percent": 5 }
       ],
       "generation_batches": [
         {

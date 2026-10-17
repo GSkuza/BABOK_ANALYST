@@ -82,7 +82,19 @@ export function checkSmart(content, criteria) {
     let ok = false;
     const lowerDesc = description.toLowerCase();
 
-    if (smart_dimension === 'Measurable' || lowerDesc.includes('numeric')) {
+    if (criterion.manual_review || smart_dimension === 'manual_review') {
+      issues.push({
+        dimension: 'quality',
+        ruleId: id,
+        severity: 'info',
+        message: `Manual review required: ${description}`,
+        remediation: `Verify manually during human attestation: ensure "${applies_to}" satisfies (${description})`,
+      });
+      ok = true;
+    } else if (criterion.signals && Array.isArray(criterion.signals) && criterion.signals.length > 0) {
+      const lowerText = text.toLowerCase();
+      ok = criterion.signals.some(sig => lowerText.includes(sig.toLowerCase()));
+    } else if (smart_dimension === 'Measurable' || lowerDesc.includes('numeric')) {
       // Require at least one numeric value
       ok = NUM_RE.test(text);
       NUM_RE.lastIndex = 0;
@@ -90,9 +102,13 @@ export function checkSmart(content, criteria) {
       // Require a specific date pattern
       ok = DATE_RE.test(text);
       DATE_RE.lastIndex = 0;
-    } else if (smart_dimension === 'Specific' || lowerDesc.includes('currency')) {
+    } else if (lowerDesc.includes('currency')) {
       // Require a currency symbol + number
       ok = CURRENCY_SYMBOL_RE.test(text) && NUM_RE.test(text);
+      NUM_RE.lastIndex = 0;
+    } else if (smart_dimension === 'Specific') {
+      // Substantive specific text in section (min 60 chars) or numbers
+      ok = text.trim().length > 60 || NUM_RE.test(text);
       NUM_RE.lastIndex = 0;
     } else if (lowerDesc.includes('npv') || lowerDesc.includes('irr') || lowerDesc.includes('payback')) {
       ok = ROI_KEYWORDS_RE.test(text);
