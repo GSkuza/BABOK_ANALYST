@@ -225,7 +225,29 @@ describe('scoreStage raw template vs filled example across profiles', () => {
         tmpRaw.cleanup();
       }
 
-      // 2. Filled synthetic fixture should pass
+      // 2. Template with populated header placeholders (unfilled body) should also fail
+      const tmpHdr = createTempProject(`HDR-${s.profile.toUpperCase()}-${s.stage}`);
+      try {
+        const rawContent = fs.readFileSync(s.raw, 'utf-8');
+        const hdrContent = rawContent.replace(
+          /\[(?:Project Name|Project ID|Initiative ID|Engagement ID|BABOK-YYYYMMDD|BC-YYYYMMDD|SD-YYYYMMDD|YYYY-MM-DD)\]/gi,
+          'Acme-2026'
+        );
+        fs.writeFileSync(path.join(tmpHdr.projectDir, s.name), hdrContent);
+        const hdrReport = await scoreStage(`HDR-${s.profile.toUpperCase()}-${s.stage}`, s.stage, {
+          projectDir: tmpHdr.projectDir,
+          profile: s.profile,
+        });
+        assert.equal(
+          hdrReport.passed,
+          false,
+          `Template with filled headers for ${s.profile} stage ${s.stage} should fail scoring, got overall ${hdrReport.scores.overall}`,
+        );
+      } finally {
+        tmpHdr.cleanup();
+      }
+
+      // 3. Filled synthetic fixture should pass
       const tmpFilled = createTempProject(`FILLED-${s.profile.toUpperCase()}-${s.stage}`);
       try {
         const filledContent = fs.readFileSync(s.fix, 'utf-8');
