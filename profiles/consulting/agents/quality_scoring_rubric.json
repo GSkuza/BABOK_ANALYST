@@ -34,7 +34,7 @@
           "smart_dimension": "Specific",
           "signals": ["weekly", "bi-weekly", "monthly", "co tydzień", "co 2 tyg", "spotkania", "co miesiąc", "dwutygodniow", "kwartalnie", "quarterly"]
         },
-        { "id": "S1-Q3", "description": "Every KPI has a numeric baseline and target with dates", "applies_to": "Success Criteria & Target KPIs", "smart_dimension": "Measurable" },
+        { "id": "S1-Q3", "description": "Every KPI has a numeric baseline and target with dates", "applies_to": "Success Criteria & Target KPIs", "smart_dimension": "Measurable", "pattern": "KPI-\\d{3}" },
         {
           "id": "S1-Q4",
           "description": "Collaboration Model specifies facilitation roles, client co-creation and post-implementation procedure ownership",
@@ -78,10 +78,10 @@
         "Value-at-Stake Sizing"
       ],
       "quality_criteria": [
-        { "id": "S2-Q1", "description": "Every Stage 1 KPI has a numeric baseline or an explicit data gap", "applies_to": "KPI Baseline", "smart_dimension": "Measurable" },
-        { "id": "S2-Q2", "description": "Every finding cites evidence and a quantified impact", "applies_to": "Findings & Root Cause Analysis", "smart_dimension": "Measurable" },
-        { "id": "S2-Q3", "description": "Every root cause explains at least one finding and has a confidence level", "applies_to": "Findings & Root Cause Analysis", "smart_dimension": "Specific" },
-        { "id": "S2-Q4", "description": "Value at stake is numeric with a basis of estimate", "applies_to": "Value-at-Stake Sizing", "smart_dimension": "Measurable" }
+        { "id": "S2-Q1", "description": "Every Stage 1 KPI has a numeric baseline or an explicit data gap", "applies_to": "KPI Baseline", "smart_dimension": "Measurable", "pattern": "KPI-\\d{3}" },
+        { "id": "S2-Q2", "description": "Every finding cites evidence and a quantified impact", "applies_to": "Findings & Root Cause Analysis", "smart_dimension": "Measurable", "pattern": "F-\\d{3}" },
+        { "id": "S2-Q3", "description": "Every root cause explains at least one finding and has a confidence level", "applies_to": "Findings & Root Cause Analysis", "smart_dimension": "Specific", "pattern": "RC-\\d{3}" },
+        { "id": "S2-Q4", "description": "Value at stake is numeric with a basis of estimate", "applies_to": "Value-at-Stake Sizing", "smart_dimension": "Measurable", "pattern": "RC-\\d{3}" }
       ],
       "consistency_checks": [
         { "id": "S2-C1", "description": "Systems are described as AS-IS context only; no solution or vendor language", "source": "Stage 0 exclusions" },
@@ -119,8 +119,8 @@
         "Risks of Inaction"
       ],
       "quality_criteria": [
-        { "id": "S3-Q1", "description": "At least three options plus a do-nothing baseline are evaluated", "applies_to": "Option Generation", "smart_dimension": "Specific", "signals": ["do-nothing", "baseline", "wariant zerowy", "OPT-00", "bez zmian"] },
-        { "id": "S3-Q2", "description": "Criteria weights sum to 100 and each has a stated source", "applies_to": "Evaluation Criteria & Weighted Scoring", "smart_dimension": "Measurable" },
+        { "id": "S3-Q1", "description": "At least three options plus a do-nothing baseline are evaluated", "applies_to": "Option Generation", "smart_dimension": "Specific", "signals": ["do-nothing", "baseline", "wariant zerowy", "OPT-00", "bez zmian"], "pattern": "OPT-03" },
+        { "id": "S3-Q2", "description": "Criteria weights sum to 100 and each has a stated source", "applies_to": "Evaluation Criteria & Weighted Scoring", "smart_dimension": "Measurable", "pattern": "(?:C|CR)-\\d{2}" },
         { "id": "S3-Q3", "description": "Recommendation names one OPT-NN and states its weighted score against the runner-up", "applies_to": "Recommended Option & Rationale", "smart_dimension": "Specific", "pattern": "OPT-\\d{2}" },
         { "id": "S3-Q4", "description": "Risks of inaction are quantified with a timeframe", "applies_to": "Risks of Inaction", "smart_dimension": "Time-bound" }
       ],
@@ -160,8 +160,8 @@
         "Dependencies & Sequencing"
       ],
       "quality_criteria": [
-        { "id": "S4-Q1", "description": "Every roadmap phase has a dated, measurable milestone and an owner", "applies_to": "Phased Roadmap", "smart_dimension": "Time-bound" },
-        { "id": "S4-Q2", "description": "No system implementation or vendor selection is proposed", "applies_to": "Target Operating Model Design", "smart_dimension": "Relevant" }
+        { "id": "S4-Q1", "description": "Every roadmap phase has a dated, measurable milestone and an owner", "applies_to": "Phased Roadmap", "smart_dimension": "Time-bound", "pattern": "(?:Phase|Faza)\\s+\\d" },
+        { "id": "S4-Q2", "description": "No system implementation or vendor selection is proposed", "applies_to": "Target Operating Model Design", "smart_dimension": "Relevant", "pattern": "RC-\\d{3}" }
       ],
       "consistency_checks": [
         { "id": "S4-C1", "description": "Target Operating Model names the implemented OPT-NN from Stage 3", "source": "stage3" },
@@ -199,7 +199,7 @@
         "Mitigation Owners"
       ],
       "quality_criteria": [
-        { "id": "S5-Q1", "description": "Every Critical/High risk has a named individual owner and a dated mitigation", "applies_to": "Risk Register", "smart_dimension": "Specific", "signals": ["Critical", "High", "Krytyczn", "Wysoki", "Mitigation"] },
+        { "id": "S5-Q1", "description": "Every Critical/High risk has a named individual owner and a dated mitigation", "applies_to": "Risk Register", "smart_dimension": "Specific", "signals": ["Critical", "High", "Krytyczn", "Wysoki", "Mitigation"], "pattern": "(?:R|RSK)-\\d{2,3}" },
         { "id": "S5-Q2", "description": "Readiness is scored per stakeholder group", "applies_to": "Change Readiness Assessment", "smart_dimension": "Measurable" },
         { "id": "S5-Q3", "description": "Escalation triggers are numeric or observable", "applies_to": "Governance & Escalation Cadence", "smart_dimension": "Measurable" }
       ],
@@ -238,9 +238,9 @@
         "Value Tracking Governance"
       ],
       "quality_criteria": [
-        { "id": "S6-Q1", "description": "Costs and benefits are numeric with a basis of estimate", "applies_to": "Cost-Benefit Analysis & ROI/NPV", "smart_dimension": "Measurable" },
-        { "id": "S6-Q2", "description": "ROI, payback and NPV are stated with assumptions and a sensitivity", "applies_to": "Cost-Benefit Analysis & ROI/NPV", "smart_dimension": "Measurable" },
-        { "id": "S6-Q3", "description": "Tracker has a named client-side owner, cadence and corrective-action trigger", "applies_to": "Value Tracking Governance", "smart_dimension": "Specific", "signals": ["cadence", "kadencja", "trigger", "koryguj", "weekly", "monthly", "quarterly"] }
+        { "id": "S6-Q1", "description": "Costs and benefits are numeric with a basis of estimate", "applies_to": "Cost-Benefit Analysis & ROI/NPV", "smart_dimension": "Measurable", "pattern": "B-\\d{3}" },
+        { "id": "S6-Q2", "description": "ROI, payback and NPV are stated with assumptions and a sensitivity", "applies_to": "Cost-Benefit Analysis & ROI/NPV", "smart_dimension": "Measurable", "pattern": "NPV" },
+        { "id": "S6-Q3", "description": "Tracker has a named client-side owner, cadence and corrective-action trigger", "applies_to": "Value Tracking Governance", "smart_dimension": "Specific", "signals": ["cadence", "kadencja", "trigger", "koryguj", "weekly", "monthly", "quarterly"], "pattern": "(?:cadence|kadencja|trigger|koryguj|monthly|miesięcz)" }
       ],
       "consistency_checks": [
         { "id": "S6-C1", "description": "Every benefit traces to a Stage 2 root cause and a Stage 1 KPI", "source": "stage2" },

@@ -22,9 +22,9 @@
         "Assumptions & Open Gaps"
       ],
       "quality_criteria": [
-        { "id": "S1-Q1", "description": "Every repository has a pinned commit/ref or a disclosed dirty-tree snapshot", "applies_to": "Repository Inventory & Pinned Commits", "smart_dimension": "Specific" },
-        { "id": "S1-Q2", "description": "Every load-bearing claim in Business/Technology/Architecture/SDLC cites an EV-NNN evidence reference", "applies_to": "Evidence Ledger", "smart_dimension": "Measurable" },
-        { "id": "S1-Q3", "description": "Every unverifiable claim is labelled Hypothesis or Assumption with a confidence level", "applies_to": "Assumptions & Open Gaps", "smart_dimension": "Specific" }
+        { "id": "S1-Q1", "description": "Every repository has a pinned commit/ref or a disclosed dirty-tree snapshot", "applies_to": "Repository Inventory & Pinned Commits", "smart_dimension": "Specific", "pattern": "[0-9a-f]{7,40}" },
+        { "id": "S1-Q2", "description": "Every load-bearing claim in Business/Technology/Architecture/SDLC cites an EV-NNN evidence reference", "applies_to": "Evidence Ledger", "smart_dimension": "Measurable", "pattern": "EV-\\d{3}" },
+        { "id": "S1-Q3", "description": "Every unverifiable claim is labelled Hypothesis or Assumption with a confidence level", "applies_to": "Assumptions & Open Gaps", "smart_dimension": "Specific", "pattern": "(?:Hypothesis|Assumption|A-\\d{3})" }
       ],
       "consistency_checks": [
         { "id": "S1-C1", "description": "Every EV-NNN cited in a context section has a matching row in the Evidence Ledger", "source": "Stage 1 internal" },
@@ -68,9 +68,9 @@
         "Constraints Confirmed"
       ],
       "quality_criteria": [
-        { "id": "S2-Q1", "description": "Current behaviour cites specific Stage 1 evidence (EV-NNN), not a generic restatement", "applies_to": "Current vs Desired Behaviour", "smart_dimension": "Specific" },
-        { "id": "S2-Q2", "description": "Every affected component/contract/data store is named individually", "applies_to": "Affected Components & Contracts", "smart_dimension": "Specific" },
-        { "id": "S2-Q3", "description": "Every regression risk names the specific component it threatens and a likelihood/impact rating", "applies_to": "Regression & Compatibility Risks", "smart_dimension": "Measurable" }
+        { "id": "S2-Q1", "description": "Current behaviour cites specific Stage 1 evidence (EV-NNN), not a generic restatement", "applies_to": "Current vs Desired Behaviour", "smart_dimension": "Specific", "pattern": "EV-\\d{3}" },
+        { "id": "S2-Q2", "description": "Every affected component/contract/data store is named individually", "applies_to": "Affected Components & Contracts", "smart_dimension": "Specific", "pattern": "(?:component|contract|service|api|store|database)" },
+        { "id": "S2-Q3", "description": "Every regression risk names the specific component it threatens and a likelihood/impact rating", "applies_to": "Regression & Compatibility Risks", "smart_dimension": "Measurable", "pattern": "(?:Low|Med|High|Medium)" }
       ],
       "consistency_checks": [
         { "id": "S2-C1", "description": "Affected components trace back to entries in the Stage 1 System Inventory or Technology Context", "source": "stage1" },
@@ -111,10 +111,10 @@
         "Critique & Corrections"
       ],
       "quality_criteria": [
-        { "id": "S3-Q1", "description": "At least one option reuses or extends an existing Stage 1 mechanism, or explains why none applies", "applies_to": "Reuse Assessment", "smart_dimension": "Relevant" },
-        { "id": "S3-Q2", "description": "A do-nothing/defer baseline is evaluated alongside proposed options", "applies_to": "Option Generation", "smart_dimension": "Specific" },
-        { "id": "S3-Q3", "description": "Recommendation names one OPT-NN and its weighted score against the runner-up", "applies_to": "Recommended Option & Rationale", "smart_dimension": "Specific" },
-        { "id": "S3-Q4", "description": "Every ADR has context, decision, consequences and alternatives considered", "applies_to": "Architecture Decision Records", "smart_dimension": "Specific" }
+        { "id": "S3-Q1", "description": "At least one option reuses or extends an existing Stage 1 mechanism, or explains why none applies", "applies_to": "Reuse Assessment", "smart_dimension": "Relevant", "pattern": "(?:reuse|extend|existing|none applicable|library|pattern|service)" },
+        { "id": "S3-Q2", "description": "A do-nothing/defer baseline is evaluated alongside proposed options", "applies_to": "Option Generation", "smart_dimension": "Specific", "pattern": "OPT-00" },
+        { "id": "S3-Q3", "description": "Recommendation names one OPT-NN and its weighted score against the runner-up", "applies_to": "Recommended Option & Rationale", "smart_dimension": "Specific", "pattern": "OPT-\\d{2}" },
+        { "id": "S3-Q4", "description": "Every ADR has context, decision, consequences and alternatives considered", "applies_to": "Architecture Decision Records", "smart_dimension": "Specific", "pattern": "ADR-\\d{2,3}" }
       ],
       "consistency_checks": [
         { "id": "S3-C1", "description": "Every option references the Stage 2 affected components/items it addresses", "source": "stage2" },
@@ -160,9 +160,9 @@
         "Execution Authorisation Status"
       ],
       "quality_criteria": [
-        { "id": "S4-Q1", "description": "Every FR has an acceptance criterion and appears in the RTM", "applies_to": "Requirements Traceability Matrix (RTM)", "smart_dimension": "Specific" },
-        { "id": "S4-Q2", "description": "Every roadmap phase has a dated, measurable milestone and a named owner", "applies_to": "Roadmap & Milestones", "smart_dimension": "Time-bound" },
-        { "id": "S4-Q3", "description": "Execution Authorisation Status reflects only what was explicitly authorised in Step 4.3, never an assumed yes", "applies_to": "Execution Authorisation Status", "smart_dimension": "Specific" }
+        { "id": "S4-Q1", "description": "Every FR has an acceptance criterion and appears in the RTM", "applies_to": "Requirements Traceability Matrix (RTM)", "smart_dimension": "Specific", "pattern": "FR-\\d{3}" },
+        { "id": "S4-Q2", "description": "Every roadmap phase has a dated, measurable milestone and a named owner", "applies_to": "Roadmap & Milestones", "smart_dimension": "Time-bound", "pattern": "(?:Phase|Faza|Milestone|M\\d)\\s*\\d*" },
+        { "id": "S4-Q3", "description": "Execution Authorisation Status reflects only what was explicitly authorised in Step 4.3, never an assumed yes", "applies_to": "Execution Authorisation Status", "smart_dimension": "Specific", "pattern": "(?:Authorised|Authorized|Pending|Not authorised|Not authorized)" }
       ],
       "consistency_checks": [
         { "id": "S4-C1", "description": "Every FR implements an ADR-NN named in Stage 3", "source": "stage3" },
@@ -207,9 +207,9 @@
         "Release Decision Status"
       ],
       "quality_criteria": [
-        { "id": "S5-Q1", "description": "Verification evidence states what actually ran, where, and its result, or explicitly states nothing has run", "applies_to": "Verification Evidence", "smart_dimension": "Measurable" },
-        { "id": "S5-Q2", "description": "Every Critical/High risk has a named individual owner and a dated mitigation", "applies_to": "Risk Register", "smart_dimension": "Specific" },
-        { "id": "S5-Q3", "description": "Monitoring signals are specific to this change's expected effect, not generic uptime monitoring", "applies_to": "Monitoring & Observability", "smart_dimension": "Relevant" }
+        { "id": "S5-Q1", "description": "Verification evidence states what actually ran, where, and its result, or explicitly states nothing has run", "applies_to": "Verification Evidence", "smart_dimension": "Measurable", "pattern": "(?:pass|fail|passed|failed|running|executed|none run|nothing has run|pending)" },
+        { "id": "S5-Q2", "description": "Every Critical/High risk has a named individual owner and a dated mitigation", "applies_to": "Risk Register", "smart_dimension": "Specific", "pattern": "(?:R|RSK)-\\d{2,3}" },
+        { "id": "S5-Q3", "description": "Monitoring signals are specific to this change's expected effect, not generic uptime monitoring", "applies_to": "Monitoring & Observability", "smart_dimension": "Relevant", "pattern": "(?:metric|alert|signal|log|latency|error|counter|gauge)" }
       ],
       "consistency_checks": [
         { "id": "S5-C1", "description": "Verification evidence covers the FRs listed in Stage 4", "source": "stage4" },
@@ -247,9 +247,9 @@
         "Related Initiatives"
       ],
       "quality_criteria": [
-        { "id": "S6-Q1", "description": "Deployment status is stated with evidence or explicitly marked not yet deployed", "applies_to": "Deployment Confirmation", "smart_dimension": "Specific" },
-        { "id": "S6-Q2", "description": "Every planned KPI has a measured value with source and window, or is explicitly marked pending", "applies_to": "KPI Outcome vs Plan", "smart_dimension": "Measurable" },
-        { "id": "S6-Q3", "description": "Baseline update proposal is specific enough to apply as a reviewable change to Stage 1", "applies_to": "Baseline Update Proposal", "smart_dimension": "Specific" }
+        { "id": "S6-Q1", "description": "Deployment status is stated with evidence or explicitly marked not yet deployed", "applies_to": "Deployment Confirmation", "smart_dimension": "Specific", "pattern": "(?:deployed|not yet deployed|pending deployment|production|staging|sha)" },
+        { "id": "S6-Q2", "description": "Every planned KPI has a measured value with source and window, or is explicitly marked pending", "applies_to": "KPI Outcome vs Plan", "smart_dimension": "Measurable", "pattern": "(?:KPI-\\d{3}|measured|pending)" },
+        { "id": "S6-Q3", "description": "Baseline update proposal is specific enough to apply as a reviewable change to Stage 1", "applies_to": "Baseline Update Proposal", "smart_dimension": "Specific", "pattern": "(?:Stage 1|baseline|update|diff|PR|MR)" }
       ],
       "consistency_checks": [
         { "id": "S6-C1", "description": "KPIs measured here match the KPIs defined in Stage 0/Stage 4", "source": "stage0" },

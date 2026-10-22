@@ -65,8 +65,8 @@ function cleanContent(text) {
       }
     }
 
-    // If line had markdown list bullet like "- " or "* " and nothing else, skip it
-    if (/^\s*[-*]\s*$/.test(line)) {
+    // If line had markdown list bullet like "- ", "* ", or numbered item like "1. " and nothing else, skip it
+    if (/^\s*(?:[-*]|\d+[.)])\s*$/.test(line)) {
       continue;
     }
 
@@ -110,6 +110,14 @@ function extractSection(content, keywords) {
 }
 
 /**
+ * Detect whether deliverable content is an unfilled raw template.
+ */
+function isRawTemplate(content) {
+  if (!content) return false;
+  return /\[(?:Project Name|Project ID|Initiative ID|Engagement ID|BABOK-YYYYMMDD|BC-YYYYMMDD|SD-YYYYMMDD|YYYY-MM-DD)\]/i.test(content);
+}
+
+/**
  * Evaluate quality criteria against markdown content.
  * Each criterion contributes equally to the quality score.
  *
@@ -121,6 +129,17 @@ export function checkSmart(content, criteria) {
   if (!criteria || criteria.length === 0) {
     // No explicit criteria: do a generic quality check
     return genericQualityCheck(content);
+  }
+
+  if (isRawTemplate(content)) {
+    const issues = criteria.map(criterion => ({
+      dimension: 'quality',
+      ruleId: criterion.id,
+      severity: 'warning',
+      message: `Quality criterion not met: deliverable contains raw template placeholders (${criterion.description})`,
+      remediation: `Ensure "${criterion.applies_to || 'deliverable'}" is populated with substantive data`,
+    }));
+    return { score: 0, issues };
   }
 
   const issues = [];
@@ -181,16 +200,8 @@ export function checkSmart(content, criteria) {
       ok = CURRENCY_SYMBOL_RE.test(text) && NUM_RE.test(text);
       NUM_RE.lastIndex = 0;
     } else if (smart_dimension === 'Specific') {
-      // Check for observable pattern in description (e.g. FR-NNN, OPT-NN, EV-NNN)
-      const idMatch = description.match(/\b(FR|OPT|EV|DR|CR|REQ|BR|KPI|ST|A|SEC)-(?:NNN?|\d{2,3})\b/i);
-      if (idMatch) {
-        const prefix = idMatch[1];
-        const numDigits = idMatch[0].includes('NNN') ? '\\d{3}' : '\\d{2,3}';
-        ok = new RegExp(`\\b${prefix}-${numDigits}\\b`, 'i').test(text);
-      } else {
-        ok = text.trim().length > 0 && (NUM_RE.test(text) || /[a-zA-Z]{3,}/.test(text));
-        NUM_RE.lastIndex = 0;
-      }
+      ok = text.trim().length > 0 && (NUM_RE.test(text) || /[a-zA-Z]{3,}/.test(text));
+      NUM_RE.lastIndex = 0;
     } else if (lowerDesc.includes('npv') || lowerDesc.includes('irr') || lowerDesc.includes('payback')) {
       ok = ROI_KEYWORDS_RE.test(text);
       ROI_KEYWORDS_RE.lastIndex = 0;
