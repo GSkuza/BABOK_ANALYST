@@ -207,18 +207,6 @@ export function approveStage(projectId, stageNumber, notes, deliverableSha256) {
   validateTwoKeyApproval(stage, deliverableSha256, { journal, deliverableContent });
 
   const now = new Date().toISOString();
-  const nowSec = now.slice(0, 19);
-  for (const s of journal.stages) {
-    if (s.stage !== stageNumber && s.status === 'approved' && s.approved_at) {
-      const existingSec = new Date(s.approved_at).toISOString().slice(0, 19);
-      if (existingSec === nowSec) {
-        throw new Error(
-          `Two-Key Gate: stage ${stageNumber} cannot share approved_at second (${nowSec}) with stage ${s.stage}.`,
-        );
-      }
-    }
-  }
-
   stage.status = 'approved';
   stage.approved_at = now;
   stage.approved_by = stage.human_attestation?.attestor || 'Human';

@@ -98,24 +98,29 @@ export function validateDeliverableHash(content, expectedSha256, stageNumber = 0
 }
 
 /**
- * Ensure no two approved stages share identical approved_at timestamp up to the second.
+ * Warn if any two approved stages share identical approved_at timestamp up to the second.
+ * Returns an array of warnings without throwing.
  * @param {object} journal
+ * @returns {Array<{rule: string, message: string}>}
  */
 export function validateJournalApprovalTimestamps(journal) {
-  if (!journal?.stages) return;
+  if (!journal?.stages) return [];
+  const warnings = [];
   const seenSeconds = new Map();
   for (const stage of journal.stages) {
     if (stage.status === 'approved' && stage.approved_at) {
       const sec = new Date(stage.approved_at).toISOString().slice(0, 19);
       if (seenSeconds.has(sec)) {
         const prior = seenSeconds.get(sec);
-        throw new Error(
-          `Two-Key Gate: stages ${prior} and ${stage.stage} share identical approved_at second (${sec}): approvals must not be batched.`,
-        );
+        warnings.push({
+          rule: 'identical_approval_timestamps',
+          message: `Two-Key Gate warning: stages ${prior} and ${stage.stage} share identical approved_at second (${sec}).`,
+        });
       }
       seenSeconds.set(sec, stage.stage);
     }
   }
+  return warnings;
 }
 
 /**

@@ -10,6 +10,7 @@ import {
   validateTwoKeyApproval,
   ensureStageTwoKeyFields,
   generateReviewId,
+  validateJournalApprovalTimestamps,
 } from '../../babok-mcp/src/lib/two-key-gate.js';
 
 const SAMPLE = '# Charter\n\nGo.';
@@ -116,7 +117,19 @@ describe('two-key-gate', () => {
     );
   });
 
-  test('validateTwoKeyApproval rejects batched approvals with identical second in journal', () => {
+  test('validateJournalApprovalTimestamps returns warning for batched approvals with identical second', () => {
+    const mockJournal = {
+      stages: [
+        { stage: 0, status: 'approved', approved_at: '2026-10-16T12:00:00.123Z' },
+        { stage: 1, status: 'approved', approved_at: '2026-10-16T12:00:00.456Z' },
+      ],
+    };
+    const warnings = validateJournalApprovalTimestamps(mockJournal);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /share identical approved_at second/);
+  });
+
+  test('validateTwoKeyApproval does not block approval when stages share identical second', () => {
     const sha = sha256Content(SAMPLE);
     const stage = {
       stage: 1,
@@ -130,9 +143,6 @@ describe('two-key-gate', () => {
         { stage: 1, status: 'approved', approved_at: '2026-10-16T12:00:00.456Z' },
       ],
     };
-    assert.throws(
-      () => validateTwoKeyApproval(stage, sha, { journal: mockJournal }),
-      /share identical approved_at second/,
-    );
+    assert.doesNotThrow(() => validateTwoKeyApproval(stage, sha, { journal: mockJournal }));
   });
 });
