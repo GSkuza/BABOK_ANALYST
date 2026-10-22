@@ -93,11 +93,32 @@ Which 3–6 KPIs will show the engagement succeeded? For each: current value (if
 
 ### Step 1.4: Communication Plan
 
-📋 **STAGE 1 — QUESTION 4/4**
+📋 **STAGE 1 - QUESTION 4/5**
 
 **Category:** Communication
 
 How does the organisation prefer to receive engagement communication (steering brief format, town halls, intranet, 1:1s)? Any audiences that must NOT be informed yet (e.g. works council timing, confidentiality)?
+
+**Please answer. I will proceed to question 5/5.**
+
+---
+
+[WAIT FOR HUMAN RESPONSE]
+
+✅ *Answer recorded. Agent action: map communication channels to stakeholder quadrants.*
+
+---
+
+### Step 1.5: Collaboration Model
+
+📋 **STAGE 1 - QUESTION 5/5**
+
+**Category:** Collaboration Model
+
+How will the advisory team and client team work together during this engagement?
+1. **Advisor Role & Client Co-Creation:** How should external advisors facilitate vs. how will client operational leaders co-create findings?
+2. **Procedure Ownership:** Does the client hold 100% post-implementation ownership of all designed procedures and operating models?
+3. **Working Rhythm & Decision Governance:** What is the agreed cadence (e.g. weekly working sessions, steering committee reviews) and who approves recommendations before execution?
 
 **This is the last question for Stage 1.**
 
@@ -105,7 +126,7 @@ How does the organisation prefer to receive engagement communication (steering b
 
 [WAIT FOR HUMAN RESPONSE]
 
-✅ *All 4 questions answered. Generating Stage 1 deliverable...*
+✅ *All 5 questions answered. Generating Stage 1 deliverable...*
 
 ---
 
@@ -116,6 +137,7 @@ How does the organisation prefer to receive engagement communication (steering b
 Load before writing: MCP `babok_get_stage_template` with `stage_n: 1` and the `project_id`.
 
 **Critical:** Keep all H2 headings unchanged so `babok score` completeness checks pass.
+**Approval Section rule:** Keep section `## Approval Section` strictly with `Status: PENDING human attestation` and empty/pending fields. Do not pre-fill client names, signatures or mock hashes as approvers. Approval is granted exclusively through the Two-Key Gate (`babok approve`).
 
 ---
 
@@ -123,6 +145,7 @@ Load before writing: MCP `babok_get_stage_template` with `stage_n: 1` and the `p
 
 - [ ] Every High-power stakeholder has a named engagement strategy
 - [ ] Steering committee has named members, a chair and a fixed cadence
+- [ ] Collaboration Model specifies advisor facilitation, client co-creation, and 100% client procedure ownership
 - [ ] Every KPI has numeric baseline (or "provisional") and target with dates
 - [ ] RACI has exactly one A per activity
 - [ ] Communication plan covers all four grid quadrants

@@ -93,6 +93,7 @@ Confirm the steering committee from Stage 1 (**[name]**) will own the risk regis
 Load before writing: MCP `babok_get_stage_template` with `stage_n: 5` and the `project_id`.
 
 **Critical:** Keep all H2 headings unchanged. Every Critical/High row in **Risk Register** must contain a named owner (First Last) and a date — checked by the `CRITICAL-RISK-OWNER` rule.
+**Approval Section rule:** Keep section `## Approval Section` strictly with `Status: PENDING human attestation` and empty/pending fields. Do not pre-fill client names, signatures or mock hashes as approvers. Approval is granted exclusively through the Two-Key Gate (`babok approve`).
 
 ---
 

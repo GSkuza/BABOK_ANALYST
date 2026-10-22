@@ -5,7 +5,7 @@
 
 An AI agent for professional business analysis compliant with **BABOK v3** (International Institute of Business Analysis) standard. Guides the analyst through a structured **9-stage** flow - from Stage 0 project charter to Stage 8 business case and ROI.
 
-**Current version:** 2.2.8 | **Plugin install:** Claude Code, Codex, Copilot CLI
+**Current version:** 2.4.0 | **Plugin install:** Claude Code, Codex, Copilot CLI
 
 ## What is BABOK Analyst?
 

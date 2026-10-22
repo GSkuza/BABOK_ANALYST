@@ -121,6 +121,7 @@ Who on the client side will own the benefits tracker after handover, in which fo
 Load before writing: MCP `babok_get_stage_template` with `stage_n: 6` and the `project_id`.
 
 **Critical:** Keep all H2 headings unchanged. **Cost-Benefit Analysis & ROI/NPV** figures are compared to the Stage 0 ceiling by the `BUDGET-CEILING` rule.
+**Approval Section rule:** Keep section `## Approval Section` strictly with `Status: PENDING human attestation` and empty/pending fields. Do not pre-fill client names, signatures or mock hashes as approvers. Approval is granted exclusively through the Two-Key Gate (`babok approve`).
 
 ---
 

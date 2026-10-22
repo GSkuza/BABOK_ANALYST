@@ -136,6 +136,7 @@ Load before writing the deliverable:
 - CLI/file: read the template path above
 
 **Critical:** Keep all H2 headings from the template unchanged so `babok score` completeness checks pass.
+**Approval Section rule:** Keep section `## Approval Section` strictly with `Status: PENDING human attestation` and empty/pending fields. Do not pre-fill client names, signatures or mock hashes as approvers. Approval is granted exclusively through the Two-Key Gate (`babok approve`).
 
 ---
 

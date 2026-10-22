@@ -1,5 +1,5 @@
 /**
- * SMART / Quality checker — heuristic checks for measurability, specificity,
+ * SMART / Quality checker - heuristic checks for measurability, specificity,
  * and time-bound attributes in stage deliverables.
  */
 
@@ -20,6 +20,60 @@ const KPI_KEYWORDS_RE = /\b(baseline|target|current|reduction|improvement|hours?
  */
 function countMatches(text, re) {
   return (text.match(re) || []).length;
+}
+
+/**
+ * Remove markdown table header rows, separator rows, and [placeholders]
+ * so only substantive filled-in content is evaluated.
+ */
+function cleanContent(text) {
+  if (!text) return '';
+  const lines = text.split('\n');
+  const separatorRe = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/;
+  const filtered = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    // If the next line is a table separator, this line is a table header row -> skip both
+    if (i + 1 < lines.length && separatorRe.test(lines[i + 1])) {
+      i++;
+      continue;
+    }
+    if (separatorRe.test(lines[i])) {
+      continue;
+    }
+
+    // Strip [placeholders] not followed by (
+    let line = lines[i].replace(/\[[^\]\r\n]*\](?!\()/g, '');
+
+    // If line is a markdown table row, verify that data cells are not empty
+    if (line.includes('|')) {
+      const parts = line.split('|').map(s => s.trim());
+      const cells = parts.filter((_, idx, arr) => {
+        if (idx === 0 && parts[0] === '') return false;
+        if (idx === arr.length - 1 && parts[arr.length - 1] === '') return false;
+        return true;
+      });
+      // In a markdown table row, if all data cells after cell 0 are empty,
+      // it means only the template key/label remains without any filled value
+      if (cells.length > 1) {
+        const dataCells = cells.slice(1);
+        if (dataCells.every(c => c.length === 0)) {
+          continue; // skip unfilled prompt row
+        }
+      } else if (cells.length === 1 && cells[0].length === 0) {
+        continue;
+      }
+    }
+
+    // If line had markdown list bullet like "- " or "* " and nothing else, skip it
+    if (/^\s*[-*]\s*$/.test(line)) {
+      continue;
+    }
+
+    filtered.push(line);
+  }
+
+  return filtered.join('\n');
 }
 
 /**
@@ -74,15 +128,47 @@ export function checkSmart(content, criteria) {
 
   for (const criterion of criteria) {
     const { id, description, applies_to, smart_dimension } = criterion;
-    const section = applies_to
-      ? extractSection(content, [applies_to])
-      : content;
-    const text = section.length > 50 ? section : content; // fallback to full doc
+    let section = '';
+    if (applies_to) {
+      const rawSection = extractSection(content, [applies_to]);
+      if (!rawSection || rawSection.trim().length === 0) {
+        issues.push({
+          dimension: 'quality',
+          ruleId: id,
+          severity: 'warning',
+          message: `Quality criterion not met: missing section "${applies_to}" (${description})`,
+          remediation: `Add section "${applies_to}" and ensure it satisfies (${description})`,
+        });
+        continue;
+      }
+      section = rawSection;
+    } else {
+      section = content;
+    }
 
+    if (criterion.manual_review || smart_dimension === 'manual_review') {
+      issues.push({
+        dimension: 'quality',
+        ruleId: id,
+        severity: 'info',
+        message: `Manual review required: ${description}`,
+        remediation: `Verify manually during human attestation: ensure "${applies_to}" satisfies (${description})`,
+      });
+      passed++;
+      continue;
+    }
+
+    const text = cleanContent(section);
     let ok = false;
     const lowerDesc = description.toLowerCase();
 
-    if (smart_dimension === 'Measurable' || lowerDesc.includes('numeric')) {
+    if (criterion.pattern) {
+      const patRe = new RegExp(criterion.pattern, 'i');
+      ok = patRe.test(text);
+    } else if (criterion.signals && Array.isArray(criterion.signals) && criterion.signals.length > 0) {
+      const lowerText = text.toLowerCase();
+      ok = criterion.signals.some(sig => lowerText.includes(sig.toLowerCase()));
+    } else if (smart_dimension === 'Measurable' || lowerDesc.includes('numeric')) {
       // Require at least one numeric value
       ok = NUM_RE.test(text);
       NUM_RE.lastIndex = 0;
@@ -90,10 +176,21 @@ export function checkSmart(content, criteria) {
       // Require a specific date pattern
       ok = DATE_RE.test(text);
       DATE_RE.lastIndex = 0;
-    } else if (smart_dimension === 'Specific' || lowerDesc.includes('currency')) {
+    } else if (lowerDesc.includes('currency')) {
       // Require a currency symbol + number
       ok = CURRENCY_SYMBOL_RE.test(text) && NUM_RE.test(text);
       NUM_RE.lastIndex = 0;
+    } else if (smart_dimension === 'Specific') {
+      // Check for observable pattern in description (e.g. FR-NNN, OPT-NN, EV-NNN)
+      const idMatch = description.match(/\b(FR|OPT|EV|DR|CR|REQ|BR|KPI|ST|A|SEC)-(?:NNN?|\d{2,3})\b/i);
+      if (idMatch) {
+        const prefix = idMatch[1];
+        const numDigits = idMatch[0].includes('NNN') ? '\\d{3}' : '\\d{2,3}';
+        ok = new RegExp(`\\b${prefix}-${numDigits}\\b`, 'i').test(text);
+      } else {
+        ok = text.trim().length > 0 && (NUM_RE.test(text) || /[a-zA-Z]{3,}/.test(text));
+        NUM_RE.lastIndex = 0;
+      }
     } else if (lowerDesc.includes('npv') || lowerDesc.includes('irr') || lowerDesc.includes('payback')) {
       ok = ROI_KEYWORDS_RE.test(text);
       ROI_KEYWORDS_RE.lastIndex = 0;
