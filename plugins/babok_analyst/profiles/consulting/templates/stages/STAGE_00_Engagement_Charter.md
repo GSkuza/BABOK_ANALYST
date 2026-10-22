@@ -91,11 +91,11 @@ All must be true to proceed to Stage 1:
 
 | Dimension | Specification |
 |-----------|---------------|
-| Advisor Role | [e.g. Facilitators and methodology guides (moderators, not external template imposers)] |
-| Client Co-Creation | [e.g. Client team actively co-creates diagnostic findings, options, and target designs] |
-| Procedure Ownership | [e.g. Client holds 100% post-implementation ownership of all procedures and operational rules] |
-| Working Rhythm | [e.g. Regular cadence (weekly working sessions on site, bi-weekly steering reviews)] |
-| Decision Governance | [e.g. Advisory recommendations require executive sponsor approval before execution] |
+| Advisor Role | [Describe advisor role and facilitation approach] |
+| Client Co-Creation | [Describe client involvement and co-creation model] |
+| Procedure Ownership | [Describe post-implementation ownership of procedures and operational rules] |
+| Working Rhythm | [Describe meeting and working session cadence] |
+| Decision Governance | [Describe decision-making authority and approval process] |
 
 ---
 

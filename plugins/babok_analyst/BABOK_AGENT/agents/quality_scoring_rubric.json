@@ -31,31 +31,36 @@
           "id": "S1-Q1",
           "description": "Every quantitative KPI has a numeric baseline value",
           "applies_to": "Success Criteria",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "\\b\\d+(?:\\.\\d+)?%?\\b"
         },
         {
           "id": "S1-Q2",
           "description": "Every quantitative KPI has a numeric target value",
           "applies_to": "Success Criteria",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "\\b\\d+(?:\\.\\d+)?%?\\b"
         },
         {
           "id": "S1-Q3",
           "description": "Every deadline is a specific calendar date (not Q1/soon/TBD)",
           "applies_to": "Project Constraints",
-          "smart_dimension": "Time-bound"
+          "smart_dimension": "Time-bound",
+          "pattern": "\\d{4}-\\d{2}-\\d{2}"
         },
         {
           "id": "S1-Q4",
           "description": "Budget range has currency and numeric bounds",
           "applies_to": "Project Constraints",
-          "smart_dimension": "Specific"
+          "smart_dimension": "Specific",
+          "pattern": "(?:PLN|EUR|USD|GBP|\\$|€|zł)\\s*[\\d,.]+|[\\d,.]+\\s*(?:PLN|EUR|USD|GBP|zł)"
         },
         {
           "id": "S1-Q5",
           "description": "ROI targets include payback period, NPV and IRR",
           "applies_to": "Success Criteria — ROI Targets",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "(?:NPV|IRR|payback|zwrot)"
         }
       ],
       "consistency_checks": [
@@ -122,19 +127,22 @@
           "id": "S2-Q1",
           "description": "Baseline metrics are numeric (not qualitative descriptions)",
           "applies_to": "Baseline Metrics",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "\\b\\d+(?:\\.\\d+)?%?\\b"
         },
         {
           "id": "S2-Q2",
           "description": "Each bottleneck cites a measurable impact",
           "applies_to": "Bottleneck Identification",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "BN-\\d{3}"
         },
         {
           "id": "S2-Q3",
           "description": "Volume metrics include unit of measure and time period",
           "applies_to": "Baseline Metrics",
-          "smart_dimension": "Specific"
+          "smart_dimension": "Specific",
+          "pattern": "(?:per|/|miesięcz|rocz|dzien|hour|day|month|year|godz|szt|h|d)\\b"
         }
       ],
       "consistency_checks": [
@@ -188,19 +196,22 @@
           "id": "S3-Q1",
           "description": "Each problem statement is measurable (contains numeric or observable criterion)",
           "applies_to": "Problem Statements",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "PS-\\d{3}"
         },
         {
           "id": "S3-Q2",
           "description": "Root cause analysis goes at least 3 levels deep (3 Whys minimum)",
           "applies_to": "Root Cause Analysis",
-          "smart_dimension": "Specific"
+          "smart_dimension": "Specific",
+          "pattern": "(?:Why|Dlaczego|RC-\\d{3})"
         },
         {
           "id": "S3-Q3",
           "description": "Prioritisation matrix uses two quantifiable dimensions (e.g. Impact × Likelihood)",
           "applies_to": "Problem Prioritisation Matrix",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "(?:Impact|Likelihood|Wpływ|Prawdopodobieństwo|Score|Wynik)"
         }
       ],
       "consistency_checks": [
@@ -257,25 +268,29 @@
           "id": "S4-Q1",
           "description": "Every acceptance criterion is testable (produces observable, verifiable outcome)",
           "applies_to": "User Stories with Acceptance Criteria",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "(?:Given|When|Then|Zakładając|Gdy|Wtedy|AC-\\d{3})"
         },
         {
           "id": "S4-Q2",
           "description": "NFRs contain numeric thresholds (e.g. response time < 2s, availability >= 99.5%)",
           "applies_to": "Non-Functional Requirements",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "(?:NFR-\\d{3}|<=|>=|<|>|%|ms|sec|s\\b)"
         },
         {
           "id": "S4-Q3",
           "description": "Each FR has a unique ID (FR-NNN format)",
           "applies_to": "Functional Requirements",
-          "smart_dimension": "Specific"
+          "smart_dimension": "Specific",
+          "pattern": "FR-\\d{3}"
         },
         {
           "id": "S4-Q4",
           "description": "MoSCoW prioritisation applied to all requirements",
           "applies_to": "Functional Requirements",
-          "smart_dimension": "Relevant"
+          "smart_dimension": "Relevant",
+          "pattern": "(?:Must|Should|Could|Won't|WONT|MUST|SHOULD|COULD)"
         }
       ],
       "consistency_checks": [
@@ -335,19 +350,22 @@
           "id": "S5-Q1",
           "description": "Every major problem from Stage 3 has a corresponding design element addressing it",
           "applies_to": "TO-BE Process Map",
-          "smart_dimension": "Relevant"
+          "smart_dimension": "Relevant",
+          "pattern": "(?:Step|Krok|Process|Proces|P-\\d{3}|F-\\d{3})"
         },
         {
           "id": "S5-Q2",
           "description": "Projected improvements are quantified and tied to Stage 1 KPI targets",
           "applies_to": "User Experience Improvements",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "(?:KPI-\\d{3}|%|h\\b|min\\b|days|dni)"
         },
         {
           "id": "S5-Q3",
           "description": "Each design decision documents alternatives considered and rationale for choice",
           "applies_to": "Key Design Decisions",
-          "smart_dimension": "Specific"
+          "smart_dimension": "Specific",
+          "pattern": "(?:DD-\\d{3}|Decision|Decyzja|Alternative|Alternatyw)"
         }
       ],
       "consistency_checks": [
@@ -407,19 +425,22 @@
           "id": "S6-Q1",
           "description": "Each milestone has a specific calendar date and measurable completion criterion",
           "applies_to": "Key Milestones",
-          "smart_dimension": "Time-bound"
+          "smart_dimension": "Time-bound",
+          "pattern": "(?:M-\\d{2}|M\\d|Milestone|Kamień|\\d{4}-\\d{2}-\\d{2})"
         },
         {
           "id": "S6-Q2",
           "description": "Each phase has estimated effort in person-days or person-months",
           "applies_to": "Implementation Phases",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "(?:Phase|Faza|man-days|person-days|osobodni|md|mm|person-months)"
         },
         {
           "id": "S6-Q3",
           "description": "Critical path explicitly identifies the longest dependency chain",
           "applies_to": "Critical Path",
-          "smart_dimension": "Specific"
+          "smart_dimension": "Specific",
+          "pattern": "(?:Critical Path|Ścieżka krytyczna|depends on|zależy od|->|→)"
         }
       ],
       "consistency_checks": [
@@ -479,19 +500,22 @@
           "id": "S7-Q1",
           "description": "Each risk has a numeric likelihood score and impact score (1–5 scale)",
           "applies_to": "Risk Register",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "(?:R|RSK)-\\d{2,3}"
         },
         {
           "id": "S7-Q2",
           "description": "Each mitigation action is assigned to a named owner with a target date",
           "applies_to": "Risk Register",
-          "smart_dimension": "Time-bound"
+          "smart_dimension": "Time-bound",
+          "pattern": "\\d{4}-\\d{2}-\\d{2}"
         },
         {
           "id": "S7-Q3",
           "description": "Residual risk is quantified after mitigation (not just described)",
           "applies_to": "Residual Risk Statement",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "(?:Low|Med|High|Niskie|Średnie|Wysokie|\\d/5)"
         }
       ],
       "consistency_checks": [
@@ -553,25 +577,29 @@
           "id": "S8-Q1",
           "description": "Every financial parameter cites a data source (vendor quote, survey, baseline data)",
           "applies_to": "Cost-Benefit Analysis",
-          "smart_dimension": "Specific"
+          "smart_dimension": "Specific",
+          "pattern": "(?:source|źródło|quote|survey|baseline|dane)"
         },
         {
           "id": "S8-Q2",
           "description": "Sensitivity analysis varies at least 2 key assumptions (e.g. adoption rate, implementation cost)",
           "applies_to": "Sensitivity Analysis",
-          "smart_dimension": "Measurable"
+          "smart_dimension": "Measurable",
+          "pattern": "(?:Scenario|Scenariusz|Worst|Best|Base|Pesymist|Optymist|Bazow|Case)"
         },
         {
           "id": "S8-Q3",
           "description": "NPV discount rate is explicitly stated and justified",
           "applies_to": "NPV Calculation",
-          "smart_dimension": "Specific"
+          "smart_dimension": "Specific",
+          "pattern": "(?:NPV|discount rate|stopa dyskontowa|%)"
         },
         {
           "id": "S8-Q4",
           "description": "Executive Recommendation clearly states go/no-go with rationale",
           "applies_to": "Executive Recommendation",
-          "smart_dimension": "Specific"
+          "smart_dimension": "Specific",
+          "pattern": "(?:GO|NO-GO|Go/No-Go|Rekomendacja|Recommend)"
         }
       ],
       "consistency_checks": [

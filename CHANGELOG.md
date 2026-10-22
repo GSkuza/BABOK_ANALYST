@@ -8,11 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Explicit observable regex patterns in quality rubrics**: Added explicit `pattern` fields to quality criteria across `BABOK_AGENT`, `profiles/consulting`, and `profiles/software-development` quality scoring rubrics, replacing heuristic regex inference from criterion descriptions.
+- **Full-spectrum raw template versus filled deliverable test coverage**: Added synthetic valid fixtures across missing stages and expanded `tests/unit/scoring.test.js` to assert that raw unfilled templates fail scoring below threshold while filled deliverables pass across all stages and profiles.
 - **Collaboration Model in consulting profile**: Added `Collaboration Model` section to consulting deliverable templates (`STAGE_00` and `STAGE_01`), elicitation checklist in stage prompts, required section and rubric quality criterion `S1-Q4` in `profiles/consulting/agents/quality_scoring_rubric.json`, profile metadata updates, and dedicated `profiles/consulting/README.md` documentation.
 - **Numerical consistency instruction for business cases**: Added `S6-C3` to consulting stage prompt and rubric quality criteria instructing agents to cross-check Stage 6 component sum vs. total and reconcile against Stage 2 Value-at-Stake within 5% tolerance (prompt instruction, not an automated engine check).
 - **Quality check observable signals and manual review**: Added `signals` evaluation in `quality/checks/smart.js` to inspect deliverables for required domain columns or keywords, allowed non-currency specific criteria, and handled `manual_review: true` criteria as informational without degrading score.
 
 ### Changed
+- **Smart criteria checker template detection**: `isRawTemplate` detection in `smart.js` flags raw template deliverables containing unfilled metadata header placeholders and limits scores below passing threshold.
+- **Consulting Collaboration Model placeholder neutralisation**: Replaced prescriptive example values (`[e.g. Client holds 100%...]`) with neutral descriptions (`[Describe ...]`) in consulting templates `STAGE_00` and `STAGE_01`.
 - **Two-Key gate human attestation enforcement**: Deliverable templates in consulting profile (`STAGE_00` to `STAGE_06`) now explicitly initialize sign-off blocks as `Status: PENDING human attestation` with blank attestation fields. Consulting stage prompts strictly prohibit agents from filling client approval attestations.
 
 ### Fixed
