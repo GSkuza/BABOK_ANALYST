@@ -135,6 +135,7 @@ If nothing changes (OPT-00) over the next 12–24 months, what happens to cost, 
 Load before writing: MCP `babok_get_stage_template` with `stage_n: 3` and the `project_id`.
 
 **Critical:** Keep all H2 headings unchanged so `babok score` completeness checks pass. The section **Recommended Option & Rationale** must name exactly one `OPT-NN` — Stage 4 and the `RECOMMENDATION-TRACEABILITY` rule depend on it.
+**Approval Section rule:** Keep section `## Approval Section` strictly with `Status: PENDING human attestation` and empty/pending fields. Do not pre-fill client names, signatures or mock hashes as approvers. Approval is granted exclusively through the Two-Key Gate (`babok approve`).
 
 ---
 

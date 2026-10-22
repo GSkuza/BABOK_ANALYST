@@ -79,10 +79,12 @@
 
 ## Approval Section
 
+Status: PENDING human attestation
+
 | Field | Value |
 |-------|-------|
-| Approver | [Name, Title] |
-| Date | [YYYY-MM-DD] |
+| Approver | [Pending human attestation via Two-Key Gate] |
+| Date | [Pending] |
 | Comments | [Optional] |
 
 **Change log**

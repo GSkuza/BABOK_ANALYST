@@ -2,7 +2,7 @@
   "$schema": "../profile.schema.json",
   "id": "consulting",
   "name": "Management Consulting Engagement",
-  "description": "Non-IT advisory engagements: process optimisation, digital-transformation strategy (business layer), organisation design and C-level advisory. Diagnostic → options → target operating model → value realisation. Produces recommendations and change roadmaps, never software requirements.",
+  "description": "Non-IT advisory engagements: process optimisation, digital-transformation strategy (business layer), organisation design and C-level advisory. Diagnostic → options → target operating model → value realisation. Produces recommendations and change roadmaps, never software requirements. Enforces an explicit Collaboration Model (advisor facilitation, client co-creation, 100% client procedure ownership).",
   "id_prefix": "BC",
   "stages": [
     { "stage": 0, "name": "Engagement Charter & Mandate", "deliverable_file": "STAGE_00_Engagement_Charter.md", "prompt_file": "Consulting_agent_stage_0.md" },

@@ -9,6 +9,8 @@ import {
   assertCanSaveDeliverable,
   validateTwoKeyApproval,
   ensureStageTwoKeyFields,
+  generateReviewId,
+  validateJournalApprovalTimestamps,
 } from '../../babok-mcp/src/lib/two-key-gate.js';
 
 const SAMPLE = '# Charter\n\nGo.';
@@ -37,7 +39,7 @@ describe('two-key-gate', () => {
     const sha = sha256Content(SAMPLE);
     const stage = {
       stage: 0,
-      agent_submission: { content_sha256: sha, review_id: 'rev-1', at: '2026-01-01' },
+      agent_submission: { content_sha256: sha, review_id: generateReviewId(), at: '2026-01-01' },
       human_attestation: { content_sha256: sha, attestor: 'Human', spot_check_passed: true, at: '2026-01-01' },
       revision_open: false,
     };
@@ -48,7 +50,7 @@ describe('two-key-gate', () => {
   test('validateTwoKeyApproval rejects SHA mismatch', () => {
     const stage = {
       stage: 1,
-      agent_submission: { content_sha256: 'a'.repeat(64) },
+      agent_submission: { content_sha256: 'a'.repeat(64), review_id: generateReviewId() },
       human_attestation: { content_sha256: 'b'.repeat(64), spot_check_passed: true },
       revision_open: false,
     };
@@ -66,10 +68,65 @@ describe('two-key-gate', () => {
     const sha = sha256Content(SAMPLE);
     const stage = {
       stage: 0,
-      agent_submission: { content_sha256: sha },
+      agent_submission: { content_sha256: sha, review_id: generateReviewId() },
       human_attestation: { content_sha256: sha, spot_check_passed: false },
     };
     ensureStageTwoKeyFields(stage);
     assert.throws(() => validateTwoKeyApproval(stage), /spot-check/);
+  });
+
+  test('validateTwoKeyApproval rejects invalid review_id format', () => {
+    const sha = sha256Content(SAMPLE);
+    const stage = {
+      stage: 0,
+      agent_submission: { content_sha256: sha, review_id: 'rev-consulting-example-s0' },
+      human_attestation: { content_sha256: sha, spot_check_passed: true },
+    };
+    ensureStageTwoKeyFields(stage);
+    assert.throws(() => validateTwoKeyApproval(stage, sha), /invalid review_id format/);
+  });
+
+  test('validateTwoKeyApproval rejects mock repeated-character hash in deliverable', () => {
+    const sha = sha256Content(SAMPLE);
+    const stage = {
+      stage: 1,
+      agent_submission: { content_sha256: sha, review_id: generateReviewId() },
+      human_attestation: { content_sha256: sha, spot_check_passed: true },
+    };
+    ensureStageTwoKeyFields(stage);
+    const mockContent = SAMPLE + '\nAttestation hash: 1111111111111111111111111111111111111111111111111111111111111111';
+    assert.throws(
+      () => validateTwoKeyApproval(stage, sha, { deliverableContent: mockContent }),
+      /mock repeated-character hash/,
+    );
+  });
+
+  test('validateJournalApprovalTimestamps returns warning for batched approvals with identical second', () => {
+    const mockJournal = {
+      stages: [
+        { stage: 0, status: 'approved', approved_at: '2026-10-16T12:00:00.123Z' },
+        { stage: 1, status: 'approved', approved_at: '2026-10-16T12:00:00.456Z' },
+      ],
+    };
+    const warnings = validateJournalApprovalTimestamps(mockJournal);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /share identical approved_at second/);
+  });
+
+  test('validateTwoKeyApproval does not block approval when stages share identical second', () => {
+    const sha = sha256Content(SAMPLE);
+    const stage = {
+      stage: 1,
+      agent_submission: { content_sha256: sha, review_id: generateReviewId() },
+      human_attestation: { content_sha256: sha, spot_check_passed: true },
+    };
+    ensureStageTwoKeyFields(stage);
+    const mockJournal = {
+      stages: [
+        { stage: 0, status: 'approved', approved_at: '2026-10-16T12:00:00.123Z' },
+        { stage: 1, status: 'approved', approved_at: '2026-10-16T12:00:00.456Z' },
+      ],
+    };
+    assert.doesNotThrow(() => validateTwoKeyApproval(stage, sha, { journal: mockJournal }));
   });
 });

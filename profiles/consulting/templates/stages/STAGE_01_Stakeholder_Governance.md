@@ -22,18 +22,18 @@
 
 | ID | Stakeholder | Role / Function | Power (H/M/L) | Interest (H/M/L) | Stance (Champion / Neutral / Resistant) | Engagement Strategy |
 |----|-------------|-----------------|---------------|------------------|-----------------------------------------|---------------------|
-| ST-001 | [Name] | [Title] | H | H | Champion | Manage closely — steering committee member |
-| ST-002 | [Name] | [Title] | H | L | Neutral | Keep satisfied — monthly executive brief |
-| ST-003 | [Name] | [Title] | L | H | Resistant | Keep informed — workshop participant |
+| [ST-001] | [Name] | [Title] | [H/M/L] | [H/M/L] | [Champion / Neutral / Resistant] | [Engagement strategy, e.g. Manage closely] |
+| [ST-002] | [Name] | [Title] | [H/M/L] | [H/M/L] | [Champion / Neutral / Resistant] | [Engagement strategy, e.g. Keep satisfied] |
+| [ST-003] | [Name] | [Title] | [H/M/L] | [H/M/L] | [Champion / Neutral / Resistant] | [Engagement strategy, e.g. Keep informed] |
 
 **Power/Interest grid summary**
 
 | Quadrant | Stakeholders | Strategy |
 |----------|--------------|----------|
-| High power / High interest | [IDs] | Manage closely |
-| High power / Low interest | [IDs] | Keep satisfied |
-| Low power / High interest | [IDs] | Keep informed |
-| Low power / Low interest | [IDs] | Monitor |
+| High power / High interest | [IDs] | [Manage closely / Strategy details] |
+| High power / Low interest | [IDs] | [Keep satisfied / Strategy details] |
+| Low power / High interest | [IDs] | [Keep informed / Strategy details] |
+| Low power / Low interest | [IDs] | [Monitor / Strategy details] |
 
 ---
 
@@ -92,11 +92,24 @@ R = Responsible · A = Accountable · C = Consulted · I = Informed
 
 ---
 
+## Collaboration Model
+
+| Dimension | Specification |
+|-----------|---------------|
+| Advisor Role | [Describe advisor role and facilitation approach] |
+| Client Co-Creation | [Describe client leadership and staff co-creation model] |
+| Procedure Ownership | [Describe post-implementation ownership of procedures, models, and tools] |
+| Working Rhythm | [Describe meeting, working session, and gemba walk cadence] |
+| Decision Governance | [Describe advisory recommendations and sponsor approval process] |
+
+---
+
 ## Quality Checklist
 
 - [ ] Every high-power stakeholder has a named engagement strategy (S1-Q1)
 - [ ] Steering committee has named members and a fixed cadence (S1-Q2)
 - [ ] Every KPI has numeric baseline and target with dates (S1-Q3)
+- [ ] Collaboration Model specifies facilitation roles, client co-creation, and post-implementation procedure ownership (S1-Q4)
 - [ ] RACI has exactly one A per activity (S1-C1)
 - [ ] Communication plan covers every quadrant of the power/interest grid (S1-C2)
 
@@ -104,10 +117,12 @@ R = Responsible · A = Accountable · C = Consulted · I = Informed
 
 ## Approval Section
 
+Status: PENDING human attestation
+
 | Field | Value |
 |-------|-------|
-| Approver | [Name, Title] |
-| Date | [YYYY-MM-DD] |
+| Approver | [Pending human attestation via Two-Key Gate] |
+| Date | [Pending] |
 | Comments | [Optional] |
 
 **Change log**

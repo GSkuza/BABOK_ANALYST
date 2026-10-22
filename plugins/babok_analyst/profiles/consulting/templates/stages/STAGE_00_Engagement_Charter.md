@@ -87,6 +87,18 @@ All must be true to proceed to Stage 1:
 
 ---
 
+## Collaboration Model
+
+| Dimension | Specification |
+|-----------|---------------|
+| Advisor Role | [Describe advisor role and facilitation approach] |
+| Client Co-Creation | [Describe client involvement and co-creation model] |
+| Procedure Ownership | [Describe post-implementation ownership of procedures and operational rules] |
+| Working Rhythm | [Describe meeting and working session cadence] |
+| Decision Governance | [Describe decision-making authority and approval process] |
+
+---
+
 ## Quality Checklist
 
 - [ ] Trigger is specific and dated, not a generic improvement goal
@@ -94,15 +106,18 @@ All must be true to proceed to Stage 1:
 - [ ] "No IT/software delivery" exclusion is explicit
 - [ ] Budget ceiling and target date are numeric / calendar values
 - [ ] Glossary has 3–10 client-vocabulary terms
+- [ ] Collaboration Model explicitly defines facilitation roles, client co-creation, and post-implementation procedure ownership
 
 ---
 
 ## Approval Section
 
+Status: PENDING human attestation
+
 | Field | Value |
 |-------|-------|
-| Approver | [Name, Title] |
-| Date | [YYYY-MM-DD] |
+| Approver | [Pending human attestation via Two-Key Gate] |
+| Date | [Pending] |
 | Comments | [Optional] |
 
 **Change log**
