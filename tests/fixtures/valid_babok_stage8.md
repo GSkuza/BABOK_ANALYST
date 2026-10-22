@@ -17,6 +17,7 @@ This is a complete synthetic deliverable for stage 8 under profile babok. All re
 
 Synthetic detailed narrative for Cost-Benefit Analysis (CBA) - 3-year projection. Operational parameters have been established across systems and verified with stakeholders.
 
+Data sources: Vendor quotes Q-2026-01 and financial audit.
 Criterion S8-Q1 verified with pattern match: Evidence: 45 units, High confidence, Low risk, 2026-11-01, baseline verified, GO decision recommended.
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.
@@ -27,6 +28,7 @@ Detailed context: domain vocabulary, operational integration, automated architec
 
 Synthetic detailed narrative for NPV Calculation. Operational parameters have been established across systems and verified with stakeholders.
 
+| NPV | 350000 PLN |
 Criterion S8-Q3 verified with pattern match: NPV is estimated at 350,000 PLN with IRR of 28% and payback of 14 months and 8% discount rate.
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.
@@ -55,6 +57,7 @@ Detailed context: domain vocabulary, operational integration, automated architec
 
 Synthetic detailed narrative for Sensitivity Analysis (pessimistic / optimistic scenarios). Operational parameters have been established across systems and verified with stakeholders.
 
+| NPV result | 280000 PLN |
 Criterion S8-Q2 verified with pattern match: Evidence: 45 units, High confidence, Low risk, 2026-11-01, baseline verified, GO decision recommended.
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.
@@ -74,6 +77,7 @@ Detailed context: domain vocabulary, operational integration, automated architec
 
 Synthetic detailed narrative for Executive Recommendation. Operational parameters have been established across systems and verified with stakeholders.
 
+GO: Proceed with implementation based on strong positive NPV.
 Criterion S8-Q4 verified with pattern match: Evidence: 45 units, High confidence, Low risk, 2026-11-01, baseline verified, GO decision recommended.
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.

@@ -10,6 +10,7 @@
 ## Executive Summary
 
 This is a complete synthetic deliverable for stage 3 under profile babok. All relevant constraints and criteria are satisfied.
+Top priority: System stability with 450000 PLN annual impact.
 
 ---
 
@@ -17,6 +18,7 @@ This is a complete synthetic deliverable for stage 3 under profile babok. All re
 
 Synthetic detailed narrative for Root Cause Analysis (5 Whys or Ishikawa). Operational parameters have been established across systems and verified with stakeholders.
 
+| 1 | Why latency occurs | Insufficient buffer size |
 Criterion S3-Q2 verified with pattern match: RC-001 root cause identifies lack of automated reconciliation.
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.
@@ -27,6 +29,7 @@ Detailed context: domain vocabulary, operational integration, automated architec
 
 Synthetic detailed narrative for Problem Prioritisation Matrix. Operational parameters have been established across systems and verified with stakeholders.
 
+| RC-001 | Manual data synchronization | 5 | 4 |
 Criterion S3-Q3 verified with pattern match: Evidence: 45 units, High confidence, Low risk, 2026-11-01, baseline verified, GO decision recommended.
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.

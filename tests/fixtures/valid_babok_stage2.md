@@ -17,6 +17,7 @@ This is a complete synthetic deliverable for stage 2 under profile babok. All re
 
 Synthetic detailed narrative for AS-IS Process Map or BPMN description. Operational parameters have been established across systems and verified with stakeholders.
 
+Step 1: Document intake and validation in workflow.
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.
 
@@ -26,6 +27,7 @@ Detailed context: domain vocabulary, operational integration, automated architec
 
 Synthetic detailed narrative for Pain Points Analysis. Operational parameters have been established across systems and verified with stakeholders.
 
+PP-001: Manual reconciliation takes 40 hours per month.
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.
 
@@ -46,6 +48,7 @@ Detailed context: domain vocabulary, operational integration, automated architec
 
 Synthetic detailed narrative for System Inventory. Operational parameters have been established across systems and verified with stakeholders.
 
+| SAP ERP | 10.0 | IT | 45 |
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.
 

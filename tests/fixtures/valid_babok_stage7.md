@@ -10,6 +10,7 @@
 ## Executive Summary
 
 This is a complete synthetic deliverable for stage 7 under profile babok. All relevant constraints and criteria are satisfied.
+Summary: 12 risks, 3 critical/high, Contingency: 15% of budget, DPIA: Required.
 
 ---
 
@@ -36,6 +37,9 @@ Detailed context: domain vocabulary, operational integration, automated architec
 ## Top 5 Risks with Mitigation Plans
 
 Synthetic detailed narrative for Top 5 Risks with Mitigation Plans. Operational parameters have been established across systems and verified with stakeholders.
+
+Owner: Jan Kowalski | Target date: 2026-11-01
+Mitigation: Implement redundant hot standby server.
 
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.

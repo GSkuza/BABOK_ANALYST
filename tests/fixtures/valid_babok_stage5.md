@@ -10,6 +10,7 @@
 ## Executive Summary
 
 This is a complete synthetic deliverable for stage 5 under profile babok. All relevant constraints and criteria are satisfied.
+Key decisions: Cloud-native platform adoption with 65% efficiency improvement.
 
 ---
 
@@ -17,6 +18,7 @@ This is a complete synthetic deliverable for stage 5 under profile babok. All re
 
 Synthetic detailed narrative for TO-BE Process Map or Description. Operational parameters have been established across systems and verified with stakeholders.
 
+Step 1: Automated invoice ingestion and matching.
 Criterion S5-Q1 verified with pattern match: F-001 indicates process variance across regions.
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.
@@ -36,6 +38,8 @@ Detailed context: domain vocabulary, operational integration, automated architec
 ## Technology Stack / Solution Architecture
 
 Synthetic detailed narrative for Technology Stack / Solution Architecture. Operational parameters have been established across systems and verified with stakeholders.
+
+| Integration | iPaaS Engine | Apache Camel |
 
 
 Detailed context: domain vocabulary, operational integration, automated architecture, production deployment.
