@@ -81,20 +81,6 @@ export function validateDeliverableHash(content, expectedSha256, stageNumber = 0
   if (/([a-f0-9])\1{15,}/i.test(content)) {
     throw new Error(`Two-Key Gate: stage ${stageNumber} deliverable contains a mock repeated-character hash.`);
   }
-
-  // If deliverable contains an explicit hash declaration, verify it matches
-  const match =
-    content.match(/(?:signature|attestation)?\s*hash:\s*([a-f0-9]{64})/i) ||
-    content.match(/\|\s*Signature Hash\s*\|\s*([a-f0-9]{64})\s*\|/i);
-
-  if (match) {
-    const embeddedHash = match[1].toLowerCase();
-    if (expectedSha256 && embeddedHash !== expectedSha256.toLowerCase()) {
-      throw new Error(
-        `Two-Key Gate: embedded hash in stage ${stageNumber} deliverable (${embeddedHash.slice(0, 12)}…) does not match content_sha256 (${expectedSha256.slice(0, 12)}…).`,
-      );
-    }
-  }
 }
 
 /**

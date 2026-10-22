@@ -85,7 +85,6 @@ Status: PENDING human attestation
 |-------|-------|
 | Approver | [Pending human attestation via Two-Key Gate] |
 | Date | [Pending] |
-| Signature Hash | [Generated upon attestation] |
 | Comments | [Optional] |
 
 **Change log**

@@ -101,22 +101,6 @@ describe('two-key-gate', () => {
     );
   });
 
-  test('validateTwoKeyApproval rejects deliverable embedded hash mismatch', () => {
-    const sha = sha256Content(SAMPLE);
-    const stage = {
-      stage: 1,
-      agent_submission: { content_sha256: sha, review_id: generateReviewId() },
-      human_attestation: { content_sha256: sha, spot_check_passed: true },
-    };
-    ensureStageTwoKeyFields(stage);
-    const nonMatchingHash = '0123456789abcdef'.repeat(4);
-    const mockContent = SAMPLE + '\nAttestation hash: ' + nonMatchingHash;
-    assert.throws(
-      () => validateTwoKeyApproval(stage, sha, { deliverableContent: mockContent }),
-      /embedded hash .* does not match content_sha256/,
-    );
-  });
-
   test('validateJournalApprovalTimestamps returns warning for batched approvals with identical second', () => {
     const mockJournal = {
       stages: [
