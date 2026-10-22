@@ -207,7 +207,7 @@
         "Release Decision Status"
       ],
       "quality_criteria": [
-        { "id": "S5-Q1", "description": "Verification evidence states what actually ran, where, and its result, or explicitly states nothing has run", "applies_to": "Verification Evidence", "smart_dimension": "Measurable", "pattern": "(?:pass|fail|passed|failed|running|executed|none run|nothing has run|pending)" },
+        { "id": "S5-Q1", "description": "Verification evidence states what actually ran, where, and its result, or explicitly states nothing has run", "applies_to": "Verification Evidence", "smart_dimension": "Measurable", "pattern": "\\|\\s*(?:pass|fail|passed|failed|running|pending|not run)\\s*\\||\\b(?:all\\s+tests?\\s+passed|nothing\\s+has\\s+run|none\\s+run|verification\\s+pending)\\b" },
         { "id": "S5-Q2", "description": "Every Critical/High risk has a named individual owner and a dated mitigation", "applies_to": "Risk Register", "smart_dimension": "Specific", "pattern": "(?:R|RSK)-\\d{2,3}" },
         { "id": "S5-Q3", "description": "Monitoring signals are specific to this change's expected effect, not generic uptime monitoring", "applies_to": "Monitoring & Observability", "smart_dimension": "Relevant", "pattern": "(?:metric|alert|signal|log|latency|error|counter|gauge)" }
       ],

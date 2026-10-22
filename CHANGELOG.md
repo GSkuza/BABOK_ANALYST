@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Raw template vs filled deliverable test coverage with populated headers**: Expanded `tests/unit/scoring.test.js` to assert that templates with populated header placeholders (`[Project Name]`, `[YYYY-MM-DD]`, etc. substituted with `'Acme-2026'`) and empty body sections fail scoring (`passed=false`) across all 20 stages (BABOK 8, consulting 6, software-development 6), while all 20 synthetic filled fixtures pass (`passed=true`).
 - **Explicit observable regex patterns in quality rubrics**: Added explicit `pattern` fields to quality criteria across `BABOK_AGENT`, `profiles/consulting`, and `profiles/software-development` quality scoring rubrics, replacing heuristic regex inference from criterion descriptions.
 - **Full-spectrum raw template versus filled deliverable test coverage**: Added synthetic valid fixtures across missing stages and expanded `tests/unit/scoring.test.js` to assert that raw unfilled templates fail scoring below threshold while filled deliverables pass across all stages and profiles.
 - **Collaboration Model in consulting profile**: Added `Collaboration Model` section to consulting deliverable templates (`STAGE_00` and `STAGE_01`), elicitation checklist in stage prompts, required section and rubric quality criterion `S1-Q4` in `profiles/consulting/agents/quality_scoring_rubric.json`, profile metadata updates, and dedicated `profiles/consulting/README.md` documentation.
@@ -15,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quality check observable signals and manual review**: Added `signals` evaluation in `quality/checks/smart.js` to inspect deliverables for required domain columns or keywords, allowed non-currency specific criteria, and handled `manual_review: true` criteria as informational without degrading score.
 
 ### Changed
-- **Smart criteria checker template detection**: `isRawTemplate` detection in `smart.js` flags raw template deliverables containing unfilled metadata header placeholders and limits scores below passing threshold.
+- **Removed isRawTemplate header shortcut**: Removed `isRawTemplate(content)` global bypass from `cli/src/quality/checks/smart.js` and `babok-mcp/src/lib/quality/checks/smart.js`. Template header placeholder tokens now emit non-blocking informational notices (`HDR-PLACEHOLDER`).
+- **Section-level substantive content verification**: In `cleanContent`, markdown table header rows, separator rows, unfilled template placeholders, prompt labels, markdown headings, and horizontal rules are stripped; if a section is empty after cleaning, the quality criterion fails immediately.
 - **Consulting Collaboration Model placeholder neutralisation**: Replaced prescriptive example values (`[e.g. Client holds 100%...]`) with neutral descriptions (`[Describe ...]`) in consulting templates `STAGE_00` and `STAGE_01`.
 - **Two-Key gate human attestation enforcement**: Deliverable templates in consulting profile (`STAGE_00` to `STAGE_06`) now explicitly initialize sign-off blocks as `Status: PENDING human attestation` with blank attestation fields. Consulting stage prompts strictly prohibit agents from filling client approval attestations.
 

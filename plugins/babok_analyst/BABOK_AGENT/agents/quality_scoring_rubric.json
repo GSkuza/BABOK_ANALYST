@@ -29,17 +29,17 @@
       "quality_criteria": [
         {
           "id": "S1-Q1",
-          "description": "Every quantitative KPI has a numeric baseline value",
-          "applies_to": "Success Criteria",
-          "smart_dimension": "Measurable",
-          "pattern": "\\b\\d+(?:\\.\\d+)?%?\\b"
+          "description": "In-scope items are substantively detailed without placeholders",
+          "applies_to": "Project Scope — In Scope",
+          "smart_dimension": "Specific",
+          "pattern": "^-\\s+[^[\\]\\r\\n]{5,}"
         },
         {
           "id": "S1-Q2",
-          "description": "Every quantitative KPI has a numeric target value",
-          "applies_to": "Success Criteria",
-          "smart_dimension": "Measurable",
-          "pattern": "\\b\\d+(?:\\.\\d+)?%?\\b"
+          "description": "System landscape identifies specific systems, versions, and integrations without placeholders",
+          "applies_to": "System Landscape",
+          "smart_dimension": "Specific",
+          "pattern": "\\|\\s*[^|\\[\\]\\r\\n]{3,}\\s*\\|\\s*[^|\\[\\]\\r\\n]{2,}\\s*\\|\\s*[^|\\[\\]\\r\\n]{2,}\\s*\\|\\s*[^|\\[\\]\\r\\n]{2,}"
         },
         {
           "id": "S1-Q3",
@@ -125,24 +125,24 @@
       "quality_criteria": [
         {
           "id": "S2-Q1",
-          "description": "Baseline metrics are numeric (not qualitative descriptions)",
-          "applies_to": "Baseline Metrics",
-          "smart_dimension": "Measurable",
-          "pattern": "\\b\\d+(?:\\.\\d+)?%?\\b"
+          "description": "AS-IS process map details steps and transaction duration without placeholders",
+          "applies_to": "AS-IS Process Map or BPMN description",
+          "smart_dimension": "Specific",
+          "pattern": "\\|\\s*\\d+\\s*\\|\\s*[^|\\[\\]\\r\\n]{3,}|\\bStep\\s+\\d+[:\\s—-]+[^[\\]\\r\\n]{5,}"
         },
         {
           "id": "S2-Q2",
-          "description": "Each bottleneck cites a measurable impact",
-          "applies_to": "Bottleneck Identification",
+          "description": "Pain points analysis identifies measurable operational impact without placeholders",
+          "applies_to": "Pain Points Analysis",
           "smart_dimension": "Measurable",
-          "pattern": "BN-\\d{3}"
+          "pattern": "\\|\\s*PP-\\d{3}\\s*\\|\\s*[^|\\[\\]\\r\\n]{3,}|\\bPP-\\d{3}[:\\s—-]+[^[\\]\\r\\n]{5,}"
         },
         {
           "id": "S2-Q3",
-          "description": "Volume metrics include unit of measure and time period",
-          "applies_to": "Baseline Metrics",
+          "description": "System inventory identifies current systems and integration points without placeholders",
+          "applies_to": "System Inventory",
           "smart_dimension": "Specific",
-          "pattern": "(?:per|/|miesięcz|rocz|dzien|hour|day|month|year|godz|szt|h|d)\\b"
+          "pattern": "\\|\\s*[^|\\[\\]\\r\\n]{3,}\\s*\\|\\s*[^|\\[\\]\\r\\n]{2,}\\s*\\|\\s*[^|\\[\\]\\r\\n]{2,}\\s*\\|\\s*[\\d.]+"
         }
       ],
       "consistency_checks": [
@@ -194,24 +194,24 @@
       "quality_criteria": [
         {
           "id": "S3-Q1",
-          "description": "Each problem statement is measurable (contains numeric or observable criterion)",
-          "applies_to": "Problem Statements",
-          "smart_dimension": "Measurable",
-          "pattern": "PS-\\d{3}"
+          "description": "Root cause analysis details 5 Whys chain without placeholders",
+          "applies_to": "Root Cause Analysis",
+          "smart_dimension": "Specific",
+          "pattern": "\\|\\s*\\d+\\s*\\|\\s*[^|\\[\\]\\r\\n]{3,}\\s*\\|\\s*[^|\\[\\]\\r\\n]{3,}|\\b(?:Why|Dlaczego)\\b[^[\\]\\r\\n]{5,}"
         },
         {
           "id": "S3-Q2",
-          "description": "Root cause analysis goes at least 3 levels deep (3 Whys minimum)",
-          "applies_to": "Root Cause Analysis",
-          "smart_dimension": "Specific",
-          "pattern": "(?:Why|Dlaczego|RC-\\d{3})"
+          "description": "Prioritisation matrix scores root causes with numeric impact and likelihood without placeholders",
+          "applies_to": "Problem Prioritisation Matrix",
+          "smart_dimension": "Measurable",
+          "pattern": "\\|\\s*RC-\\d{3}\\s*\\|\\s*[^|\\[\\]\\r\\n]{3,}\\s*\\|\\s*\\d+\\s*\\|\\s*\\d+"
         },
         {
           "id": "S3-Q3",
-          "description": "Prioritisation matrix uses two quantifiable dimensions (e.g. Impact × Likelihood)",
-          "applies_to": "Problem Prioritisation Matrix",
+          "description": "Executive summary details top priority problem and impact without placeholders",
+          "applies_to": "Executive Summary",
           "smart_dimension": "Measurable",
-          "pattern": "(?:Impact|Likelihood|Wpływ|Prawdopodobieństwo|Score|Wynik)"
+          "pattern": "\\bTop\\s+priority[:\\s—-]+[^[\\]\\r\\n]{5,}"
         }
       ],
       "consistency_checks": [
@@ -348,24 +348,24 @@
       "quality_criteria": [
         {
           "id": "S5-Q1",
-          "description": "Every major problem from Stage 3 has a corresponding design element addressing it",
-          "applies_to": "TO-BE Process Map",
-          "smart_dimension": "Relevant",
-          "pattern": "(?:Step|Krok|Process|Proces|P-\\d{3}|F-\\d{3})"
+          "description": "TO-BE process map details steps and duration without placeholders",
+          "applies_to": "TO-BE Process Map or Description",
+          "smart_dimension": "Specific",
+          "pattern": "\\bStep\\s+\\d+[:\\s—-]+[^[\\]\\r\\n]{5,}|\\bProcess\\s+\\d+[:\\s—-]+[^[\\]\\r\\n]{5,}|\\|\\s*\\d+\\s*\\|\\s*[^|\\[\\]\\r\\n]{3,}\\s*\\|\\s*[^|\\[\\]\\r\\n]{3,}"
         },
         {
           "id": "S5-Q2",
-          "description": "Projected improvements are quantified and tied to Stage 1 KPI targets",
-          "applies_to": "User Experience Improvements",
+          "description": "Executive summary details key decisions and projected improvement without placeholders",
+          "applies_to": "Executive Summary",
           "smart_dimension": "Measurable",
-          "pattern": "(?:KPI-\\d{3}|%|h\\b|min\\b|days|dni)"
+          "pattern": "\\b(?:Key\\s+decisions?|Projected\\s+improvement)[:\\s—-]+[^[\\]\\r\\n]{10,}"
         },
         {
           "id": "S5-Q3",
-          "description": "Each design decision documents alternatives considered and rationale for choice",
-          "applies_to": "Key Design Decisions",
+          "description": "Technology stack specifies integration and data layers without placeholders",
+          "applies_to": "Technology Stack / Solution Architecture",
           "smart_dimension": "Specific",
-          "pattern": "(?:DD-\\d{3}|Decision|Decyzja|Alternative|Alternatyw)"
+          "pattern": "\\|\\s*(?:Integration|Data)\\s*\\|\\s*[^|\\[\\]\\r\\n]{3,}\\s*\\|\\s*[^|\\[\\]\\r\\n]{3,}"
         }
       ],
       "consistency_checks": [
@@ -423,24 +423,24 @@
       "quality_criteria": [
         {
           "id": "S6-Q1",
-          "description": "Each milestone has a specific calendar date and measurable completion criterion",
-          "applies_to": "Key Milestones",
+          "description": "Implementation phases define dated scope and person-month effort without placeholders",
+          "applies_to": "Implementation Phases",
           "smart_dimension": "Time-bound",
-          "pattern": "(?:M-\\d{2}|M\\d|Milestone|Kamień|\\d{4}-\\d{2}-\\d{2})"
+          "pattern": "\\bPhase\\s+\\d+[:\\s—-]+[^[\\]\\r\\n]{5,}"
         },
         {
           "id": "S6-Q2",
-          "description": "Each phase has estimated effort in person-days or person-months",
+          "description": "Implementation phases have measurable exit criteria without placeholders",
           "applies_to": "Implementation Phases",
           "smart_dimension": "Measurable",
-          "pattern": "(?:Phase|Faza|man-days|person-days|osobodni|md|mm|person-months)"
+          "pattern": "\\bExit\\s+criteria[:\\s—-]+[^[\\]\\r\\n]{5,}"
         },
         {
           "id": "S6-Q3",
-          "description": "Critical path explicitly identifies the longest dependency chain",
-          "applies_to": "Critical Path",
+          "description": "Executive summary details summary of gaps, phases and go-live date without placeholders",
+          "applies_to": "Executive Summary",
           "smart_dimension": "Specific",
-          "pattern": "(?:Critical Path|Ścieżka krytyczna|depends on|zależy od|->|→)"
+          "pattern": "\\bSummary[:\\s—-]+[^[\\]\\r\\n]{10,}"
         }
       ],
       "consistency_checks": [
@@ -498,24 +498,24 @@
       "quality_criteria": [
         {
           "id": "S7-Q1",
-          "description": "Each risk has a numeric likelihood score and impact score (1–5 scale)",
-          "applies_to": "Risk Register",
-          "smart_dimension": "Measurable",
-          "pattern": "(?:R|RSK)-\\d{2,3}"
+          "description": "Top risks specify named owner and target date without placeholders",
+          "applies_to": "Top 5 Risks with Mitigation Plans",
+          "smart_dimension": "Specific",
+          "pattern": "\\bOwner[:\\s—-]+[^[\\]\\r\\n]{3,}"
         },
         {
           "id": "S7-Q2",
-          "description": "Each mitigation action is assigned to a named owner with a target date",
-          "applies_to": "Risk Register",
-          "smart_dimension": "Time-bound",
-          "pattern": "\\d{4}-\\d{2}-\\d{2}"
+          "description": "Top risks define concrete mitigation and contingency actions without placeholders",
+          "applies_to": "Top 5 Risks with Mitigation Plans",
+          "smart_dimension": "Measurable",
+          "pattern": "\\bMitigation[:\\s—-]+[^[\\]\\r\\n]{5,}"
         },
         {
           "id": "S7-Q3",
-          "description": "Residual risk is quantified after mitigation (not just described)",
-          "applies_to": "Residual Risk Statement",
-          "smart_dimension": "Measurable",
-          "pattern": "(?:Low|Med|High|Niskie|Średnie|Wysokie|\\d/5)"
+          "description": "Executive summary details risk counts and contingency percentage without placeholders",
+          "applies_to": "Executive Summary",
+          "smart_dimension": "Specific",
+          "pattern": "\\b(?:risks|contingency|budget|dpia)\\b[^[\\]\\r\\n]{10,}"
         }
       ],
       "consistency_checks": [
@@ -575,31 +575,31 @@
       "quality_criteria": [
         {
           "id": "S8-Q1",
-          "description": "Every financial parameter cites a data source (vendor quote, survey, baseline data)",
+          "description": "Every financial parameter cites a concrete data source without placeholders",
           "applies_to": "Cost-Benefit Analysis",
           "smart_dimension": "Specific",
-          "pattern": "(?:source|źródło|quote|survey|baseline|dane)"
+          "pattern": "\\bData\\s+sources?[:\\s—-]+[^[\\]\\r\\n]{10,}"
         },
         {
           "id": "S8-Q2",
-          "description": "Sensitivity analysis varies at least 2 key assumptions (e.g. adoption rate, implementation cost)",
-          "applies_to": "Sensitivity Analysis",
+          "description": "NPV calculation states quantified net present value without placeholders",
+          "applies_to": "NPV Calculation",
           "smart_dimension": "Measurable",
-          "pattern": "(?:Scenario|Scenariusz|Worst|Best|Base|Pesymist|Optymist|Bazow|Case)"
+          "pattern": "\\|\\s*\\*{0,2}NPV\\*{0,2}\\s*\\|\\s*[^|\\[\\]\\r\\n]*?[\\d,.]+"
         },
         {
           "id": "S8-Q3",
-          "description": "NPV discount rate is explicitly stated and justified",
-          "applies_to": "NPV Calculation",
-          "smart_dimension": "Specific",
-          "pattern": "(?:NPV|discount rate|stopa dyskontowa|%)"
+          "description": "Sensitivity analysis calculates numeric NPV results across scenarios without placeholders",
+          "applies_to": "Sensitivity Analysis",
+          "smart_dimension": "Measurable",
+          "pattern": "\\|\\s*\\*{0,2}NPV\\s+result\\*{0,2}\\s*\\|\\s*[^|\\[\\]\\r\\n]*?[\\d,.]+"
         },
         {
           "id": "S8-Q4",
-          "description": "Executive Recommendation clearly states go/no-go with rationale",
+          "description": "Executive Recommendation clearly states go/no-go decision and quantified rationale without placeholders",
           "applies_to": "Executive Recommendation",
           "smart_dimension": "Specific",
-          "pattern": "(?:GO|NO-GO|Go/No-Go|Rekomendacja|Recommend)"
+          "pattern": "\\b(?:GO|NO-GO|Go/No-Go|Proceed|Defer)\\b[^[\\]\\r\\n]{5,}"
         }
       ],
       "consistency_checks": [
