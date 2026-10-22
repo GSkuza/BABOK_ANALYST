@@ -23,8 +23,8 @@ function countMatches(text, re) {
 }
 
 /**
- * Remove markdown table header rows, separator rows, and [placeholders]
- * so only substantive filled-in content is evaluated.
+ * Remove markdown table header rows, separator rows, unfilled template placeholders,
+ * prompt labels, and markdown headings so only substantive filled-in content is evaluated.
  */
 function cleanContent(text) {
   if (!text) return '';
@@ -42,8 +42,37 @@ function cleanContent(text) {
       continue;
     }
 
+    // Skip section headings
+    if (/^#{1,6}\s+/.test(lines[i])) {
+      continue;
+    }
+
+    // Skip horizontal rules/dividers
+    if (/^\s*---+\s*$/.test(lines[i])) {
+      continue;
+    }
+
+    // Skip HTML comments
+    if (/<!--[\s\S]*?-->/.test(lines[i])) {
+      continue;
+    }
+
+    // Skip lines that still contain unfilled template placeholders
+    // (placeholders are [...] but not checkboxes [ ], [x], [X] and not markdown links [...](...))
+    if (/\[(?![ xX]\])[^\]\r\n]+\](?!\()/.test(lines[i])) {
+      continue;
+    }
+
     // Strip [placeholders] not followed by (
     let line = lines[i].replace(/\[[^\]\r\n]*\](?!\()/g, '');
+
+    // Skip empty bullet points or prompt labels like "**5 Whys:**"
+    if (/^\s*(?:[-*]|\d+[.)])\s*$/.test(line)) {
+      continue;
+    }
+    if (/^\s*\*\*[^*]+\*\*:\s*$/.test(line)) {
+      continue;
+    }
 
     // If line is a markdown table row, verify that data cells are not empty
     if (line.includes('|')) {
@@ -65,8 +94,7 @@ function cleanContent(text) {
       }
     }
 
-    // If line had markdown list bullet like "- ", "* ", or numbered item like "1. " and nothing else, skip it
-    if (/^\s*(?:[-*]|\d+[.)])\s*$/.test(line)) {
+    if (line.trim().length === 0) {
       continue;
     }
 
@@ -110,14 +138,6 @@ function extractSection(content, keywords) {
 }
 
 /**
- * Detect whether deliverable content is an unfilled raw template.
- */
-function isRawTemplate(content) {
-  if (!content) return false;
-  return /\[(?:Project Name|Project ID|Initiative ID|Engagement ID|BABOK-YYYYMMDD|BC-YYYYMMDD|SD-YYYYMMDD|YYYY-MM-DD)\]/i.test(content);
-}
-
-/**
  * Evaluate quality criteria against markdown content.
  * Each criterion contributes equally to the quality score.
  *
@@ -131,19 +151,19 @@ export function checkSmart(content, criteria) {
     return genericQualityCheck(content);
   }
 
-  if (isRawTemplate(content)) {
-    const issues = criteria.map(criterion => ({
-      dimension: 'quality',
-      ruleId: criterion.id,
-      severity: 'warning',
-      message: `Quality criterion not met: deliverable contains raw template placeholders (${criterion.description})`,
-      remediation: `Ensure "${criterion.applies_to || 'deliverable'}" is populated with substantive data`,
-    }));
-    return { score: 0, issues };
-  }
-
   const issues = [];
   let passed = 0;
+
+  // Informational notice if header placeholders remain (does not fail scoring)
+  if (/\[(?:Project Name|Project ID|Initiative ID|Engagement ID|BABOK-YYYYMMDD|BC-YYYYMMDD|SD-YYYYMMDD|YYYY-MM-DD)\]/i.test(content)) {
+    issues.push({
+      dimension: 'quality',
+      ruleId: 'HDR-PLACEHOLDER',
+      severity: 'info',
+      message: 'Document contains unfilled header placeholder tokens',
+      remediation: 'Fill in project metadata (Project Name, ID, Date) in deliverable header',
+    });
+  }
 
   for (const criterion of criteria) {
     const { id, description, applies_to, smart_dimension } = criterion;
@@ -180,6 +200,18 @@ export function checkSmart(content, criteria) {
     const text = cleanContent(section);
     let ok = false;
     const lowerDesc = description.toLowerCase();
+
+    // If cleaned section is empty, quality criterion cannot be met
+    if (text.trim().length === 0) {
+      issues.push({
+        dimension: 'quality',
+        ruleId: id,
+        severity: 'warning',
+        message: `Quality criterion not met: section "${applies_to || 'deliverable'}" contains no substantive filled data (${description})`,
+        remediation: `Ensure "${applies_to || 'deliverable'}" is populated with substantive data`,
+      });
+      continue;
+    }
 
     if (criterion.pattern) {
       const patRe = new RegExp(criterion.pattern, 'i');
