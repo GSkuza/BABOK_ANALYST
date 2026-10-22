@@ -32,7 +32,7 @@
           "description": "Steering committee has named members and a fixed cadence",
           "applies_to": "Governance Model & Steering Committee",
           "smart_dimension": "Specific",
-          "signals": ["cadence", "kadencja", "weekly", "bi-weekly", "monthly", "co tydzień", "co 2 tyg", "spotkania"]
+          "signals": ["weekly", "bi-weekly", "monthly", "co tydzień", "co 2 tyg", "spotkania", "co miesiąc", "dwutygodniow", "kwartalnie", "quarterly"]
         },
         { "id": "S1-Q3", "description": "Every KPI has a numeric baseline and target with dates", "applies_to": "Success Criteria & Target KPIs", "smart_dimension": "Measurable" },
         {
@@ -119,9 +119,9 @@
         "Risks of Inaction"
       ],
       "quality_criteria": [
-        { "id": "S3-Q1", "description": "At least three options plus a do-nothing baseline are evaluated", "applies_to": "Option Generation", "smart_dimension": "Specific" },
+        { "id": "S3-Q1", "description": "At least three options plus a do-nothing baseline are evaluated", "applies_to": "Option Generation", "smart_dimension": "Specific", "signals": ["do-nothing", "baseline", "wariant zerowy", "OPT-00", "bez zmian"] },
         { "id": "S3-Q2", "description": "Criteria weights sum to 100 and each has a stated source", "applies_to": "Evaluation Criteria & Weighted Scoring", "smart_dimension": "Measurable" },
-        { "id": "S3-Q3", "description": "Recommendation names one OPT-NN and states its weighted score against the runner-up", "applies_to": "Recommended Option & Rationale", "smart_dimension": "Specific" },
+        { "id": "S3-Q3", "description": "Recommendation names one OPT-NN and states its weighted score against the runner-up", "applies_to": "Recommended Option & Rationale", "smart_dimension": "Specific", "pattern": "OPT-\\d{2}" },
         { "id": "S3-Q4", "description": "Risks of inaction are quantified with a timeframe", "applies_to": "Risks of Inaction", "smart_dimension": "Time-bound" }
       ],
       "consistency_checks": [
@@ -199,7 +199,7 @@
         "Mitigation Owners"
       ],
       "quality_criteria": [
-        { "id": "S5-Q1", "description": "Every Critical/High risk has a named individual owner and a dated mitigation", "applies_to": "Risk Register", "smart_dimension": "Specific" },
+        { "id": "S5-Q1", "description": "Every Critical/High risk has a named individual owner and a dated mitigation", "applies_to": "Risk Register", "smart_dimension": "Specific", "signals": ["Critical", "High", "Krytyczn", "Wysoki", "Mitigation"] },
         { "id": "S5-Q2", "description": "Readiness is scored per stakeholder group", "applies_to": "Change Readiness Assessment", "smart_dimension": "Measurable" },
         { "id": "S5-Q3", "description": "Escalation triggers are numeric or observable", "applies_to": "Governance & Escalation Cadence", "smart_dimension": "Measurable" }
       ],
@@ -240,7 +240,7 @@
       "quality_criteria": [
         { "id": "S6-Q1", "description": "Costs and benefits are numeric with a basis of estimate", "applies_to": "Cost-Benefit Analysis & ROI/NPV", "smart_dimension": "Measurable" },
         { "id": "S6-Q2", "description": "ROI, payback and NPV are stated with assumptions and a sensitivity", "applies_to": "Cost-Benefit Analysis & ROI/NPV", "smart_dimension": "Measurable" },
-        { "id": "S6-Q3", "description": "Tracker has a named client-side owner, cadence and corrective-action trigger", "applies_to": "Value Tracking Governance", "smart_dimension": "Specific" }
+        { "id": "S6-Q3", "description": "Tracker has a named client-side owner, cadence and corrective-action trigger", "applies_to": "Value Tracking Governance", "smart_dimension": "Specific", "signals": ["cadence", "kadencja", "trigger", "koryguj", "weekly", "monthly", "quarterly"] }
       ],
       "consistency_checks": [
         { "id": "S6-C1", "description": "Every benefit traces to a Stage 2 root cause and a Stage 1 KPI", "source": "stage2" },

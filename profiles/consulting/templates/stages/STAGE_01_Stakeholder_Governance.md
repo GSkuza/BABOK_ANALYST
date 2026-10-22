@@ -22,18 +22,18 @@
 
 | ID | Stakeholder | Role / Function | Power (H/M/L) | Interest (H/M/L) | Stance (Champion / Neutral / Resistant) | Engagement Strategy |
 |----|-------------|-----------------|---------------|------------------|-----------------------------------------|---------------------|
-| ST-001 | [Name] | [Title] | H | H | Champion | Manage closely — steering committee member |
-| ST-002 | [Name] | [Title] | H | L | Neutral | Keep satisfied — monthly executive brief |
-| ST-003 | [Name] | [Title] | L | H | Resistant | Keep informed — workshop participant |
+| [ST-001] | [Name] | [Title] | [H/M/L] | [H/M/L] | [Champion / Neutral / Resistant] | [Engagement strategy, e.g. Manage closely] |
+| [ST-002] | [Name] | [Title] | [H/M/L] | [H/M/L] | [Champion / Neutral / Resistant] | [Engagement strategy, e.g. Keep satisfied] |
+| [ST-003] | [Name] | [Title] | [H/M/L] | [H/M/L] | [Champion / Neutral / Resistant] | [Engagement strategy, e.g. Keep informed] |
 
 **Power/Interest grid summary**
 
 | Quadrant | Stakeholders | Strategy |
 |----------|--------------|----------|
-| High power / High interest | [IDs] | Manage closely |
-| High power / Low interest | [IDs] | Keep satisfied |
-| Low power / High interest | [IDs] | Keep informed |
-| Low power / Low interest | [IDs] | Monitor |
+| High power / High interest | [IDs] | [Manage closely / Strategy details] |
+| High power / Low interest | [IDs] | [Keep satisfied / Strategy details] |
+| Low power / High interest | [IDs] | [Keep informed / Strategy details] |
+| Low power / Low interest | [IDs] | [Monitor / Strategy details] |
 
 ---
 
@@ -96,11 +96,11 @@ R = Responsible · A = Accountable · C = Consulted · I = Informed
 
 | Dimension | Specification |
 |-----------|---------------|
-| Advisor Role | Facilitators and process architects; guiding methodology, never imposing external templates without adaptation |
-| Client Co-Creation | Client operational leaders and staff actively co-create diagnostic findings, solution designs, and roadmap milestones |
-| Procedure Ownership | Client holds 100% post-implementation ownership of all designed procedures, operating models, and tools |
-| Working Rhythm | Regular cadence (weekly working sessions on site / gemba walks, bi-weekly steering reviews) |
-| Decision Governance | Advisory recommendations require executive sponsor approval before execution |
+| Advisor Role | [e.g. Facilitators and process architects; guiding methodology, never imposing external templates without adaptation] |
+| Client Co-Creation | [e.g. Client operational leaders and staff actively co-create diagnostic findings, solution designs, and roadmap milestones] |
+| Procedure Ownership | [e.g. Client holds 100% post-implementation ownership of all designed procedures, operating models, and tools] |
+| Working Rhythm | [e.g. Regular cadence (weekly working sessions on site / gemba walks, bi-weekly steering reviews)] |
+| Decision Governance | [e.g. Advisory recommendations require executive sponsor approval before execution] |
 
 ---
 

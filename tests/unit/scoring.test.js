@@ -177,3 +177,67 @@ describe('scoreStage with invalid_stage1_no_kpi_numbers.md', () => {
     assert.equal(typeof report.rubricVersion, 'string');
   });
 });
+
+describe('scoreStage raw template vs filled example across profiles', () => {
+  const PROFILES = [
+    {
+      id: 'babok',
+      rawTemplate: path.resolve(__dirname, '../../templates/stages/STAGE_01_Project_Initialization.md'),
+      filledFixture: fixtureFile('valid_stage1.md'),
+      deliverableName: 'STAGE_01_Project_Initialization.md',
+    },
+    {
+      id: 'consulting',
+      rawTemplate: path.resolve(__dirname, '../../profiles/consulting/templates/stages/STAGE_01_Stakeholder_Governance.md'),
+      filledFixture: fixtureFile('valid_consulting_stage1.md'),
+      deliverableName: 'STAGE_01_Stakeholder_Governance.md',
+    },
+    {
+      id: 'software-development',
+      rawTemplate: path.resolve(__dirname, '../../profiles/software-development/templates/stages/STAGE_01_Product_Repository_Baseline.md'),
+      filledFixture: fixtureFile('valid_software_development_stage1.md'),
+      deliverableName: 'STAGE_01_Product_Repository_Baseline.md',
+    },
+  ];
+
+  for (const prof of PROFILES) {
+    test(`profile ${prof.id}: raw template fails below rubric threshold, filled example passes`, async () => {
+      // 1. Raw template should fail
+      const tmpRaw = createTempProject(`RAW-${prof.id.toUpperCase()}`);
+      try {
+        const rawContent = fs.readFileSync(prof.rawTemplate, 'utf-8');
+        fs.writeFileSync(path.join(tmpRaw.projectDir, prof.deliverableName), rawContent);
+        const rawReport = await scoreStage(`RAW-${prof.id.toUpperCase()}`, 1, {
+          projectDir: tmpRaw.projectDir,
+          profile: prof.id,
+        });
+        assert.equal(
+          rawReport.passed,
+          false,
+          `Raw template for ${prof.id} should fail scoring, got overall ${rawReport.scores.overall}`,
+        );
+      } finally {
+        tmpRaw.cleanup();
+      }
+
+      // 2. Filled synthetic fixture should pass
+      const tmpFilled = createTempProject(`FILLED-${prof.id.toUpperCase()}`);
+      try {
+        const filledContent = fs.readFileSync(prof.filledFixture, 'utf-8');
+        fs.writeFileSync(path.join(tmpFilled.projectDir, prof.deliverableName), filledContent);
+        const filledReport = await scoreStage(`FILLED-${prof.id.toUpperCase()}`, 1, {
+          projectDir: tmpFilled.projectDir,
+          profile: prof.id,
+        });
+        assert.equal(
+          filledReport.passed,
+          true,
+          `Filled fixture for ${prof.id} should pass scoring, got overall ${filledReport.scores.overall}`,
+        );
+      } finally {
+        tmpFilled.cleanup();
+      }
+    });
+  }
+});
+
