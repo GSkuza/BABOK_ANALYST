@@ -36,7 +36,7 @@
     "postcss": "^8.5.19",
     "shadcn-ui": "^0.9.5",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=18.18.0"
