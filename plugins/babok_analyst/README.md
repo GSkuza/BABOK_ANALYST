@@ -5,7 +5,7 @@
 
 An AI agent for professional business analysis compliant with **BABOK v3** (International Institute of Business Analysis) standard. Guides the analyst through a structured **9-stage** flow - from Stage 0 project charter to Stage 8 business case and ROI.
 
-**Current version:** 2.2.8 | **Plugin install:** Claude Code, Codex, Copilot CLI
+**Current version:** 2.4.0 | **Plugin install:** Claude Code, Codex, Copilot CLI
 
 ## What is BABOK Analyst?
 
@@ -1218,6 +1218,10 @@ Contributions are welcome! Please feel free to submit:
 **Grzegorz Skuza**
 - GitHub: [@GSkuza](https://github.com/GSkuza)
 - Repository: [BABOK_ANALYST](https://github.com/GSkuza/BABOK_ANALYST)
+
+## Acknowledgements
+
+- **Consulting Profile**: concept and initial prototype by [Łukasz Stachowiak](https://github.com/stalubalub) (see the `archive-consulting-prototype` branch in his fork).
 
 ---
 
